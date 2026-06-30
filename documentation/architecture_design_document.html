@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>False Alert Suppression: Architecture</title>
+    <!-- GitHub Markdown CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
+    <!-- Mermaid.js -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            box-sizing: border-box;
+            min-width: 200px;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 45px;
+            background-color: #0d1117;
+        }
+        .markdown-body {
+            box-sizing: border-box;
+            min-width: 200px;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 45px;
+        }
+        .mermaid {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body class="markdown-body">
+    <h1>False Alert Suppression: Architecture Design Document</h1>
+    <p>This document outlines the complete end-to-end architecture of the False Alert Suppression system, integrating LangGraph, RabbitMQ, MongoDB, ServiceNow, and the React Traceability Dashboard.</p>
+
+    <h2>System Architecture Diagram</h2>
+    <div class="mermaid">
+    graph TD
+        DNAC[Cisco DNAC Alerts] -->|Ingest Payload| Ingress(run.py Entrypoint)
+        
+        subgraph LangGraph Pipeline
+            Ingress --> A1[Agent 1: Backdated Filter]
+            A1 -->|Fresh Alert| SUP[Supervisor Router]
+            A1 -->|Backdated| REP[Reporter Node]
+            
+            SUP --> A2[Agent 2: ML Classifier]
+            A2 --> A3[Agent 3: DLX Scheduler]
+            
+            A3 -->|Predicted: Auto-Resolving| RMQ_WAIT[(RabbitMQ Wait Queue<br/>15m TTL)]
+            A3 -->|Predicted: Non-Auto Resolving| A4[Agent 4: ServiceNow Orchestrator]
+            
+            A4 --> REP
+        end
+
+        RMQ_WAIT -->|TTL Expires| RMQ_DLX{Dead Letter Exchange}
+        RMQ_DLX --> RMQ_ACT[(RabbitMQ Active Queue)]
+        
+        RMQ_ACT -->|Consumed by| CONS(Delayed Consumer Daemon)
+        CONS -->|Verify Status| DNAC_API[DNAC REST API]
+        
+        DNAC_API -.->|Resolved| EXIT((Drop / Suppress))
+        DNAC_API -.->|Still Active| A4
+        
+        A4 <-->|REST API| SNOW[ServiceNow Instance]
+
+        REP -->|Upsert Payload| MDB[(MongoDB)]
+        MDB <--> API[FastAPI Backend]
+        API <--> UI[React Traceability Dashboard]
+        
+        classDef primary fill:#3b82f6,stroke:#1e40af,color:#fff;
+        classDef secondary fill:#10b981,stroke:#047857,color:#fff;
+        classDef db fill:#f59e0b,stroke:#b45309,color:#fff;
+        classDef external fill:#6b7280,stroke:#374151,color:#fff;
+        
+        class Ingress,A1,SUP,A2,A3,A4,REP,CONS,API primary;
+        class RMQ_WAIT,RMQ_ACT,MDB secondary;
+        class RMQ_DLX db;
+        class DNAC,DNAC_API,SNOW,UI external;
+    </div>
+
+    <hr>
+
+    <h2>Component Breakdown</h2>
+
+    <h3>1. LangGraph Pipeline (The Brain)</h3>
+    <p>The core intelligence of the system is built using LangGraph, utilizing distinct node-based agents to evaluate alerts sequentially.</p>
+    <ul>
+        <li><strong>Agent 1 (Backdated Filter)</strong>: Evaluates the timestamp of the incoming alert. If the alert is significantly older than the current time, it is flagged as <code>backdated</code> and immediately bypassed/suppressed.</li>
+        <li><strong>Agent 2 (ML Classifier)</strong>: Uses Machine Learning algorithms to analyze the alert payload and categorizes it as either <code>Auto resolving</code> or <code>Non-Auto Resolving</code>.</li>
+        <li><strong>Agent 3 (DLX Scheduler)</strong>: Intercepts <code>Auto resolving</code> alerts and pushes their entire payload into a RabbitMQ Dead-Letter Exchange (DLX) delay queue. It effectively pauses the lifecycle of the alert for 15 minutes.</li>
+        <li><strong>Agent 4 (ServiceNow Orchestrator)</strong>: Intercepts <code>Non-Auto Resolving</code> alerts. It dynamically queries ServiceNow to append comments to active incidents, re-open recently closed incidents, or create net-new incidents.</li>
+        <li><strong>Reporter Node</strong>: The terminal node that collects the execution traces of all previous agents and persists the final state payload.</li>
+    </ul>
+
+    <h3>2. Event-Driven Delay Mechanism (RabbitMQ)</h3>
+    <p>To gracefully handle "Auto resolving" alerts without locking up compute threads, the system utilizes a RabbitMQ DLX architecture.</p>
+    <ul>
+        <li><strong>Wait Queue (wait.q)</strong>: Configured with a strict 15-minute Time-To-Live. No consumers listen to this queue.</li>
+        <li><strong>Dead-Letter Exchange (dnac.exchange)</strong>: When the 15-minute timer expires, RabbitMQ evicts the message and routes it through this exchange.</li>
+        <li><strong>Consumer Daemon</strong>: A standalone Python process that listens to the active queue. When a delayed message arrives, it verifies the current alert status with DNAC. If still active, it explicitly triggers <strong>Agent 4</strong> to escalate it to an incident.</li>
+    </ul>
+
+    <h3>3. Traceability & Persistence Layer</h3>
+    <ul>
+        <li><strong>MongoDB</strong>: The <code>Reporter</code> node seamlessly upserts every completed alert lifecycle into a NoSQL document database.</li>
+        <li><strong>FastAPI Bridge</strong>: A lightweight, asynchronous REST API exposes the MongoDB data to the frontend, incorporating a real-time bulk-fetch integration with ServiceNow to display live incident states.</li>
+        <li><strong>React Dashboard</strong>: A visually stunning Vite/React SPA utilizing Glassmorphism design and Recharts. It polls the FastAPI bridge every 15 seconds to provide engineers with real-time volumetrics, historical trends, and an interactive traceability matrix for every alert.</li>
+    </ul>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>False Alert Suppression: User Manual</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
+    <style>
+        body {
+            box-sizing: border-box;
+            min-width: 200px;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 45px;
+            background-color: #0d1117;
+        }
+        .markdown-body {
+            box-sizing: border-box;
+            min-width: 200px;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 45px;
+        }
+        .alert-tip {
+            padding: 16px;
+            background-color: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid #3b82f6;
+            margin-bottom: 16px;
+            border-radius: 4px;
+        }
+        pre { background: #161b22; padding: 16px; border-radius: 6px; }
+        code { font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace; }
+    </style>
+</head>
+<body class="markdown-body">
+    <h1>False Alert Suppression: User Manual</h1>
+    <p>Welcome to the False Alert Suppression system. This manual provides Operations Teams, Engineers, and Analysts with instructions on how to access, monitor, and interact with the various components of the platform.</p>
+
+    <hr>
+
+    <h2>1. The Traceability Dashboard (Frontend UI)</h2>
+    <p>The React Dashboard is your primary lens into the health and status of all networking alerts in the ecosystem.</p>
+    
+    <h3>Accessing the Dashboard</h3>
+    <ul>
+        <li><strong>Local URL:</strong> <a href="http://localhost:3000" target="_blank">http://localhost:3000</a> (or your server's IP).</li>
+    </ul>
+
+    <h3>Navigating the UI</h3>
+    <ul>
+        <li><strong>KPI Hero Cards:</strong> At the top of the dashboard, you will see three glowing cards: Backdated, Auto-Resolving, and Non-Auto Resolving. These display the total lifetime volume of alerts in each category.</li>
+        <li><strong>Interactive Filtering:</strong> The KPI cards are clickable! Click on "Auto-Resolving" to instantly filter the data table and charts to show only alerts that were successfully suppressed. Click it again (or refresh) to clear the filter.</li>
+        <li><strong>Traceability Matrix:</strong> The large data table at the bottom shows individual alert details. The <strong>ServiceNow Status</strong> column is fetched in real-time. If it says <code>Pending / Delayed Queue</code>, that means the 15-minute wait timer hasn't expired yet!</li>
+    </ul>
+
+    <hr>
+
+    <h2>2. The Data API (FastAPI Backend)</h2>
+    <p>The backend serves the MongoDB data and enriches it with real-time ServiceNow data. Because it is built on FastAPI, it automatically generates interactive API documentation for developers.</p>
+
+    <h3>Accessing the API Docs</h3>
+    <ul>
+        <li><strong>Interactive Swagger UI:</strong> <a href="http://localhost:8000/docs" target="_blank">http://localhost:8000/docs</a></li>
+        <li><strong>Alternative ReDoc UI:</strong> <a href="http://localhost:8000/redoc" target="_blank">http://localhost:8000/redoc</a></li>
+    </ul>
+
+    <div class="alert-tip">
+        <strong>Tip:</strong> You can navigate to <code>/docs</code> in your browser to interactively test the API endpoints without writing any code!
+    </div>
+
+    <h3>Available Endpoints</h3>
+    <ul>
+        <li><code>GET /api/alerts</code>: Returns a JSON array of all processed alerts. The backend automatically queries ServiceNow on-the-fly, so the JSON payload will include a <code>live_snow_status</code> attribute for each incident.</li>
+    </ul>
+
+    <hr>
+
+    <h2>3. Monitoring the RabbitMQ Message Broker</h2>
+    <p>If you suspect alerts are not progressing, or you want to see exactly how many alerts are currently paused in the "15-minute delay" window, you should check RabbitMQ.</p>
+
+    <h3>Accessing the Management UI</h3>
+    <ul>
+        <li><strong>Local URL:</strong> <a href="http://localhost:15672" target="_blank">http://localhost:15672</a></li>
+        <li><strong>Default Credentials:</strong> Usually <code>guest</code> / <code>guest</code> (or check your <code>.env</code> file).</li>
+    </ul>
+
+    <h3>What to look for:</h3>
+    <ul>
+        <li>Navigate to the <strong>Queues</strong> tab.</li>
+        <li>Look at <code>dnac.alerts.wait.q</code>. The "Ready" column tells you exactly how many alerts are currently waiting for their 15-minute timer to expire.</li>
+        <li>Look at <code>dnac.alerts.delayed.q</code>. This should generally be <code>0</code>. If messages are backing up here, it means the Python Consumer Daemon is offline or crashed.</li>
+    </ul>
+
+    <hr>
+
+    <h2>4. Monitoring the Background Daemons</h2>
+    <p>The backend Python scripts run silently. To troubleshoot or view execution traces, you must inspect their console logs.</p>
+
+    <h3>The Consumer Daemon</h3>
+    <p>The consumer orchestrates the final DNAC re-check and ServiceNow escalations. If it runs via a terminal, simply look at the stdout logs. It will clearly state:</p>
+    <pre><code>[INFO] Checking DNAC status for device UK-LON-SW01...
+[WARNING] Alert is STILL ACTIVE in DNAC after 15 minutes! Forcing Non-Auto Resolving escalation.
+[INFO] Agent 4: Found active incident INC00123. Appending comment.</code></pre>
+
+    <h3>The Ingestion Pipeline (LangGraph)</h3>
+    <p>Every time an alert is ingested via <code>run.py</code>, LangGraph outputs a trace of its path (e.g., <code>Agent 1 -> Supervisor -> Agent 2</code>) and writes a <code>status.json</code> file to the root directory for immediate local inspection.</p>
+
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>False Alert Suppression: Technical Specification</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
+    <style>
+        body {
+            box-sizing: border-box;
+            min-width: 200px;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 45px;
+            background-color: #0d1117;
+        }
+        .markdown-body {
+            box-sizing: border-box;
+            min-width: 200px;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 45px;
+        }
+        pre { background: #161b22; padding: 16px; border-radius: 6px; }
+        code { font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px; }
+        th, td { border: 1px solid #30363d; padding: 8px 12px; text-align: left; }
+        th { background-color: #21262d; }
+    </style>
+</head>
+<body class="markdown-body">
+    <h1>False Alert Suppression: Technical Specification Document</h1>
+    
+    <h2>1. Introduction & Overview</h2>
+    <p>The False Alert Suppression system is an intelligent, event-driven orchestration pipeline designed to ingest networking alerts from Cisco DNAC, evaluate their validity using Machine Learning and historical heuristics, and conditionally escalate them to ServiceNow.</p>
+    <p>By implementing an intelligent "delay and re-check" loop via RabbitMQ, the system eliminates transient/flapping alerts, drastically reducing manual engineering overhead and MTTR (Mean Time to Resolution).</p>
+
+    <hr>
+
+    <h2>2. System Components</h2>
+
+    <h3>2.1 LangGraph Orchestration Engine</h3>
+    <p>The core pipeline uses <strong>LangGraph</strong> to maintain a strictly typed <code>GraphState</code> dictionary, routing alerts sequentially through specialized agents.</p>
+    <ul>
+        <li><strong>Agent 1 (Backdated Filter)</strong>: Analyzes the <code>timestamp</code> attribute of the alert. If the event occurred significantly in the past (e.g., > 1 hour ago), the alert is flagged as <code>is_backdated=True</code> and gracefully suppressed.</li>
+        <li><strong>Agent 2 (ML Classifier)</strong>: Feeds the alert payload into a Large Language Model (configured via OpenAI API) utilizing a highly specific prompt template to classify the alert into two distinct categories: <code>Auto resolving</code> or <code>Non-Auto Resolving</code>.</li>
+        <li><strong>Agent 3 (DLX Scheduler)</strong>: Conditionally triggers only for <code>Auto resolving</code> alerts. It utilizes the <code>pika</code> library to serialize the alert state and push it to a Dead-Letter Exchange delay queue.</li>
+        <li><strong>Agent 4 (ServiceNow Orchestrator)</strong>: Conditionally triggers only for <code>Non-Auto Resolving</code> alerts. It interfaces with the <code>ServiceNowClient</code> tool to execute stateful updates against the SNOW API.</li>
+    </ul>
+
+    <h3>2.2 Event-Driven Delay Mechanism (RabbitMQ)</h3>
+    <p>To avoid blocking compute threads during the "wait" period, the system relies on native RabbitMQ features:</p>
+    <ul>
+        <li><strong>Message TTL</strong>: Messages published to <code>dnac.alerts.wait.q</code> are configured with a <code>x-message-ttl: 900000</code> (15 minutes).</li>
+        <li><strong>Dead-Letter Routing</strong>: Upon TTL expiration, RabbitMQ natively forwards the message to <code>dnac.exchange</code> using the <code>x-dead-letter-routing-key</code>, placing it into the active consumer queue.</li>
+    </ul>
+
+    <h3>2.3 Consumer Daemon & DNAC Re-Check</h3>
+    <p>The <code>consumer-delay-queue.py</code> script is a continuously running background process utilizing a blocking AMQP connection. When a delayed alert expires and hits the active queue:</p>
+    <ol>
+        <li>The consumer invokes the <code>check_dnac_status()</code> function to query the DNAC REST API.</li>
+        <li>If DNAC reports the alert as resolved, the consumer <code>ACK</code>s the message, and the lifecycle terminates.</li>
+        <li>If the alert remains active, the consumer dynamically injects the alert into Agent 4 by mocking the <code>GraphState</code>, forcefully overriding the ML prediction to <code>Non-Auto Resolving</code>.</li>
+    </ol>
+
+    <h3>2.4 Persistence & Traceability Layer</h3>
+    <ul>
+        <li><strong>MongoDB</strong>: A NoSQL database initialized via <code>MongoDBClient</code>. The pipeline utilizes <code>update_one(upsert=True)</code> keyed on <code>event_id</code> to track the alert lifecycle across multiple asynchronous runs.</li>
+        <li><strong>FastAPI Bridge</strong>: A Python web server providing the <code>GET /api/alerts</code> endpoint. During API execution, it extracts all unique ServiceNow Incident IDs from the MongoDB dataset and executes a bulk-fetch query (<code>sysparm_query=numberIN...</code>) against ServiceNow to map live incident states in real-time.</li>
+        <li><strong>React Dashboard</strong>: A Vite SPA utilizing standard React hooks, Recharts, and Lucide icons. It polls the FastAPI bridge on a 15-second interval (<code>setInterval</code>) to render highly responsive DOM updates and analytical visualizations.</li>
+    </ul>
+
+    <hr>
+
+    <h2>3. Data Schemas</h2>
+
+    <h3>3.1 Incoming Alert Payload Structure (Expected JSON)</h3>
+    <pre><code>{
+  "event_id": "string (UUID)",
+  "device_name": "string",
+  "device_id": "string",
+  "issue_name": "string",
+  "severity": "integer",
+  "timestamp": "ISO 8601 string",
+  "facility": "string"
+}</code></pre>
+
+    <h3>3.2 MongoDB <code>alert_results</code> Document Schema</h3>
+    <pre><code>{
+  "alert_id": "string (Matches event_id)",
+  "results": {
+    "agent_1": { "data": { "is_backdated": boolean } },
+    "agent_2": { "data": { "predicted_category": "string" } },
+    "agent_3": { "data": { "queue_status": "string" } },
+    "agent_4": { 
+      "data": { 
+        "action": "string (e.g., incident_created, incident_reopened)",
+        "incident": "string (INC number)"
+      }
+    }
+  },
+  "alert_details": { /* Original Payload */ },
+  "runtime_error": null
+}</code></pre>
+
+    <hr>
+
+    <h2>4. External Integrations (APIs)</h2>
+    
+    <h3>4.1 ServiceNow Integrations</h3>
+    <p>All SNOW interactions utilize Basic HTTP Authentication against the standard Table API.</p>
+    <table>
+        <tr><th>Action</th><th>Endpoint</th><th>Method</th><th>Parameters/Query</th></tr>
+        <tr>
+            <td>Find Active Incident</td>
+            <td><code>/api/now/table/incident</code></td>
+            <td>GET</td>
+            <td><code>sysparm_query=cmdb_ci=Network^active=true^short_descriptionLIKE{device_name}...</code></td>
+        </tr>
+        <tr>
+            <td>Create New Incident</td>
+            <td><code>/api/now/table/incident</code></td>
+            <td>POST</td>
+            <td><code>sysparm_input_display_value=true</code></td>
+        </tr>
+        <tr>
+            <td>Bulk Fetch Statuses</td>
+            <td><code>/api/now/table/incident</code></td>
+            <td>GET</td>
+            <td><code>sysparm_query=numberININC001,INC002</code></td>
+        </tr>
+    </table>
+
+    <hr>
+
+    <h2>5. Security & Error Handling</h2>
+    <ul>
+        <li><strong>Environment Isolation</strong>: All credentials and URIs are strictly decoupled from the codebase using the <code>python-dotenv</code> library. The system will fail fast if critical environment variables are missing.</li>
+        <li><strong>AMQP Fallbacks</strong>: If the consumer fails to trigger ServiceNow (e.g., due to network timeouts), the <code>try/except</code> block catches the exception and explicitly <code>NACK</code>s the message with <code>requeue=False</code>. This prevents the RabbitMQ queue from entering an infinite loop of failures, though a final "Poison Message" queue could be implemented for enhanced observability.</li>
+    </ul>
+</body>
+</html>

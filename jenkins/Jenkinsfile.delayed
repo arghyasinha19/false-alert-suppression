@@ -1,0 +1,69 @@
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'INSTANCE_ID', defaultValue: '', description: 'Alert instance id')
+        string(name: 'EVENT_ID', defaultValue: '', description: 'Alert event id')
+        string(name: 'DEVICE_ID', defaultValue: '', description: 'Network device id')
+        string(name: 'DEVICE_NAME', defaultValue: '', description: 'Network device name')
+        string(name: 'SEVERITY', defaultValue: '', description: 'Alert severity')
+        string(name: 'CATEGORY', defaultValue: '', description: 'Alert category')
+        string(name: 'STATUS', defaultValue: '', description: 'Alert status')
+        string(name: 'RAW_TIMESTAMP', defaultValue: '', description: 'Alert timestamp')
+        string(name: 'CORRELATION_ID', defaultValue: '', description: 'Alert correlation id')
+        string(name: 'SOURCE', defaultValue: '', description: 'Alert source')
+        string(name: 'ISSUE_NAME', defaultValue: '', description: 'Alert issue name')
+        string(name: 'ISSUE_DETAILS', defaultValue: '', description: 'Alert details')
+        string(name: 'DELAYED_ALERT', defaultValue: 'true', description: 'Flag for delayed pipeline')
+    }
+
+    environment {
+        PYTHONUNBUFFERED = '1'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('Setup Environment') {
+            steps {
+                sh '''
+                python3 -m venv venv
+                . venv/bin/activate
+                pip install -r requirements.txt
+                '''
+            }
+        }
+
+        stage('Execute Delayed Alert Verification Workflow') {
+            steps {
+                sh '''
+                . venv/bin/activate
+                python workflow/run_delayed.py \
+                    --instance_id "${params.INSTANCE_ID}" \
+                    --event_id "${params.EVENT_ID}" \
+                    --device_id "${params.DEVICE_ID}" \
+                    --device_name "${params.DEVICE_NAME}" \
+                    --severity "${params.SEVERITY}" \
+                    --category "${params.CATEGORY}" \
+                    --status "${params.STATUS}" \
+                    --raw_timestamp "${params.RAW_TIMESTAMP}" \
+                    --correlation_id "${params.CORRELATION_ID}" \
+                    --source "${params.SOURCE}" \
+                    --issue_name "${params.ISSUE_NAME}" \
+                    --issue_details "${params.ISSUE_DETAILS}" \
+                    --is-delayed
+                '''
+            }
+        }
+    }
+    
+    post {
+        always {
+            archiveArtifacts artifacts: 'status.json, run.log', allowEmptyArchive: true
+        }
+    }
+}

@@ -1,0 +1,41 @@
+dnac:
+  base_url: "https://10.48.200.53"   # Replace with your DNAC IP/Hostname
+  verify_ssl: false
+
+  # Webhook registration settings
+  webhook_registration:
+    enabled: true
+    name: "FalseAlertDetection"
+    description: "Webhook receiver for false alert ML pipeline"
+    receiver_url: "http://10.64.1.189:8000/api/v1/webhook"
+    event_categories: []
+rabbitmq:
+  host: "10.208.130.50"
+  port: 5672
+  vhost: "/noops_automation"
+  queue: "dnac.alerts.q"
+  exchange: "dnac.exchange"
+  delayed:
+    wait_queue: "dnac.alerts.wait.q"
+    target_exchange: "dnac.exchange"
+    target_routing_key: "dnac.alerts.delayed"
+    delay_ms: 900000  # 15 minutes in milliseconds
+
+server:
+  port: 8000
+  host: "0.0.0.0"
+
+classifier:
+  model_path: "models"              # Directory containing the trained model artifacts
+  confidence_threshold: 0.6         # Below this confidence, label as "uncertain"
+  enabled: true                     # Master switch to enable/disable classification
+
+email_notifications:
+  enabled: true
+  smtp_host: "smtp.example.com"
+  smtp_port: 25
+  sender_address: "noreply@example.com"
+  dl_address: "dl-alerts@example.com"
+  notify_on_backdated_suppressed: true
+  notify_on_autoresolve_resolved: true
+  notify_on_genuine_servicenow: true

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>False Alert Suppression: Deployment Guide</title>
+    <!-- GitHub Markdown CSS for beautiful rendering -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
+    <style>
+        body {
+            box-sizing: border-box;
+            min-width: 200px;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 45px;
+            background-color: #0d1117;
+        }
+        .markdown-body {
+            box-sizing: border-box;
+            min-width: 200px;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 45px;
+        }
+        .alert-important {
+            padding: 16px;
+            background-color: rgba(234, 179, 8, 0.1);
+            border-left: 4px solid #eab308;
+            margin-bottom: 16px;
+            border-radius: 4px;
+        }
+        .alert-tip {
+            padding: 16px;
+            background-color: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid #3b82f6;
+            margin-bottom: 16px;
+            border-radius: 4px;
+        }
+        pre { background: #161b22; padding: 16px; border-radius: 6px; }
+        code { font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace; }
+    </style>
+</head>
+<body class="markdown-body">
+    <h1>False Alert Suppression: Detailed Deployment Guide</h1>
+    <p>This document provides a comprehensive, step-by-step guide to deploying the False Alert Suppression pipeline, the background consumer, the API, and the React Traceability Dashboard in a production environment.</p>
+
+    <hr>
+
+    <h2>1. System Prerequisites & Dependencies</h2>
+    <ul>
+        <li><strong>Python 3.10+</strong>: Required for LangGraph, FastAPI, and the Consumer daemon.</li>
+        <li><strong>Node.js (v18+) & NPM</strong>: Required to build and run the React Traceability Dashboard.</li>
+        <li><strong>RabbitMQ Server (v3.10+)</strong>: Required for the Dead-Letter Exchange (DLX) delay queue architecture. Must have the Management Plugin enabled for UI configuration.</li>
+        <li><strong>MongoDB Server (v5.0+)</strong>: Required to persist alert execution payloads and historical states.</li>
+        <li><strong>ServiceNow Instance</strong>: Must have the standard Table REST API enabled with an active service account.</li>
+    </ul>
+
+    <hr>
+
+    <h2>2. Infrastructure Setup</h2>
+
+    <h3>RabbitMQ DLX Configuration</h3>
+    <div class="alert-important">
+        <strong>Important:</strong> Service accounts typically do not have <code>configure</code> permissions. You must manually create the queue structures before starting the Python services.
+    </div>
+    <ol>
+        <li>Log into the RabbitMQ Management UI (typically <code>http://localhost:15672</code>).</li>
+        <li>Navigate to the appropriate Virtual Host (e.g., <code>/noops_automation</code>).</li>
+        <li><strong>Create Exchange</strong>: Go to Exchanges -> Add a new <code>direct</code> exchange named <code>dnac.exchange</code> (Durable).</li>
+        <li><strong>Create Active Queue</strong>: Go to Queues -> Add a queue named <code>dnac.alerts.delayed.q</code> (Durable).</li>
+        <li><strong>Bind Queue</strong>: Click on <code>dnac.alerts.delayed.q</code> -> Bindings -> Bind to <code>dnac.exchange</code> with routing key <code>dnac.alerts.delayed</code>.</li>
+        <li><strong>Create Delay/Wait Queue</strong>: Go to Queues -> Add a queue named <code>dnac.alerts.wait.q</code> (Durable). Expand arguments and add:
+            <ul>
+                <li><code>x-dead-letter-exchange</code> = <code>dnac.exchange</code></li>
+                <li><code>x-dead-letter-routing-key</code> = <code>dnac.alerts.delayed</code></li>
+                <li><code>x-message-ttl</code> = <code>900000</code> (15 minutes in milliseconds)</li>
+            </ul>
+        </li>
+    </ol>
+
+    <hr>
+
+    <h2>3. Application Installation</h2>
+
+    <h3>A. Python Backend Environment</h3>
+    <pre><code># 1. Navigate to the project root
+cd /path/to/false-alert-suppression
+
+# 2. Create and activate a virtual environment
+python -m venv venv
+# On Windows: venv\Scripts\activate
+# On Linux: source venv/bin/activate
+
+# 3. Install required Python packages
+pip install langgraph pika requests python-dotenv pyyaml pymongo fastapi uvicorn
+</code></pre>
+
+    <h3>B. React Dashboard Environment</h3>
+    <pre><code># 1. Navigate to the dashboard directory
+cd dashboard
+
+# 2. Install NPM dependencies
+npm install
+</code></pre>
+
+    <hr>
+
+    <h2>4. Credentials & Configuration (<code>.env</code>)</h2>
+    <p>Create a file named <code>.env</code> in the root directory (<code>false-alert-suppression/.env</code>) and populate it with the following required credentials. Do <strong>NOT</strong> commit this file to version control.</p>
+
+    <pre><code># ==========================================
+# 1. LangGraph & ML
+# ==========================================
+OPENAI_API_KEY=sk-your-openai-api-key-here
+
+# ==========================================
+# 2. RabbitMQ Connection
+# ==========================================
+RABBITMQ_USERNAME=svc_rabbitmq_noops_consumer
+RABBITMQ_PASSWORD=your_secure_rmq_password
+
+# ==========================================
+# 3. ServiceNow Integrations
+# ==========================================
+SNOW_INSTANCE_URL=https://dev12345.service-now.com
+SNOW_USERNAME=svc_snow_automation
+SNOW_PASSWORD=your_secure_snow_password
+
+# ==========================================
+# 4. MongoDB Database
+# ==========================================
+MONGO_URI=mongodb://localhost:27017
+MONGO_DB_NAME=false_alert_suppression
+
+# ==========================================
+# 5. Cisco DNAC
+# ==========================================
+DNAC_USERNAME=svc_dnac_reader
+DNAC_PASSWORD=your_secure_dnac_password
+</code></pre>
+
+    <div class="alert-tip">
+        <strong>Tip:</strong> Ensure your <code>config.yaml</code> in the root directory correctly maps the RabbitMQ host and DNAC base URL.
+    </div>
+
+    <hr>
+
+    <h2>5. Running the System (Execution Guide)</h2>
+    <p>To run the complete system, you must start four separate processes (typically via <code>systemd</code>, <code>pm2</code>, or Docker containers in production).</p>
+
+    <h3>Process 1: The FastAPI Backend Bridge</h3>
+    <p>This serves MongoDB and live ServiceNow data to the React Dashboard.</p>
+    <pre><code>cd /path/to/false-alert-suppression
+source venv/bin/activate
+uvicorn dashboard.api:app --host 0.0.0.0 --port 8000
+</code></pre>
+
+    <h3>Process 2: The Delayed Queue Consumer</h3>
+    <p>This daemon runs infinitely, listening for expired alerts from RabbitMQ and orchestrating the ServiceNow escalation.</p>
+    <pre><code>cd /path/to/false-alert-suppression
+source venv/bin/activate
+python consumer/consumer-delay-queue.py
+</code></pre>
+
+    <h3>Process 3: The React Traceability Dashboard</h3>
+    <p>This provides the UI for engineers.</p>
+    <pre><code>cd /path/to/false-alert-suppression/dashboard
+npm run build
+npm run preview -- --host 0.0.0.0 --port 3000
+# (Or serve the /dist folder via Nginx/Apache in production)
+</code></pre>
+
+    <h3>Process 4: Alert Ingestion (The Producer)</h3>
+    <p>When DNAC triggers an alert webhook, execute the LangGraph pipeline.</p>
+    <pre><code>cd /path/to/false-alert-suppression
+source venv/bin/activate
+python workflow/run.py
+</code></pre>
+
+</body>
+</html>
