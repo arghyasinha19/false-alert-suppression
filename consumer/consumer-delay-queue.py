@@ -21,43 +21,27 @@ logger = configure_logging()
 logger = logging.getLogger("DelayedQueueConsumer")
 
 def load_config():
-    config_path = os.path.join(os.path.dirname(__file__), "config.yaml")
+    config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "config.yaml")
     with open(config_path, "r") as f:
         return yaml.safe_load(f)
 
-def check_dnac_status(device_id: str, event_id: str) -> bool:
-    """
-    Check DNAC to see if the alert is still active.
-    Returns True if still active, False if resolved.
-    """
-    # TODO: Implement the actual DNAC API check here.
-    # We need the correct endpoint (e.g., /dna/intent/api/v1/issues) to query the issue status.
-    # For now, we assume it's still active to trigger the ServiceNow escalation.
-    logger.info(f"Checking DNAC status for device {device_id} and event {event_id}...")
-    return True
+
 
 def process_delayed_alert(payload: dict):
     """
     Process the delayed alert:
-    1. Check DNAC to see if it's still active.
-    2. If active, force 'Non-Auto Resolving' and trigger ServiceNow Agent 4.
+    Forward the payload directly to the Delayed Jenkins Pipeline.
+    The DNAC check and Agent 4 execution are handled inside the Jenkins job (run_delayed.py).
     """
-    device_id = payload.get("device_id")
-    event_id = payload.get("event_id")
+    logger.info("Received delayed alert from wait queue. Forwarding to Delayed Jenkins Pipeline...")
     
-    is_active = check_dnac_status(device_id, event_id)
-    
-    if not is_active:
-        logger.info("Alert is resolved in DNAC. No further action needed (Auto-resolved successfully).")
-        return True
-        
-    logger.warning("Alert is STILL ACTIVE in DNAC after 15 minutes! Forcing Non-Auto Resolving escalation.")
-    
-    # Spin up Jenkins job to run the agentic workflow
+    # Spin up Jenkins job to run the delayed workflow
     jenkins_base_url = os.getenv("JENKINS_URL")
     jenkins_username = os.getenv("JENKINS_USERNAME")
     jenkins_api_token = os.getenv("JENKINS_TOKEN")
-    jenkins_job_path = os.getenv("JENKINS_JOB_PATH")
+    
+    # Use the specific delayed job path, fallback to main if missing
+    jenkins_job_path = os.getenv("JENKINS_DELAYED_JOB_PATH") or os.getenv("JENKINS_JOB_PATH")
     
     from helpers.jenkins_helpers import JenkinsConfig, JenkinsHelper, map_dnac_to_jenkins_params
     from noops_dnac_consumer import normalize_json_payload
@@ -85,11 +69,11 @@ def process_delayed_alert(payload: dict):
         )
         
         if trigger_result.get("queue_url"):
-            logger.info(f"Jenkins job triggered successfully: {trigger_result['queue_url']}")
+            logger.info(f"Delayed Jenkins job triggered successfully: {trigger_result['queue_url']}")
             return True
             
     except Exception as e:
-        logger.error(f"Failed to execute Jenkins Job: {e}", exc_info=True)
+        logger.error(f"Failed to execute Delayed Jenkins Job: {e}", exc_info=True)
         return False
 
 def callback(ch, method, properties, body):
