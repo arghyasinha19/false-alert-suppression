@@ -28,34 +28,39 @@ pipeline {
             }
         }
         
-        stage('Setup Environment') {
-            steps {
-                sh '''
-                python3 -m venv venv
-                . venv/bin/activate
-                pip install -r requirements.txt
-                '''
-            }
-        }
-
         stage('Execute Delayed Alert Verification Workflow') {
             steps {
                 sh '''
-                . venv/bin/activate
-                python workflow/run_delayed.py \
-                    --instance_id "${params.INSTANCE_ID}" \
-                    --event_id "${params.EVENT_ID}" \
-                    --device_id "${params.DEVICE_ID}" \
-                    --device_name "${params.DEVICE_NAME}" \
-                    --severity "${params.SEVERITY}" \
-                    --category "${params.CATEGORY}" \
-                    --status "${params.STATUS}" \
-                    --raw_timestamp "${params.RAW_TIMESTAMP}" \
-                    --correlation_id "${params.CORRELATION_ID}" \
-                    --source "${params.SOURCE}" \
-                    --issue_name "${params.ISSUE_NAME}" \
-                    --issue_details "${params.ISSUE_DETAILS}" \
-                    --is-delayed
+                # Call the FastAPI server
+                curl -s -X POST "http://127.0.0.1:8001/api/v1/invoke/delayed" \\
+                     -H "Content-Type: application/json" \\
+                     -d "{
+                           \\"instance_id\\": \\"${params.INSTANCE_ID}\\",
+                           \\"event_id\\": \\"${params.EVENT_ID}\\",
+                           \\"device_id\\": \\"${params.DEVICE_ID}\\",
+                           \\"device_name\\": \\"${params.DEVICE_NAME}\\",
+                           \\"severity\\": \\"${params.SEVERITY}\\",
+                           \\"category\\": \\"${params.CATEGORY}\\",
+                           \\"status\\": \\"${params.STATUS}\\",
+                           \\"raw_timestamp\\": \\"${params.RAW_TIMESTAMP}\\",
+                           \\"correlation_id\\": \\"${params.CORRELATION_ID}\\",
+                           \\"source\\": \\"${params.SOURCE}\\",
+                           \\"issue_name\\": \\"${params.ISSUE_NAME}\\",
+                           \\"issue_details\\": \\"${params.ISSUE_DETAILS}\\"
+                         }" > status.json
+                         
+                # Parse exit code based on overall_status
+                python3 -c "
+import sys, json
+try:
+    with open('status.json') as f:
+        data = json.load(f)
+    s = data.get('overall_status', 'unknown')
+    codes = {'success': 0, 'partial_failure': 2, 'failed': 1, 'unknown': 1, 'config_error': 3}
+    sys.exit(codes.get(s, 1))
+except Exception:
+    sys.exit(1)
+"
                 '''
             }
         }
