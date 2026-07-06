@@ -24,8 +24,13 @@ def safe_node(agent_name: str, fn: Callable[[GraphState], Any]) -> Callable[[Gra
         try:
             out = fn(state)
             
-            # Normalize outputs: if tool-like dict with ok/data/error exists, use it.
-            if isinstance(out, dict) and "ok" in out:
+            if out is state:
+                state["results"][agent_name].update({
+                    "status": "success",
+                    "ok": True,
+                    "ended_at": _now(),
+                })
+            elif isinstance(out, dict) and "ok" in out:
                 ok = bool(out.get("ok"))
                 state["results"][agent_name].update({
                     "status": "success" if ok else "failed",
@@ -39,7 +44,7 @@ def safe_node(agent_name: str, fn: Callable[[GraphState], Any]) -> Callable[[Gra
                     "status": "success",
                     "ok": True,
                     "data": out,
-                    "remarks": out.get("remarks"),
+                    "remarks": out.get("remarks") if isinstance(out, dict) else None,
                     "ended_at": _now(),
                 })
                 

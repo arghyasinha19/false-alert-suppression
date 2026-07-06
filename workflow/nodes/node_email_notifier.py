@@ -8,7 +8,7 @@ from workflow.tools.email_client import EmailClient
 
 logger = logging.getLogger(__name__)
 
-def email_notifier(state: GraphState) -> GraphState:
+def email_notifier(state: GraphState) -> Dict[str, Any]:
     """
     Evaluates the GraphState and sends email notifications to the DL if configured
     conditions are met (backdated, auto-resolved, or pushed to SNOW).
@@ -29,7 +29,7 @@ def email_notifier(state: GraphState) -> GraphState:
         
         if not email_config.get("enabled"):
             logger.info(f"[{event_id}] Email notifications disabled globally.")
-            return state
+            return {"ok": True, "data": None, "remarks": "Email notifications disabled globally."}
             
         client = EmailClient(email_config)
         results = state.get("results", {})
@@ -67,7 +67,7 @@ def email_notifier(state: GraphState) -> GraphState:
                 client.send_email(subject, body)
                 logger.info(f"[{event_id}] Sent ServiceNow push email.")
                 
+        return {"ok": True, "data": None, "remarks": "Email notifier completed successfully."}
     except Exception as e:
         logger.error(f"[{event_id}] Failed in Email Notifier node: {e}", exc_info=True)
-        
-    return state
+        return {"ok": False, "data": None, "remarks": f"error: {str(e)}"}
