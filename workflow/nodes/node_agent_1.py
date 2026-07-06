@@ -18,7 +18,7 @@ def agent_1_logic(state: GraphState) -> Dict[str, Any]:
     logger.info(f"[{event_id}] Entering Agent 1. Input payload: {alerts}")
 
     detector = BackdateDetector(
-        threshold_minutes=5,
+        threshold_minutes=1440, # 24 hours (current day)
         allow_future_skew_seconds=60,
         max_reasonable_age_days=30,
         logger=logger

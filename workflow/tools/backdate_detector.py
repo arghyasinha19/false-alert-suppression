@@ -231,20 +231,17 @@ class BackdateDetector:
             
     def _extract_metadata(self, payload: Dict[str, Any]) -> Dict[str, Optional[str]]:
         """
-        Uses your payload keys exactly:
-          - instance_id, event_id, correlation_id
-          - network.device_id
-          - details.device_name
+        Supports both the original nested DNAC payload and the flat snake_case payload used by Jenkins.
         """
         details = payload.get("details") or {}
         network = payload.get("network") or {}
         
         return {
-            "instance_id": payload.get("instanceId"),
-            "event_id": payload.get("eventId"),
-            "correlation_id": payload.get("correlationId"),
-            "device_id": network.get("deviceId"),
-            "device_name": details.get("deviceName"),
+            "instance_id": payload.get("instanceId") or payload.get("instance_id"),
+            "event_id": payload.get("eventId") or payload.get("event_id"),
+            "correlation_id": payload.get("correlationId") or payload.get("correlation_id"),
+            "device_id": network.get("deviceId") or payload.get("device_id"),
+            "device_name": details.get("deviceName") or details.get("Device") or payload.get("device_name"),
         }
         
     def _format_duration(self, ms: int) -> str:
