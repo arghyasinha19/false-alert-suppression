@@ -4,8 +4,12 @@ from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
 from dotenv import load_dotenv
 
+from dotenv import load_dotenv
+
 logger = logging.getLogger(__name__)
-load_dotenv()
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+env_path = os.path.join(project_root, ".env")
+load_dotenv(dotenv_path=env_path)
 
 class MongoDBClient:
     def __init__(self):
