@@ -57,8 +57,8 @@ def email_notifier(state: GraphState) -> Dict[str, Any]:
         # Condition 3: Genuine alerts pushed into ServiceNow
         # Checked via agent_4 action
         agent_4 = results.get("agent_4", {})
-        agent_4_data = agent_4.get("data", {})
-        action = agent_4_data.get("action", "")
+        agent_4_data = agent_4.get("data") or {}
+        action = agent_4_data.get("action", "") if isinstance(agent_4_data, dict) else ""
         if action in ["incident_created", "incident_reopened", "comment_appended"]:
             if email_config.get("notify_on_genuine_servicenow"):
                 incident = agent_4_data.get("incident", "UNKNOWN")

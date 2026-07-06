@@ -46,7 +46,6 @@ def supervisor(state: GraphState) -> GraphState:
             "ok": False,
             "reason": f"dependency_failed_or_not_success: agent_1 ok={a1_ok}"
         })
-        })
         state["next_node"] = "reporter"
         logger.info(f"[{event_id}] Supervisor decided: Route to reporter (Agent 1 failed).")
         return state
@@ -59,7 +58,6 @@ def supervisor(state: GraphState) -> GraphState:
             "status": "skipped",
             "ok": False,
             "reason": "agent1_gate: backdated alert"
-        })
         })
         state["next_node"] = "reporter"
         logger.info(f"[{event_id}] Supervisor decided: Route to reporter (Backdated alert).")
@@ -75,7 +73,6 @@ def supervisor(state: GraphState) -> GraphState:
             "status": "skipped",
             "ok": False,
             "reason": "agent1_gate: Non-CITO"
-        })
         })
         state["next_node"] = "reporter"
         logger.info(f"[{event_id}] Supervisor decided: Route to reporter (Non-CITO).")

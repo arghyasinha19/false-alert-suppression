@@ -1,5 +1,6 @@
 import pika
 import json
+import os
 import logging
 
 logger = logging.getLogger(__name__)
@@ -9,13 +10,17 @@ class RabbitMQBroker:
         self.host = config.get("host", "localhost")
         self.port = config.get("port", 5672)
         self.vhost = config.get("vhost", "/")
+        self.username = config.get("username") or os.getenv("RABBITMQ_USERNAME", "guest")
+        self.password = config.get("password") or os.getenv("RABBITMQ_PASSWORD", "guest")
         self.delayed_config = config.get("delayed", {})
         
     def _get_connection(self):
+        credentials = pika.PlainCredentials(self.username, self.password)
         parameters = pika.ConnectionParameters(
             host=self.host,
             port=self.port,
-            virtual_host=self.vhost
+            virtual_host=self.vhost,
+            credentials=credentials
         )
         return pika.BlockingConnection(parameters)
         
