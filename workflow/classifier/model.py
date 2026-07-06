@@ -49,11 +49,20 @@ class AlertClassifier:
     def load(cls, model_dir: str):
         """
         Load the model from a directory.
-        Looks for ONNX first, then PyTorch.
+        Supports three layouts:
+          1. model.onnx at top level (ONNX Runtime)
+          2. distilbert_model/ subdirectory (full training export)
+          3. model.safetensors or pytorch_model.bin at top level (raw Trainer checkpoint)
         """
         onnx_path = os.path.join(model_dir, "model.onnx")
-        pytorch_dir = os.path.join(model_dir, "distilbert_model")
+        pytorch_subdir = os.path.join(model_dir, "distilbert_model")
         metadata_path = os.path.join(model_dir, "evaluation_report.json")
+        
+        # Check if model_dir itself is a valid HuggingFace model directory
+        has_safetensors = os.path.exists(os.path.join(model_dir, "model.safetensors"))
+        has_pytorch_bin = os.path.exists(os.path.join(model_dir, "pytorch_model.bin"))
+        has_config = os.path.exists(os.path.join(model_dir, "config.json"))
+        is_hf_checkpoint = has_config and (has_safetensors or has_pytorch_bin)
         
         # Load metadata if it exists
         metadata = {}
@@ -66,7 +75,6 @@ class AlertClassifier:
                     metadata = json.load(f)
                     
                 if "label_mapping" in metadata:
-                    # Convert string keys to int (JSON keys are always strings)
                     label_mapping = {int(k): v for k, v in metadata["label_mapping"].items()}
                 
                 if "max_length" in metadata:
@@ -83,7 +91,6 @@ class AlertClassifier:
         if os.path.exists(onnx_path):
             try:
                 import onnxruntime as ort
-                # Use CPU execution provider for broad compatibility
                 providers = ["CPUExecutionProvider"]
                 onnx_session = ort.InferenceSession(onnx_path, providers=providers)
                 logger.info(f"Loaded ONNX model from {onnx_path}")
@@ -97,29 +104,48 @@ class AlertClassifier:
 
         # Fallback to PyTorch
         if onnx_session is None:
-            if not os.path.exists(pytorch_dir):
+            # Determine where the PyTorch model lives
+            if os.path.exists(pytorch_subdir):
+                load_from = pytorch_subdir
+            elif is_hf_checkpoint:
+                load_from = model_dir
+            else:
                 raise FileNotFoundError(
                     f"No model found in {model_dir}.\n"
-                    f"Expected model.onnx or distilbert_model/ directory.\n"
+                    f"Expected model.onnx, distilbert_model/ directory, "
+                    f"or model.safetensors/pytorch_model.bin + config.json.\n"
                     f"Run train_model.py first."
                 )
             
             import torch
             from transformers import DistilBertForSequenceClassification
             
-            pytorch_model = DistilBertForSequenceClassification.from_pretrained(pytorch_dir)
+            pytorch_model = DistilBertForSequenceClassification.from_pretrained(load_from)
             pytorch_model.eval()
 
-            # Move to GPU if available
             device = "cuda" if torch.cuda.is_available() else "cpu"
             pytorch_model.to(device)
 
-            logger.info(f"Loaded PyTorch model from {pytorch_dir} (device: {device})")
+            logger.info(f"Loaded PyTorch model from {load_from} (device: {device})")
         
-        # Load tokenizer - from PyTorch dir (it's saved alongside the model)
-        tokenizer_dir = pytorch_dir if os.path.exists(pytorch_dir) else model_dir
-        tokenizer = AutoTokenizer.from_pretrained(tokenizer_dir)
-        logger.info(f"Loaded tokenizer from {tokenizer_dir}")
+        # Load tokenizer
+        # Priority: pytorch_subdir > model_dir > base pretrained model
+        tokenizer = None
+        for tokenizer_candidate in [pytorch_subdir, model_dir]:
+            if os.path.exists(tokenizer_candidate):
+                try:
+                    tokenizer = AutoTokenizer.from_pretrained(tokenizer_candidate)
+                    logger.info(f"Loaded tokenizer from {tokenizer_candidate}")
+                    break
+                except Exception:
+                    continue
+        
+        if tokenizer is None:
+            # Trainer checkpoints often don't save the tokenizer;
+            # fall back to the base model tokenizer
+            base_model_name = "distilbert-base-uncased"
+            tokenizer = AutoTokenizer.from_pretrained(base_model_name)
+            logger.info(f"Tokenizer not found in checkpoint, loaded base tokenizer: {base_model_name}")
 
         return cls(
             tokenizer=tokenizer,
