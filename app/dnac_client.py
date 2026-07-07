@@ -151,3 +151,39 @@ class DNACClient:
             logger.info("Webhook de-registered successfully.")
         else:
             logger.warning(f"Failed to de-register webhook: {response.status_code} {response.text}")
+
+    # -------------------------------------------------------------------------
+    # Issue / Event Status Checks
+    # -------------------------------------------------------------------------
+    def get_issue_status(self, issue_id: str) -> str:
+        """
+        Fetch the current status of an issue from DNAC.
+        Returns the issue status string (e.g., 'ACTIVE', 'RESOLVED').
+        If the issue is not found (404), it is assumed to be resolved.
+        """
+        if not issue_id:
+            logger.warning("No issue_id provided. Cannot check DNAC status.")
+            return "UNKNOWN"
+            
+        url = f"{self.base_url}/dna/intent/api/v1/issues/{issue_id}"
+        logger.info(f"Checking DNAC issue status for ID: {issue_id} at {url}")
+        
+        response = requests.get(url, headers=self._get_headers(), verify=self.verify_ssl)
+        
+        # In DNAC, an issue that is no longer active may be deleted and return 404
+        if response.status_code == 404:
+            logger.info(f"Issue {issue_id} not found (404). Assuming it is resolved/cleared.")
+            return "RESOLVED"
+            
+        if not response.ok:
+            logger.error(f"Failed to fetch issue status: {response.status_code} - {response.text}")
+            response.raise_for_status()
+            
+        data = response.json()
+        # The structure is usually: { "response": { "issueStatus": "ACTIVE", ... } }
+        # or flat { "issueStatus": "ACTIVE" }
+        resp_obj = data.get("response", data)
+        status = resp_obj.get("issueStatus", "UNKNOWN")
+        
+        logger.info(f"DNAC issue {issue_id} status is: {status}")
+        return status

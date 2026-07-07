@@ -89,15 +89,45 @@ def build_summary(final_state: dict, stage: str, runtime_error: str = None) -> d
         "runtime_error": runtime_error,
     }
 
-def check_dnac_status(device_id: str, event_id: str) -> bool:
+def check_dnac_status(instance_id: str) -> bool:
     """
     Check DNAC to see if the alert is still active.
     Returns True if still active, False if resolved.
     """
-    # TODO: Implement the actual DNAC API check here.
-    # For now, we assume it's still active to trigger the ServiceNow escalation.
-    LOG.info(f"Checking DNAC status for device {device_id} and event {event_id}...")
-    return True
+    if not instance_id:
+        LOG.warning("No instance_id provided. Assuming alert is still active.")
+        return True
+        
+    import yaml
+    try:
+        from app.dnac_client import DNACClient
+    except ImportError:
+        # Fallback if run_delayed.py is called from a different working directory
+        sys.path.insert(0, os.path.dirname(project_root))
+        from app.dnac_client import DNACClient
+    
+    # Load config.yaml
+    config_path = os.path.join(project_root, "config.yaml")
+    try:
+        with open(config_path, "r") as f:
+            config = yaml.safe_load(f)
+    except Exception as e:
+        LOG.error(f"Failed to load config.yaml for DNAC check: {e}")
+        return True
+        
+    try:
+        dnac_config = config.get("dnac", {})
+        client = DNACClient(dnac_config)
+        status = client.get_issue_status(instance_id)
+        
+        # If the status is RESOLVED, it's no longer active.
+        if status.upper() in ["RESOLVED", "IGNORED", "CLEARED"]:
+            return False
+            
+        return True
+    except Exception as e:
+        LOG.error(f"DNAC status check failed: {e}. Assuming active to be safe.")
+        return True
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run Delayed Incident Triage flow")
@@ -153,7 +183,7 @@ def main() -> int:
     final_state = None
     try:
         with redirect_all_output(args.run_log):
-            is_active = check_dnac_status(args.device_id, args.event_id)
+            is_active = check_dnac_status(args.instance_id)
             if is_active:
                 # Force escalation by faking agent 2 prediction
                 LOG.warning(f"Alert {args.event_id} STILL ACTIVE. Forcing escalation.")
