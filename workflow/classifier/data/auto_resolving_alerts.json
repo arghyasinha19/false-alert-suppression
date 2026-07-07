@@ -1,0 +1,42 @@
+[
+  {
+    "description": "1 AP(s) are disconnected from Wireless Controller that are physically connected to Switch 'at-vie-core01.dyson.global.corp'.",
+    "category": "Auto Resolving"
+  },
+  {
+    "description": "3 AP(s) are disconnected from Wireless Controller that are physically connected to Switch 'Unknown'.",
+    "category": "Auto Resolving"
+  },
+  {
+    "description": "ThousandEyes Alert triggered for [underlay] - UK Hub Primary to at-vie-rtr01 213.208.30.126",
+    "category": "Auto Resolving"
+  },
+  {
+    "description": "ThousandEyes Alert triggered for [underlay] STC_To_au-par-rtr01_124.158.16.251",
+    "category": "Auto Resolving"
+  },
+  {
+    "description": "2 AP(s) are disconnected from Wireless Controller that are physically connected to Switch 'uk-bri-02-a-as01.dyson.global.corp'.",
+    "category": "Auto Resolving"
+  },
+  {
+    "description": "5 AP(s) are disconnected from Wireless Controller that are physically connected to Switch 'PH-BAT-PTC-C-L3S8-AS01.dyson.global.corp'.",
+    "category": "Auto Resolving"
+  },
+  {
+    "description": "4 AP(s) are disconnected from Wireless Controller that are physically connected to Switch 'PH-BAT-PTC-C-L3S7-AS01.dyson.global.corp'.",
+    "category": "Auto Resolving"
+  },
+  {
+    "description": "ThousandEyes Alert triggered for [underlay] branch_to_uk-mal-rtr01_biz-int",
+    "category": "Auto Resolving"
+  },
+  {
+    "description": "ThousandEyes Alert triggered for [underlay] branch_to_sg-dop-rtr01_biz-int",
+    "category": "Auto Resolving"
+  },
+  {
+    "description": "1 AP(s) are disconnected from Wireless Controller that are physically connected to Switch 'PH-PAM-AS01.dyson.global.corp'.",
+    "category": "Auto Resolving"
+  }
+]

@@ -1,0 +1,42 @@
+[
+  {
+    "description": "This network device at-vie-core01.dyson.global.corp is unreachable from Cisco Catalyst Center. The device role is BORDER:DEFAULT:WLC:EDGE:MAP-SERVER.",
+    "category": "Non-Auto Resolving"
+  },
+  {
+    "description": "This network device at-vie-rtr02 is unreachable from Cisco Catalyst Center. The device role is BORDER ROUTER.",
+    "category": "Non-Auto Resolving"
+  },
+  {
+    "description": "This network device at-vie-rtr01 is unreachable from Cisco Catalyst Center. The device role is BORDER ROUTER.",
+    "category": "Non-Auto Resolving"
+  },
+  {
+    "description": "There is a Power Supply's Failure in Network Device PH-PAM-AS04.dyson.global.corp.",
+    "category": "Non-Auto Resolving"
+  },
+  {
+    "description": "There is a Power Supply's Failure in Network Device SG-SAM-B20-AS01-1.dyson.global.corp.",
+    "category": "Non-Auto Resolving"
+  },
+  {
+    "description": "This network device UK-Hul-h86-EX14.dyson.global.corp is unreachable from Cisco Catalyst Center. The device role is EXTENDED-NODE.",
+    "category": "Non-Auto Resolving"
+  },
+  {
+    "description": "This network device UK-Hul-h86-EX10.dyson.global.corp is unreachable from Cisco Catalyst Center. The device role is EXTENDED-NODE.",
+    "category": "Non-Auto Resolving"
+  },
+  {
+    "description": "This network device UK-Hul-h181-EX17.dyson.global.corp is unreachable from Cisco Catalyst Center. The device role is EXTENDED-NODE.",
+    "category": "Non-Auto Resolving"
+  },
+  {
+    "description": "This network device au-per-rtr01 is unreachable from Cisco Catalyst Center. The device role is BORDER ROUTER.",
+    "category": "Non-Auto Resolving"
+  },
+  {
+    "description": "This network device au-per-core01.dyson.global.corp is unreachable from Cisco Catalyst Center. The device role is WLC:MAP-SERVER:EDGE:BORDER:DEFAULT.",
+    "category": "Non-Auto Resolving"
+  }
+]
