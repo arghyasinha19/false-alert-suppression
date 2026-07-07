@@ -16,16 +16,28 @@ def train_and_save(csv_path: str, model_out_path: str):
     texts = []
     labels = []
     
-    with open(csv_path, "r", encoding="utf-8") as f:
+    with open(csv_path, "r", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
+        
+        # Get actual field names and create a lowercase mapping
+        field_map = {str(k).strip().lower(): k for k in reader.fieldnames if k}
+        
+        desc_key = field_map.get("description")
+        cat_key = field_map.get("category")
+        
+        if not desc_key or not cat_key:
+            raise ValueError(f"Could not find 'description' or 'category' columns. Found columns: {reader.fieldnames}")
+            
         for row in reader:
-            desc = row.get("description", "")
-            cat = row.get("category", "")
+            desc = row.get(desc_key, "")
+            cat = row.get(cat_key, "")
             if desc and cat:
-                # Clean text is normally handled in predict_batch, but we must do it for training
                 texts.append(clean_text(desc))
                 labels.append(label_to_id(cat))
                 
+    if not texts:
+        raise ValueError("No valid training samples found! Check if the CSV has populated 'description' and 'category' rows.")
+        
     logger.info(f"Loaded {len(texts)} samples.")
     
     # Build pipeline
