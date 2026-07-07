@@ -49,12 +49,10 @@ def clean_text(text: str) -> str:
     Steps:
     1. Unescape HTML entities
     2. Remove HTML tags
-    3. Collapse whitespace (newlines, tabs, multiple spaces)
-    4. Strip leading/trailing whitespace
-    5. Lowercase
-
-    DistilBERT's tokenizer handles sub-word tokenization, so we keep
-    punctuation and digits intact - they carry signal for alert classification.
+    3. Mask IPs, MACs, Hostnames, and Numbers
+    4. Collapse whitespace (newlines, tabs, multiple spaces)
+    5. Strip leading/trailing whitespace
+    6. Lowercase
     """
     if not isinstance(text, str):
         return ""
@@ -65,8 +63,23 @@ def clean_text(text: str) -> str:
     # Remove any HTML tags
     text = re.sub(r"<[^>]+>", " ", text)
 
+    # Mask IP Addresses
+    text = re.sub(r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b", "[IP]", text)
+    
+    # Mask MAC Addresses
+    text = re.sub(r"\b(?:[0-9A-Fa-f]{2}[:-]){5}(?:[0-9A-Fa-f]{2})\b", "[MAC]", text)
+
+    # Mask specific known hostnames / domains (anything ending in .corp, .com, etc.)
+    text = re.sub(r"\b[A-Za-z0-9\-]+\.[A-Za-z0-9\-\.]+\.corp\b", "[HOSTNAME]", text)
+    text = re.sub(r"\b[A-Za-z0-9\-]+\.[A-Za-z0-9\-\.]+\.com\b", "[HOSTNAME]", text)
+    # Also mask device names that look like switch/router names e.g. at-vie-core01
+    text = re.sub(r"\b[a-z]{2,3}-[a-z]{2,3}-[a-z0-9\-]+\b", "[DEVICE]", text, flags=re.IGNORECASE)
+
     # Replace common separator patterns with spaces
     text = re.sub(r"[_|]+", " ", text)
+
+    # Mask Numbers
+    text = re.sub(r"\b\d+\b", "[NUM]", text)
 
     # Collapse all whitespace (tabs, newlines, multiple spaces) into single space
     text = re.sub(r"\s+", " ", text)

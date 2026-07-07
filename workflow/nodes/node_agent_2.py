@@ -11,45 +11,55 @@ class MockClassifier:
     def predict(self, text):
         return {"category": "Auto resolving", "confidence": 0.92, "label_id": 1}
 
-# Module-level classifier singleton
-_classifier = None
-_classifier_load_attempted = False
+# Module-level classifier singletons
+_ml_classifier = None
+_dl_classifier = None
+_classifiers_load_attempted = False
 
-def _get_classifier():
-    global _classifier, _classifier_load_attempted
+def _get_classifiers():
+    global _ml_classifier, _dl_classifier, _classifiers_load_attempted
     
-    if _classifier is not None:
-        return _classifier
+    if _classifiers_load_attempted:
+        return _ml_classifier, _dl_classifier
         
-    if _classifier_load_attempted:
-        return None
-        
-    _classifier_load_attempted = True
+    _classifiers_load_attempted = True
     
+    config_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+        "config.yaml",
+    )
     try:
-        config_path = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-            "config.yaml",
-        )
         with open(config_path, "r") as f:
             config = yaml.safe_load(f)
-            
-        model_path = config.get("classifier", {}).get("model_path", "models")
-        # Ensure model_path is relative to the project root
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-        if not os.path.isabs(model_path):
-            model_path = os.path.join(project_root, model_path)
-        
-        from workflow.classifier.model import AlertClassifier
-        
-        _classifier = AlertClassifier.load(model_path)
-        logger.info(f"Agent 2: Classifier loaded from {model_path}")
-        return _classifier
-        
     except FileNotFoundError:
-        logger.warning("Agent 2: No trained model found. Using mock classifier for testing.")
-        _classifier = MockClassifier()
-        return _classifier
+        config = {}
+        
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    
+    # 1. Load ML Classifier (Option A)
+    ml_model_path = os.path.join(project_root, "models", "ml_model.joblib")
+    try:
+        from workflow.classifier.model_ml import MLAlertClassifier
+        _ml_classifier = MLAlertClassifier.load(ml_model_path)
+        logger.info(f"Agent 2: ML Classifier loaded from {ml_model_path}")
+    except Exception as e:
+        logger.warning(f"Agent 2: Failed to load ML Classifier: {e}")
+        _ml_classifier = MockClassifier()
+        
+    # 2. Load DL Classifier (Option C - DistilBERT)
+    dl_model_path = config.get("classifier", {}).get("model_path", "models")
+    if not os.path.isabs(dl_model_path):
+        dl_model_path = os.path.join(project_root, dl_model_path)
+    
+    try:
+        from workflow.classifier.model import AlertClassifier
+        _dl_classifier = AlertClassifier.load(dl_model_path)
+        logger.info(f"Agent 2: DL Classifier loaded from {dl_model_path}")
+    except Exception as e:
+        logger.warning(f"Agent 2: Failed to load DL Classifier: {e}")
+        _dl_classifier = MockClassifier()
+        
+    return _ml_classifier, _dl_classifier
 
 def agent_2_logic(state: GraphState) -> Dict[str, Any]:
     """
@@ -80,12 +90,12 @@ def agent_2_logic(state: GraphState) -> Dict[str, Any]:
             "remarks": "skipped: no description found for classification"
         }
         
-    classifier = _get_classifier()
-    if classifier is None:
+    ml_clf, dl_clf = _get_classifiers()
+    if ml_clf is None and dl_clf is None:
         return {
             "ok": False,
             "data": None,
-            "remarks": "skipped: classifier not loaded"
+            "remarks": "skipped: classifiers not loaded"
         }
         
     try:
@@ -97,8 +107,21 @@ def agent_2_logic(state: GraphState) -> Dict[str, Any]:
             config = yaml.safe_load(f)
             
         threshold = config.get("classifier", {}).get("confidence_threshold", 0.6)
+        ml_threshold = 0.85 # High confidence threshold for ML fallback
         
-        result = classifier.predict(description)
+        # 1. Primary: ML Classifier
+        result = ml_clf.predict(description)
+        used_model = "ML_TFIDF"
+        
+        # 2. Fallback: DL Classifier if ML confidence is low
+        if result["confidence"] < ml_threshold and not isinstance(dl_clf, MockClassifier):
+            logger.info(f"[{event_id}] ML confidence {result['confidence']:.4f} < {ml_threshold}. Falling back to DL model.")
+            try:
+                dl_result = dl_clf.predict(description)
+                result = dl_result
+                used_model = "DL_DISTILBERT"
+            except Exception as e:
+                logger.warning(f"[{event_id}] DL fallback failed: {e}. Using ML result.")
         
         if result["confidence"] >= threshold:
             final_category = result["category"]
@@ -111,6 +134,7 @@ def agent_2_logic(state: GraphState) -> Dict[str, Any]:
             "confidence": result["confidence"],
             "label_id": result["label_id"],
             "threshold_applied": threshold,
+            "used_model": used_model,
         }
         
         logger.info(f"[{event_id}] Agent 2 classified alert | prediction={final_category} | confidence={result['confidence']:.4f}")
