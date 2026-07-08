@@ -94,8 +94,8 @@ class JenkinsHelper:
         for attempt in range(1, retries + 1):
             try:
                 self.log.info(
-                    "Triggering Jenkins job (attempt %s/%s): job_path=%s params_keys=%s",
-                    attempt, retries, job_path, list(safe_params.keys())
+                    "Triggering Jenkins job (attempt %s/%s): job_path=%s params=%s",
+                    attempt, retries, job_path, safe_params
                 )
                 
                 resp = self.session.post(
@@ -117,7 +117,7 @@ class JenkinsHelper:
                     "status_code": resp.status_code,
                     "queue_url": queue_url,
                     "job_trigger_url": build_url,
-                    "sent_params_keys": list(safe_params.keys())
+                    "sent_params": safe_params
                 }
                 
                 # Optionally parse queue id
