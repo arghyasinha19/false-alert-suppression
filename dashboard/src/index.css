@@ -74,10 +74,26 @@ body {
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 }
 
-::-webkit-scrollbar { width: 6px; height: 6px; }
+/* Modern scrollbars — hidden by default, visible on hover */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+*:hover {
+  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+}
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.12); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.2); }
+::-webkit-scrollbar-thumb { background: transparent; border-radius: 10px; transition: background 0.3s; }
+*:hover::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.12); }
+*:hover::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }
+
+/* Freeze body scroll when detail panel is open */
+body.panel-open {
+  overflow: hidden;
+}
 
 h1, h2, h3, h4, h5, h6 { font-weight: 600; line-height: 1.3; }
 

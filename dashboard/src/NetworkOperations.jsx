@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   MapPin, Server, AlertTriangle, CheckCircle, HelpCircle,
   Search, X, Clock, Wifi, WifiOff, Shield, AlertOctagon,
@@ -107,6 +107,16 @@ export default function NetworkOperations({ devices: rawDevices }) {
   const [panelOpen, setPanelOpen] = useState(false);
 
   const devices = rawDevices.length > 0 ? rawDevices : generateMockDevices();
+
+  // Freeze body scroll when detail panel is open
+  useEffect(() => {
+    if (panelOpen) {
+      document.body.classList.add('panel-open');
+    } else {
+      document.body.classList.remove('panel-open');
+    }
+    return () => document.body.classList.remove('panel-open');
+  }, [panelOpen]);
 
   const filteredDevices = useMemo(() => {
     if (!searchQuery) return devices;
