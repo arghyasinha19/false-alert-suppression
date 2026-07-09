@@ -43,8 +43,7 @@ def process_delayed_alert(payload: dict):
     # Use the specific delayed job path, fallback to main if missing
     jenkins_job_path = os.getenv("JENKINS_DELAYED_JOB_PATH") or os.getenv("JENKINS_JOB_PATH")
     
-    from helpers.jenkins_helpers import JenkinsConfig, JenkinsHelper, map_dnac_to_jenkins_params
-    from noops_dnac_consumer import normalize_json_payload
+    from helpers.jenkins_helpers import JenkinsConfig, JenkinsHelper
     
     try:
         cfg = JenkinsConfig(
@@ -55,8 +54,9 @@ def process_delayed_alert(payload: dict):
         )
         
         jh = JenkinsHelper(cfg)
-        normalized_payload = normalize_json_payload(payload)
-        params = map_dnac_to_jenkins_params(normalized_payload)
+        # The payload from Agent 3 is already formatted as AlertPayload (snake_case).
+        # Convert keys to UPPERCASE for Jenkins parameters.
+        params = {k.upper(): v for k, v in payload.items() if v is not None}
         
         # Add a flag if the workflow needs to know it's a delayed alert
         params["DELAYED_ALERT"] = "true"

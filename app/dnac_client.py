@@ -180,6 +180,16 @@ class DNACClient:
             response.raise_for_status()
             
         data = response.json()
+        
+        import json
+        logger.info(
+            f"DNAC API Call Details:\n"
+            f"  Method: GET\n"
+            f"  URL: {url}\n"
+            f"  Response Code: {response.status_code}\n"
+            f"  Response Body: {json.dumps(data, indent=2)}"
+        )
+        
         # The structure is usually: { "response": { "issueStatus": "ACTIVE", ... } }
         # or flat { "issueStatus": "ACTIVE" }
         resp_obj = data.get("response", data)
