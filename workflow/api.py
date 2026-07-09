@@ -125,13 +125,50 @@ async def invoke_workflow(alert: AlertPayload):
             runtime_error=str(e)
         )
 
-def check_dnac_status(device_id: str, event_id: str) -> bool:
+def check_dnac_status(device_id: str, event_id: str, instance_id: str = None) -> bool:
     """
-    Check DNAC to see if the alert is still active.
-    Returns True if still active, False if resolved.
+    Check DNAC to see if the alert is still active by calling
+    DNACClient.get_issue_status().
+
+    Uses instance_id (the DNAC issue ID) as the primary lookup key.
+    Falls back to event_id if instance_id is not available.
+
+    Returns True if still active, False if resolved/cleared.
     """
-    logger.info(f"Checking DNAC status for device {device_id} and event {event_id}...")
-    return True
+    import yaml
+    from app.dnac_client import DNACClient
+
+    issue_id = instance_id or event_id
+    if not issue_id:
+        logger.warning("No instance_id or event_id available. Cannot check DNAC status. Assuming still active.")
+        return True
+
+    try:
+        config_path = os.path.join(project_root, "config.yaml")
+        with open(config_path, "r") as f:
+            config = yaml.safe_load(f)
+
+        dnac_config = config.get("dnac", {})
+        client = DNACClient(dnac_config)
+
+        logger.info(f"Querying DNAC for issue status: issue_id={issue_id}, device_id={device_id}, event_id={event_id}")
+        status = client.get_issue_status(issue_id)
+
+        if status.upper() in ("RESOLVED", "DELETED", "CLEARED"):
+            logger.info(f"DNAC reports issue {issue_id} as '{status}' — alert has auto-resolved.")
+            return False
+        else:
+            logger.warning(f"DNAC reports issue {issue_id} as '{status}' — alert is STILL ACTIVE.")
+            return True
+
+    except FileNotFoundError:
+        logger.error(f"config.yaml not found at {config_path}. Cannot initialize DNACClient. Assuming alert still active.")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to check DNAC status for issue {issue_id}: {e}", exc_info=True)
+        # Fail-safe: assume still active so it gets escalated
+        logger.warning("Defaulting to 'still active' due to DNAC check failure.")
+        return True
 
 @app.post("/api/v1/invoke/delayed", response_model=InvokeResponse, tags=["Workflow"])
 async def invoke_delayed_workflow(alert: AlertPayload):
@@ -146,7 +183,7 @@ async def invoke_delayed_workflow(alert: AlertPayload):
     logger.info(f"Invoking delayed check for event_id: {alert.event_id}")
     final_state = None
     try:
-        is_active = check_dnac_status(alert.device_id, alert.event_id)
+        is_active = check_dnac_status(alert.device_id, alert.event_id, instance_id=alert.instance_id)
         if is_active:
             logger.warning(f"Alert {alert.event_id} STILL ACTIVE. Forcing escalation.")
             initial_state["results"]["agent_2"] = {
