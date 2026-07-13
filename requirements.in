@@ -1,0 +1,17 @@
+datasets
+fastapi
+joblib
+langgraph
+numpy
+onnxruntime
+pandas
+pika
+pydantic
+pymongo
+python-dotenv
+PyYAML
+requests
+scikit-learn
+torch
+transformers
+urllib3
