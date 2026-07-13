@@ -32,7 +32,7 @@ class RabbitMQPublisher:
         self.password = os.environ.get('RABBITMQ_PASSWORD') or config.get('password', 'guest')
         self.vhost = config.get('vhost', '/')
         self.exchange = config.get('exchange', '')
-        self.queue_name = config.get('queue_name', 'dnac_alerts_queue')
+        self.queue_name = config.get('queue', 'dnac.alerts.q')
         
         self._connection: Optional[pika.BlockingConnection] = None
         self._channel = None
