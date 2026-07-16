@@ -26,6 +26,17 @@ app.add_middleware(
 mongo = MongoDBClient()
 
 
+def safe_get(d, *keys, default=None):
+    curr = d
+    for k in keys:
+        if not isinstance(curr, dict):
+            return default
+        curr = curr.get(k)
+        if curr is None:
+            return default
+    return curr
+
+
 @app.get("/api/alerts")
 def get_alerts():
     """Fetch all processed alerts from MongoDB."""
@@ -40,7 +51,7 @@ def get_alerts():
         # Extract unique incident numbers
         incident_numbers = set()
         for a in alerts:
-            inc = a.get("results", {}).get("agent_4", {}).get("data", {}).get("incident")
+            inc = safe_get(a, "results", "agent_4", "data", "incident")
             if inc and inc != "Unknown":
                 incident_numbers.add(inc)
 
@@ -53,7 +64,7 @@ def get_alerts():
 
         # Enrich the alerts with the live status
         for a in alerts:
-            inc = a.get("results", {}).get("agent_4", {}).get("data", {}).get("incident")
+            inc = safe_get(a, "results", "agent_4", "data", "incident")
             if inc in snow_statuses:
                 a["live_snow_status"] = snow_statuses[inc]
 
@@ -78,7 +89,7 @@ def get_devices():
         device_map = {}
 
         for a in alerts:
-            details = a.get("alert_details", {})
+            details = a.get("alert_details") or {}
             name = details.get("device_name") or details.get("device") or "Unknown"
 
             if name not in device_map:
@@ -98,8 +109,8 @@ def get_devices():
             entry = device_map[name]
             entry["total_alerts"] += 1
 
-            is_backdated = a.get("results", {}).get("agent_1", {}).get("data", {}).get("is_backdated", False)
-            predicted = a.get("results", {}).get("agent_2", {}).get("data", {}).get("predicted_category", "")
+            is_backdated = safe_get(a, "results", "agent_1", "data", "is_backdated", default=False)
+            predicted = safe_get(a, "results", "agent_2", "data", "predicted_category", default="")
 
             if is_backdated:
                 entry["backdated"] += 1
@@ -108,7 +119,7 @@ def get_devices():
             elif predicted == "Non-Auto Resolving":
                 entry["non_auto_resolving"] += 1
 
-            snow_action = a.get("results", {}).get("agent_4", {}).get("data", {}).get("action")
+            snow_action = safe_get(a, "results", "agent_4", "data", "action")
             if snow_action and "created" in str(snow_action):
                 entry["snow_incidents"] += 1
 
@@ -127,7 +138,7 @@ def get_devices():
                     "category": details.get("category"),
                     "timestamp": ts,
                     "predicted_category": predicted if not is_backdated else "Backdated",
-                    "snow_incident": a.get("results", {}).get("agent_4", {}).get("data", {}).get("incident"),
+                    "snow_incident": safe_get(a, "results", "agent_4", "data", "incident"),
                     "snow_action": snow_action,
                 })
 
@@ -188,12 +199,11 @@ def get_kpi_summary():
         device_counts = {}
 
         for a in alerts:
-            details = a.get("alert_details", {})
-            results = a.get("results", {})
-
-            is_bd = results.get("agent_1", {}).get("data", {}).get("is_backdated", False)
-            predicted = results.get("agent_2", {}).get("data", {}).get("predicted_category", "")
-            snow_action = results.get("agent_4", {}).get("data", {}).get("action", "")
+            details = a.get("alert_details") or {}
+            
+            is_bd = safe_get(a, "results", "agent_1", "data", "is_backdated", default=False)
+            predicted = safe_get(a, "results", "agent_2", "data", "predicted_category", default="")
+            snow_action = safe_get(a, "results", "agent_4", "data", "action", default="")
 
             if is_bd:
                 backdated += 1
@@ -215,7 +225,7 @@ def get_kpi_summary():
             elif snow_action == "incident_reopened":
                 snow_reopened += 1
 
-            delayed_status = results.get("delayed_check", {}).get("status", "")
+            delayed_status = safe_get(a, "results", "delayed_check", "status", default="")
             if delayed_status == "resolved":
                 delayed_resolved += 1
 
