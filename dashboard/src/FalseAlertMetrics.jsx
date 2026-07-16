@@ -86,7 +86,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
   const [timeRange, setTimeRange] = useState('ALL');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
 
-  const alerts = rawAlerts.length > 0 ? rawAlerts : generateMockData();
+  const alerts = rawAlerts;
 
   const deviceNames = useMemo(() => {
     const names = new Set();

@@ -106,7 +106,7 @@ export default function NetworkOperations({ devices: rawDevices }) {
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [panelOpen, setPanelOpen] = useState(false);
 
-  const devices = rawDevices.length > 0 ? rawDevices : generateMockDevices();
+  const devices = rawDevices;
 
   // Freeze body scroll when detail panel is open
   useEffect(() => {

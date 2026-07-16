@@ -89,7 +89,7 @@ function App() {
           <div className="sidebar-status-row">
             <div className={`sidebar-status-dot ${apiConnected ? '' : 'error'}`} />
             <Database size={13} />
-            <span>{apiConnected ? 'API Connected' : 'Offline — Mock Data'}</span>
+            <span>{apiConnected ? 'API Connected' : 'Offline'}</span>
           </div>
           {lastRefresh && (
             <div className="sidebar-status-row" style={{ marginTop: '0.4rem', fontSize: '0.72rem' }}>
@@ -112,7 +112,7 @@ function App() {
             </div>
             {!loading && (
               <span style={{ fontSize: '0.78rem', color: 'var(--text-tertiary)' }}>
-                {alerts.length > 0 ? `${alerts.length} alerts` : 'Mock data'}
+                {alerts.length > 0 ? `${alerts.length} alerts` : '0 alerts'}
               </span>
             )}
           </div>
