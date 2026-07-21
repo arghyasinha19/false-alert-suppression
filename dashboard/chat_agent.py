@@ -516,26 +516,52 @@ When intent is AMBIGUOUS:
 
 
 # ---------------------------------------------------------------------------
-# ChatAgent
+# ChatAgent — LangChain ChatOpenAI → Gemini
 # ---------------------------------------------------------------------------
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import (
+    AIMessage,
+    HumanMessage,
+    SystemMessage,
+    ToolMessage,
+)
+
+
+def _build_langchain_tools() -> list:
+    """Convert GEMINI_TOOL_DECLARATIONS to LangChain-style JSON tool schemas."""
+    lc_tools = []
+    for decl in GEMINI_TOOL_DECLARATIONS:
+        lc_tools.append({
+            "type": "function",
+            "function": {
+                "name": decl["name"],
+                "description": decl["description"],
+                "parameters": decl.get("parameters", {"type": "object", "properties": {}}),
+            },
+        })
+    return lc_tools
+
+
 class ChatAgent:
-    """Gemini-powered agent with tool-calling loop."""
+    """Gemini-powered agent using LangChain ChatOpenAI."""
 
     def __init__(self):
-        if not GEMINI_API_KEY or GEMINI_API_KEY == "your-gemini-api-key-here":
+        if not GEMINI_API_KEY:
             raise ValueError("GEMINI_API_KEY is not configured. Update your .env file.")
 
-        self.api_url = (
-            f"{GEMINI_BASE_URL.rstrip('/')}/v1beta/models/{GEMINI_MODEL}:generateContent"
-        )
-        self.max_tool_rounds = 5
+        # LiteLLM gateway — already OpenAI-compatible
+        base_url = GEMINI_BASE_URL.rstrip('/')
 
-        # SSL CA bundle — use custom root CA if provided, else default verification
-        if GEMINI_CA_BUNDLE:
-            self.verify_ssl = GEMINI_CA_BUNDLE
-            logger.info(f"Using custom CA bundle: {GEMINI_CA_BUNDLE}")
-        else:
-            self.verify_ssl = True
+        self.llm = ChatOpenAI(
+            model=GEMINI_MODEL,
+            api_key=GEMINI_API_KEY,
+            base_url=base_url,
+            temperature=0.2,
+            max_tokens=4096,
+        )
+
+        self.tools_schema = _build_langchain_tools()
+        self.max_tool_rounds = 5
 
     def run(
         self,
@@ -558,36 +584,39 @@ class ChatAgent:
         if on_task:
             on_task("Analyzing intent...")
 
-        # Build Gemini conversation
-        contents = self._build_contents(user_message, history)
+        # Build LangChain message history
+        messages = self._build_messages(user_message, history)
         citations: List[dict] = []
         charts: List[dict] = []
 
-        for _round in range(self.max_tool_rounds):
-            response = self._call_gemini(contents)
+        # Bind tools to the model
+        llm_with_tools = self.llm.bind_tools(self.tools_schema)
 
-            if "error" in response:
+        for _round in range(self.max_tool_rounds):
+            try:
+                response: AIMessage = llm_with_tools.invoke(messages)
+            except Exception as e:
+                err_msg = str(e)
+                if GEMINI_API_KEY:
+                    err_msg = err_msg.replace(GEMINI_API_KEY, "[REDACTED]")
+                logger.error(f"LLM call failed: {err_msg}")
                 return {
-                    "text": f"Sorry, I encountered an error: {response['error']}",
+                    "text": f"Sorry, I encountered an error: {err_msg}",
                     "citations": citations,
                     "charts": charts,
                     "clarification": None,
                     "suggestions": None,
                 }
 
-            candidate = response.get("candidates", [{}])[0]
-            content = candidate.get("content", {})
-            parts = content.get("parts", [])
+            # Check if there are tool calls
+            tool_calls = response.tool_calls if hasattr(response, "tool_calls") else []
 
-            # Check for function calls
-            function_calls = [p for p in parts if "functionCall" in p]
-            text_parts = [p.get("text", "") for p in parts if "text" in p]
+            if not tool_calls:
+                # Final text answer
+                final_text = response.content or ""
+                messages.append(response)
 
-            if not function_calls:
-                # Final text answer — check if it's a clarification
-                final_text = "\n".join(text_parts).strip()
                 is_clarification = self._is_clarification(final_text)
-
                 if is_clarification:
                     return {
                         "text": final_text,
@@ -606,13 +635,12 @@ class ChatAgent:
                 }
 
             # Process tool calls
-            contents.append(content)  # add assistant's response with function calls
+            messages.append(response)
 
-            tool_responses = []
-            for fc_part in function_calls:
-                fc = fc_part["functionCall"]
-                tool_name = fc["name"]
-                tool_args = fc.get("args", {})
+            for tc in tool_calls:
+                tool_name = tc["name"]
+                tool_args = tc.get("args", {})
+                tool_call_id = tc.get("id", tool_name)
 
                 label = TOOL_TASK_LABELS.get(tool_name, f"Running {tool_name}...")
                 if on_task:
@@ -641,20 +669,17 @@ class ChatAgent:
                 if tool_name == "generate_visualization" and "error" not in result:
                     charts.append(result)
 
-                # Truncate large results to stay within context limits
+                # Truncate large results
                 result_str = json.dumps(result, default=str)
                 if len(result_str) > 15000:
                     result_str = result_str[:15000] + '..."}'
 
-                tool_responses.append({
-                    "functionResponse": {
-                        "name": tool_name,
-                        "response": {"result": json.loads(result_str) if len(result_str) <= 15000 else result},
-                    }
-                })
-
-            # Add tool results back to conversation
-            contents.append({"role": "function", "parts": tool_responses})
+                messages.append(
+                    ToolMessage(
+                        content=result_str,
+                        tool_call_id=tool_call_id,
+                    )
+                )
 
         # Max rounds exceeded
         return {
@@ -666,59 +691,21 @@ class ChatAgent:
         }
 
     # -----------------------------------------------------------------------
-    # Gemini API call
-    # -----------------------------------------------------------------------
-    def _call_gemini(self, contents: list) -> dict:
-        payload = {
-            "contents": contents,
-            "systemInstruction": {
-                "parts": [{"text": SYSTEM_PROMPT}]
-            },
-            "tools": [{"functionDeclarations": GEMINI_TOOL_DECLARATIONS}],
-            "generationConfig": {
-                "temperature": 0.2,
-                "maxOutputTokens": 4096,
-            },
-        }
-
-        try:
-            resp = requests.post(
-                self.api_url,
-                json=payload,
-                headers={
-                    "Content-Type": "application/json",
-                    "x-goog-api-key": GEMINI_API_KEY
-                },
-                timeout=60,
-                verify=self.verify_ssl,
-            )
-            if not resp.ok:
-                logger.error(f"Gemini API error: {resp.status_code} {resp.text[:1000]}")
-                return {"error": f"Gemini API returned {resp.status_code}: {resp.text[:500]}"}
-            return resp.json()
-        except Exception as e:
-            err_msg = str(e).replace(GEMINI_API_KEY, "[REDACTED]") if GEMINI_API_KEY else str(e)
-            logger.error(f"Gemini API connection error: {err_msg}")
-            return {"error": err_msg}
-
-    # -----------------------------------------------------------------------
     # Helpers
     # -----------------------------------------------------------------------
-    def _build_contents(self, user_message: str, history: list = None) -> list:
-        contents = []
+    def _build_messages(self, user_message: str, history: list = None) -> list:
+        messages = [SystemMessage(content=SYSTEM_PROMPT)]
         if history:
-            for msg in history[-10:]:  # keep last 10 messages for context
-                role = "user" if msg.get("role") == "user" else "model"
-                contents.append({
-                    "role": role,
-                    "parts": [{"text": msg.get("text", "")}],
-                })
+            for msg in history[-10:]:
+                role = msg.get("role", "user")
+                text = msg.get("text", "")
+                if role == "user":
+                    messages.append(HumanMessage(content=text))
+                else:
+                    messages.append(AIMessage(content=text))
 
-        contents.append({
-            "role": "user",
-            "parts": [{"text": user_message}],
-        })
-        return contents
+        messages.append(HumanMessage(content=user_message))
+        return messages
 
     def _is_clarification(self, text: str) -> bool:
         """Heuristic: detect if the model is asking for clarification."""
@@ -746,7 +733,6 @@ class ChatAgent:
         suggestions = []
         lower = text.lower()
 
-        # Detect mentioned chart types
         if "bar" in lower:
             suggestions.append("Bar chart")
         if "pie" in lower:
@@ -758,7 +744,6 @@ class ChatAgent:
         if "text" in lower or "summary" in lower or "numbers" in lower:
             suggestions.append("Text summary")
 
-        # Always include at least text + one chart option
         if not suggestions:
             suggestions = ["Text summary", "Bar chart", "Pie chart"]
         elif "Text summary" not in suggestions:
