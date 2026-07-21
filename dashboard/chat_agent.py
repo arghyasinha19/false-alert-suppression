@@ -125,8 +125,13 @@ def tool_get_device_status(args: dict) -> dict:
 
     for a in alerts:
         details = a.get("alert_details") or {}
-        is_bd = (a.get("results") or {}).get("agent_1", {}).get("data", {}).get("is_backdated", False)
-        predicted = (a.get("results") or {}).get("agent_2", {}).get("data", {}).get("predicted_category", "")
+        results = a.get("results") or {}
+        
+        agent_1_data = (results.get("agent_1") or {}).get("data") or {}
+        is_bd = agent_1_data.get("is_backdated", False)
+        
+        agent_2_data = (results.get("agent_2") or {}).get("data") or {}
+        predicted = agent_2_data.get("predicted_category", "")
 
         if is_bd:
             backdated += 1
@@ -203,9 +208,9 @@ def tool_get_kpi_summary(args: dict) -> dict:
         details = a.get("alert_details") or {}
         results = a.get("results") or {}
 
-        is_bd = results.get("agent_1", {}).get("data", {}).get("is_backdated", False)
-        predicted = results.get("agent_2", {}).get("data", {}).get("predicted_category", "")
-        snow_action = results.get("agent_4", {}).get("data", {}).get("action", "")
+        is_bd = ((results.get("agent_1") or {}).get("data") or {}).get("is_backdated", False)
+        predicted = ((results.get("agent_2") or {}).get("data") or {}).get("predicted_category", "")
+        snow_action = ((results.get("agent_4") or {}).get("data") or {}).get("action", "")
 
         if is_bd:
             backdated += 1
@@ -225,7 +230,7 @@ def tool_get_kpi_summary(args: dict) -> dict:
         elif snow_action == "comment_appended":
             snow_appended += 1
 
-        delayed_status = results.get("delayed_check", {}).get("status", "")
+        delayed_status = (results.get("delayed_check") or {}).get("status", "")
         if delayed_status == "resolved":
             delayed_resolved += 1
 
