@@ -6,6 +6,7 @@ Orchestrates:
   2. Tool-calling loop (MongoDB first, then DNAC)
   3. Citation collection
   4. Chart spec generation (via generate_visualization tool)
+  openssl x509 -in root-ca.crt -out root-ca.pem -outform PEM
 """
 
 import os
@@ -40,6 +41,7 @@ logger = logging.getLogger("chat_agent")
 GEMINI_BASE_URL = os.getenv("GEMINI_BASE_URL", "https://generativelanguage.googleapis.com")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+GEMINI_CA_BUNDLE = os.getenv("GEMINI_CA_BUNDLE", "")  # Path to root CA .pem file
 
 _config_path = os.path.join(_project_root, "config.yaml")
 with open(_config_path, "r") as _f:
@@ -522,6 +524,13 @@ class ChatAgent:
         )
         self.max_tool_rounds = 5
 
+        # SSL CA bundle — use custom root CA if provided, else default verification
+        if GEMINI_CA_BUNDLE and os.path.isfile(GEMINI_CA_BUNDLE):
+            self.verify_ssl = GEMINI_CA_BUNDLE
+            logger.info(f"Using custom CA bundle: {GEMINI_CA_BUNDLE}")
+        else:
+            self.verify_ssl = True
+
     def run(
         self,
         user_message: str,
@@ -672,6 +681,7 @@ class ChatAgent:
                 json=payload,
                 headers={"Content-Type": "application/json"},
                 timeout=60,
+                verify=self.verify_ssl,
             )
             if not resp.ok:
                 logger.error(f"Gemini API error: {resp.status_code} {resp.text[:1000]}")
