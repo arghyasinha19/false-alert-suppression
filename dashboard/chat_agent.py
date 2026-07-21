@@ -308,22 +308,53 @@ def tool_query_dnac_device_health(args: dict) -> dict:
     try:
         client = _get_dnac()
         
-        # Step 1: If we only have device_name, try to get its exact UUID first
-        # This prevents the device-health endpoint from ignoring deviceName and returning all devices
+        # Step 1: Try to look up the device's IP or MAC from MongoDB alert history
+        mongo_ip = None
+        mongo_mac = None
         if not device_id and device_name:
+            try:
+                mongo = _get_mongo()
+                collection = mongo.get_collection("alert_results")
+                if collection is not None:
+                    alert = collection.find_one({
+                        "$or": [
+                            {"alert_details.device_name": {"$regex": device_name, "$options": "i"}},
+                            {"alert_details.device": {"$regex": device_name, "$options": "i"}}
+                        ]
+                    })
+                    if alert:
+                        details = alert.get("alert_details") or {}
+                        mongo_ip = details.get("ip_address") or details.get("ip") or details.get("managementIpAddress")
+                        mongo_mac = details.get("mac_address") or details.get("mac") or details.get("macAddress")
+                        logger.info(f"MongoDB mapping for {device_name} -> IP: {mongo_ip}, MAC: {mongo_mac}")
+            except Exception as e:
+                logger.warning(f"Failed to lookup hardware mapping in Mongo: {e}")
+
+        # Step 2: Resolve to exact UUID using DNAC /network-device
+        # Use MAC or IP if we found them, fallback to hostname
+        if not device_id:
             nd_url = f"{client.base_url}/dna/intent/api/v1/network-device"
-            nd_resp = requests.get(
-                nd_url, 
-                headers=client._get_headers(), 
-                params={"hostname": device_name}, 
-                verify=client.verify_ssl,
-                timeout=15
-            )
-            if nd_resp.ok:
-                nd_data = nd_resp.json().get("response", [])
-                if isinstance(nd_data, list) and len(nd_data) > 0:
-                    # Successfully resolved to UUID
-                    device_id = nd_data[0].get("id", "")
+            nd_params = {}
+            if mongo_mac:
+                nd_params["macAddress"] = mongo_mac
+            elif mongo_ip:
+                nd_params["managementIpAddress"] = mongo_ip
+            elif device_name:
+                nd_params["hostname"] = device_name
+                
+            if nd_params:
+                nd_resp = requests.get(
+                    nd_url, 
+                    headers=client._get_headers(), 
+                    params=nd_params, 
+                    verify=client.verify_ssl,
+                    timeout=15
+                )
+                if nd_resp.ok:
+                    nd_data = nd_resp.json().get("response", [])
+                    if isinstance(nd_data, list) and len(nd_data) > 0:
+                        # Successfully resolved to UUID
+                        device_id = nd_data[0].get("id", "")
 
         # Step 2: Fetch health data using exact UUID if available
         url = f"{client.base_url}/dna/intent/api/v1/device-health"
@@ -353,8 +384,7 @@ def tool_query_dnac_device_health(args: dict) -> dict:
         # Local filter as a last resort if DNAC returned multiple devices
         if isinstance(resp_data, list) and device_name and not device_id:
             filtered = [d for d in resp_data if isinstance(d, dict) and device_name.lower() in str(d.get("name", "")).lower()]
-            if filtered:
-                resp_data = filtered
+            resp_data = filtered
             
             # Limit to top 2 to prevent token overflow
             resp_data = resp_data[:2]
