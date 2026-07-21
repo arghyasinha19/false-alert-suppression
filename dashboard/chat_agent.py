@@ -324,9 +324,16 @@ def tool_query_dnac_device_health(args: dict) -> dict:
                     })
                     if alert:
                         details = alert.get("alert_details") or {}
-                        mongo_ip = details.get("ip_address") or details.get("ip") or details.get("managementIpAddress")
-                        mongo_mac = details.get("mac_address") or details.get("mac") or details.get("macAddress")
-                        logger.info(f"MongoDB mapping for {device_name} -> IP: {mongo_ip}, MAC: {mongo_mac}")
+                        
+                        # The raw DNAC UUID is actually stored as 'device_id' in Mongo!
+                        mongo_device_id = details.get("device_id")
+                        if mongo_device_id:
+                            device_id = mongo_device_id
+                            logger.info(f"MongoDB mapping for {device_name} -> device_id (UUID): {device_id}")
+                        else:
+                            mongo_ip = details.get("ip_address") or details.get("ip") or details.get("managementIpAddress")
+                            mongo_mac = details.get("mac_address") or details.get("mac") or details.get("macAddress")
+                            logger.info(f"MongoDB mapping for {device_name} -> IP: {mongo_ip}, MAC: {mongo_mac}")
             except Exception as e:
                 logger.warning(f"Failed to lookup hardware mapping in Mongo: {e}")
 
