@@ -526,7 +526,6 @@ class ChatAgent:
 
         self.api_url = (
             f"{GEMINI_BASE_URL.rstrip('/')}/v1beta/models/{GEMINI_MODEL}:generateContent"
-            f"?key={GEMINI_API_KEY}"
         )
         self.max_tool_rounds = 5
 
@@ -685,7 +684,10 @@ class ChatAgent:
             resp = requests.post(
                 self.api_url,
                 json=payload,
-                headers={"Content-Type": "application/json"},
+                headers={
+                    "Content-Type": "application/json",
+                    "x-goog-api-key": GEMINI_API_KEY
+                },
                 timeout=60,
                 verify=self.verify_ssl,
             )
@@ -694,8 +696,9 @@ class ChatAgent:
                 return {"error": f"Gemini API returned {resp.status_code}: {resp.text[:500]}"}
             return resp.json()
         except Exception as e:
-            logger.error(f"Gemini API call failed: {e}")
-            return {"error": str(e)}
+            err_msg = str(e).replace(GEMINI_API_KEY, "[REDACTED]") if GEMINI_API_KEY else str(e)
+            logger.error(f"Gemini API connection error: {err_msg}")
+            return {"error": err_msg}
 
     # -----------------------------------------------------------------------
     # Helpers
