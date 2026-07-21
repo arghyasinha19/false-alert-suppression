@@ -120,6 +120,8 @@ def check_dnac_status(instance_id: str) -> bool:
         client = DNACClient(dnac_config)
         status = client.get_issue_status(instance_id)
         
+        LOG.info(f"DNAC status check result for instance_id={instance_id}: status={status}")
+        
         # If the status is RESOLVED, it's no longer active.
         if status.upper() in ["RESOLVED", "IGNORED", "CLEARED"]:
             return False

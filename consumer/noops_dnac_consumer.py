@@ -170,8 +170,18 @@ def run():
                     payload = parse_json(body)
                     # event_type, ticket, meta = normalize_incoming(payload)
                     
+                    logger.info(
+                        "DNAC Payload from RabbitMQ:\n  Body: %s",
+                        json.dumps(payload, indent=2) if isinstance(payload, (dict, list)) else str(payload)
+                    )
+                    
                     # Get meta data from the payload in a dictionary
                     normalized_payload = normalize_json_payload(payload)
+                    
+                    logger.info(
+                        "DNAC Normalized Payload:\n  Body: %s",
+                        json.dumps(normalized_payload, indent=2)
+                    )
                     
                     retry_count = get_retry_count(properties) if properties else 0
                     logger.info("Received payload, retries=%s", retry_count)

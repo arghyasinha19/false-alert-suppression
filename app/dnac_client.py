@@ -1,3 +1,4 @@
+import json
 import requests
 from requests.auth import HTTPBasicAuth
 import urllib3
@@ -30,10 +31,21 @@ class DNACClient:
         """Fetch and cache a DNAC auth token."""
         url = f"{self.base_url}/dna/system/api/v1/auth/token"
         logger.info("Authenticating with DNAC...")
+        logger.info(
+            f"DNAC Request:\n"
+            f"  Method: POST\n"
+            f"  URL: {url}\n"
+            f"  Payload: (basic-auth credentials, not logged)"
+        )
         response = requests.post(
             url,
             auth=HTTPBasicAuth(self.username, self.password),
             verify=self.verify_ssl
+        )
+        logger.info(
+            f"DNAC Response:\n"
+            f"  Status Code: {response.status_code}\n"
+            f"  Body: {response.text}"
         )
         response.raise_for_status()
         self.token = response.json()['Token']
@@ -59,13 +71,27 @@ class DNACClient:
         (which means no subscriptions exist yet).
         """
         url = f"{self.base_url}/dna/intent/api/v1/event/subscription"
+        logger.info(
+            f"DNAC Request:\n"
+            f"  Method: GET\n"
+            f"  URL: {url}"
+        )
         response = requests.get(url, headers=self._get_headers(), verify=self.verify_ssl)
 
         # 204 No Content = no subscriptions registered yet - not an error
         if response.status_code == 204:
-            logger.info("DNAC returned 204 - no webhook subscriptions registered yet.")
+            logger.info(
+                f"DNAC Response:\n"
+                f"  Status Code: 204 (No Content)\n"
+                f"  Body: (empty — no webhook subscriptions registered yet)"
+            )
             return []
-            
+
+        logger.info(
+            f"DNAC Response:\n"
+            f"  Status Code: {response.status_code}\n"
+            f"  Body: {json.dumps(response.json(), indent=2)}"
+        )
         response.raise_for_status()
         return response.json()
 
@@ -115,12 +141,23 @@ class DNACClient:
                 self.subscription_id = sub.get('subscriptionId')
                 logger.info(f"Webhook '{name}' already registered (ID: {self.subscription_id}). Skipping.")
                 return sub
-                
+
+        logger.info(
+            f"DNAC Request:\n"
+            f"  Method: POST\n"
+            f"  URL: {register_url}\n"
+            f"  Payload: {json.dumps(payload, indent=2)}"
+        )
         response = requests.post(
             register_url,
             headers=self._get_headers(),
             json=payload,
             verify=self.verify_ssl
+        )
+        logger.info(
+            f"DNAC Response:\n"
+            f"  Status Code: {response.status_code}\n"
+            f"  Body: {response.text}"
         )
         
         # Log full DNAC error body for easy debugging
@@ -146,7 +183,18 @@ class DNACClient:
         url = f"{self.base_url}/dna/intent/api/v1/event/subscription"
         params = {"subscriptionIds": self.subscription_id}
         logger.info(f"De-registering webhook (ID: {self.subscription_id})...")
+        logger.info(
+            f"DNAC Request:\n"
+            f"  Method: DELETE\n"
+            f"  URL: {url}\n"
+            f"  Params: {json.dumps(params, indent=2)}"
+        )
         response = requests.delete(url, headers=self._get_headers(), params=params, verify=self.verify_ssl)
+        logger.info(
+            f"DNAC Response:\n"
+            f"  Status Code: {response.status_code}\n"
+            f"  Body: {response.text}"
+        )
         if response.ok:
             logger.info("Webhook de-registered successfully.")
         else:
@@ -166,28 +214,38 @@ class DNACClient:
             return "UNKNOWN"
             
         url = f"{self.base_url}/dna/intent/api/v1/issues/{issue_id}"
-        logger.info(f"Checking DNAC issue status for ID: {issue_id} at {url}")
+        logger.info(
+            f"DNAC Request:\n"
+            f"  Method: GET\n"
+            f"  URL: {url}"
+        )
         
         response = requests.get(url, headers=self._get_headers(), verify=self.verify_ssl)
         
         # In DNAC, an issue that is no longer active may be deleted and return 404
         if response.status_code == 404:
-            logger.info(f"Issue {issue_id} not found (404). Assuming it is resolved/cleared.")
+            logger.info(
+                f"DNAC Response:\n"
+                f"  Status Code: 404 (Not Found)\n"
+                f"  Body: {response.text}\n"
+                f"  -> Issue {issue_id} not found. Assuming resolved/cleared."
+            )
             return "RESOLVED"
             
         if not response.ok:
-            logger.error(f"Failed to fetch issue status: {response.status_code} - {response.text}")
+            logger.error(
+                f"DNAC Response (Error):\n"
+                f"  Status Code: {response.status_code}\n"
+                f"  Body: {response.text}"
+            )
             response.raise_for_status()
             
         data = response.json()
         
-        import json
         logger.info(
-            f"DNAC API Call Details:\n"
-            f"  Method: GET\n"
-            f"  URL: {url}\n"
-            f"  Response Code: {response.status_code}\n"
-            f"  Response Body: {json.dumps(data, indent=2)}"
+            f"DNAC Response:\n"
+            f"  Status Code: {response.status_code}\n"
+            f"  Body: {json.dumps(data, indent=2)}"
         )
         
         # The structure is usually: { "response": { "issueStatus": "ACTIVE", ... } }

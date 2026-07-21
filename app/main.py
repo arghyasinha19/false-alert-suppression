@@ -1,4 +1,5 @@
 import yaml
+import json
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -109,7 +110,12 @@ async def dnac_webhook_receiver(request: Request):
         payload: Any = await request.json()
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid JSON payload received.")
-        
+
+    logger.info(
+        f"DNAC Webhook Payload Received:\n"
+        f"  Body: {json.dumps(payload, indent=2)}"
+    )
+    
     # DNAC can send a single object or a list of events
     events = payload if isinstance(payload, list) else [payload]
     
