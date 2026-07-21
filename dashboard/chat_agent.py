@@ -307,29 +307,116 @@ def tool_query_dnac_device_health(args: dict) -> dict:
 
     try:
         client = _get_dnac()
-        # DNAC device health endpoint
+        
+        # Step 1: If we only have device_name, try to get its exact UUID first
+        # This prevents the device-health endpoint from ignoring deviceName and returning all devices
+        if not device_id and device_name:
+            nd_url = f"{client.base_url}/dna/intent/api/v1/network-device"
+            nd_resp = requests.get(
+                nd_url, 
+                headers=client._get_headers(), 
+                params={"hostname": device_name}, 
+                verify=client.verify_ssl,
+                timeout=15
+            )
+            if nd_resp.ok:
+                nd_data = nd_resp.json().get("response", [])
+                if isinstance(nd_data, list) and len(nd_data) > 0:
+                    # Successfully resolved to UUID
+                    device_id = nd_data[0].get("id", "")
+
+        # Step 2: Fetch health data using exact UUID if available
         url = f"{client.base_url}/dna/intent/api/v1/device-health"
         params = {}
-        if device_name:
-            params["deviceName"] = device_name
         if device_id:
             params["deviceUuid"] = device_id
+        elif device_name:
+            # Fallback if UUID resolution failed
+            params["deviceName"] = device_name
 
         logger.info(f"DNAC Request:\n  Method: GET\n  URL: {url}\n  Params: {json.dumps(params)}")
-        response = requests.get(url, headers=client._get_headers(), params=params, verify=client.verify_ssl)
+        response = requests.get(
+            url, 
+            headers=client._get_headers(), 
+            params=params, 
+            verify=client.verify_ssl,
+            timeout=15
+        )
         logger.info(f"DNAC Response:\n  Status Code: {response.status_code}\n  Body: {response.text[:2000]}")
 
         if not response.ok:
             return {"error": f"DNAC returned {response.status_code}: {response.text[:500]}"}
 
         data = response.json()
+        resp_data = data.get("response", data)
+        
+        # Local filter as a last resort if DNAC returned multiple devices
+        if isinstance(resp_data, list) and device_name and not device_id:
+            filtered = [d for d in resp_data if isinstance(d, dict) and device_name.lower() in str(d.get("name", "")).lower()]
+            if filtered:
+                resp_data = filtered
+            
+            # Limit to top 2 to prevent token overflow
+            resp_data = resp_data[:2]
+
         return {
             "source": "dnac_live_api",
             "endpoint": url,
-            "device_health": data.get("response", data),
+            "device_health": resp_data,
         }
+    except requests.exceptions.RequestException as re:
+        logger.error(f"Network error querying DNAC: {re}")
+        return {"error": f"Network connection to DNAC failed: {str(re)}"}
     except Exception as e:
-        return {"error": str(e)}
+        logger.error(f"Unexpected error in query_dnac_device_health: {e}")
+        return {"error": f"Failed to query DNAC device health: {str(e)}"}
+
+
+def tool_call_dnac_rest_api(args: dict) -> dict:
+    """Generic tool for the LLM to call any DNAC REST API endpoint."""
+    endpoint = args.get("endpoint", "")
+    method = args.get("method", "GET").upper()
+    params = args.get("params", {})
+    body = args.get("body", {})
+
+    if not endpoint:
+        return {"error": "endpoint is required"}
+    
+    # Ensure endpoint starts with /
+    if not endpoint.startswith("/"):
+        endpoint = "/" + endpoint
+        
+    try:
+        client = _get_dnac()
+        url = f"{client.base_url}{endpoint}"
+        
+        logger.info(f"DNAC REST API Tool Request:\n  Method: {method}\n  URL: {url}\n  Params: {json.dumps(params)}\n  Body: {json.dumps(body)}")
+        
+        headers = client._get_headers()
+        
+        if method == "GET":
+            response = requests.get(url, headers=headers, params=params, verify=client.verify_ssl, timeout=20)
+        elif method == "POST":
+            response = requests.post(url, headers=headers, params=params, json=body, verify=client.verify_ssl, timeout=20)
+        else:
+            return {"error": f"Unsupported HTTP method: {method}"}
+            
+        logger.info(f"DNAC REST API Tool Response:\n  Status Code: {response.status_code}\n  Body Preview: {response.text[:1000]}")
+        
+        if not response.ok:
+            return {"error": f"DNAC returned {response.status_code}", "response_body": response.text[:2000]}
+            
+        return {
+            "source": "dnac_rest_api",
+            "endpoint": url,
+            "data": response.json()
+        }
+    except requests.exceptions.RequestException as re:
+        logger.error(f"Network error in call_dnac_rest_api: {re}")
+        return {"error": f"Network connection to DNAC failed: {str(re)}"}
+    except Exception as e:
+        logger.error(f"Unexpected error in call_dnac_rest_api: {e}")
+        return {"error": f"Failed to call DNAC: {str(e)}"}
 
 
 def tool_generate_visualization(args: dict) -> dict:
@@ -355,6 +442,7 @@ TOOLS = {
     "get_kpi_summary": tool_get_kpi_summary,
     "query_dnac_issue": tool_query_dnac_issue,
     "query_dnac_device_health": tool_query_dnac_device_health,
+    "call_dnac_rest_api": tool_call_dnac_rest_api,
     "generate_visualization": tool_generate_visualization,
 }
 
@@ -365,6 +453,7 @@ TOOL_TASK_LABELS = {
     "get_kpi_summary": "Computing KPI summary from MongoDB...",
     "query_dnac_issue": "Querying DNAC for live issue status...",
     "query_dnac_device_health": "Querying DNAC for device health...",
+    "call_dnac_rest_api": "Calling DNAC REST API...",
     "generate_visualization": "Generating visualization...",
 }
 
@@ -438,6 +527,20 @@ GEMINI_TOOL_DECLARATIONS = [
         },
     },
     {
+        "name": "call_dnac_rest_api",
+        "description": "Call a specific Cisco DNA Center REST API endpoint. Use this for advanced queries like fetching site health, device details by region, or device trends.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "endpoint": {"type": "string", "description": "The DNAC API path (e.g. /dna/intent/api/v1/site-health)"},
+                "method": {"type": "string", "description": "HTTP method (GET or POST)", "enum": ["GET", "POST"]},
+                "params": {"type": "object", "description": "Query parameters as key-value pairs"},
+                "body": {"type": "object", "description": "JSON body (for POST requests)"},
+            },
+            "required": ["endpoint", "method"],
+        },
+    },
+    {
         "name": "generate_visualization",
         "description": "Generate a chart visualization from data. Call this ONLY when you have determined the user wants a VISUALIZATION (not for AMBIGUOUS intent). Supply the chart_type, title, data array, and axis keys. For multi-series line/area/bar charts, provide multi_series_keys.",
         "parameters": {
@@ -480,9 +583,30 @@ SYSTEM_PROMPT = """You are an AI assistant for the DNAC Ops Center — a network
 
 ## DATA SOURCES
 You have access to these tools:
-1. **MongoDB tools** (query_alerts, get_device_status, get_device_history, get_kpi_summary) — contain historical alert data, classification results, and ServiceNow ticket info. ALWAYS try these first.
-2. **DNAC live API tools** (query_dnac_issue, query_dnac_device_health) — live queries to Cisco DNA Center. Use ONLY when MongoDB doesn't have the answer OR the user explicitly asks to "check DNAC" or wants "live" / "current" status from DNAC.
+1. **MongoDB tools** (query_alerts, get_device_status, get_device_history, get_kpi_summary) — contain historical alert data, classification results, and ServiceNow ticket info. ALWAYS try these first for standard alerts/tickets.
+2. **DNAC live API tools** (query_dnac_issue, query_dnac_device_health, call_dnac_rest_api) — live queries to Cisco DNA Center. Use when the user asks for "live" / "current" status, or complex DNAC-specific data like trends, sites, or topology.
 3. **generate_visualization** — creates chart specs for the frontend to render.
+
+## AUTONOMOUS API EXECUTION
+When the user asks network questions, you must act as a fully autonomous agent. You are NOT restricted to specific examples or pre-defined paths. You must understand the customer's intent and dynamically deduce the right API calls.
+1. **Decompose the query**: Break complex tasks into steps (e.g. 1. Find the Site UUID, 2. Get Site Health using that UUID).
+2. **Use call_dnac_rest_api**: Construct and execute the API requests. If an endpoint requires an ID (like a device UUID or site UUID), first query the relevant search endpoint (like `/dna/intent/api/v1/network-device` or `/dna/intent/api/v1/site`) to find the ID.
+3. **Handle large data**: If an endpoint returns an error or too much data, try refining your `params` or selecting a different endpoint.
+
+### DNAC Endpoint Reference
+You may use other official Cisco DNAC REST API endpoints if you know them. Do not hallucinate endpoints. The following are common examples to help you get started (always prefix with `/dna/intent/api/v1/`):
+- **Sites**: `/site` (GET, query by `name` to get site Id)
+- **Site Health**: `/site-health` (GET)
+- **Devices**: `/network-device` (GET, query by `hostname` or `macAddress` to get device Id)
+- **Device Health**: `/device-health` (GET)
+- **Device Details/Trends**: `/device-detail` (GET, requires `searchBy=macAddress` or `searchBy=identifier` and `identifier=...`)
+- **Issues**: `/issues` (GET, query by `macAddress`, `siteId`, `deviceUuid`)
+
+## RULES
+1. **Never guess ticket/alert stats**. Use the MongoDB tools.
+2. **Visualizations**: If the user asks for a chart, graph, or visualization, use `generate_visualization`. If it's ambiguous, ask for clarification.
+3. **Ask Clarifying Questions**: If the user's query is missing critical context (e.g., they ask for "the device's trend" but didn't specify which device, or "region health" without specifying the region), DO NOT guess or make random API calls. Ask the user for the missing information first.
+4. **Respond clearly**: Use Markdown formatting, bullet points, and bold text for readability.
 
 ## INTENT ANALYSIS RULES
 Before calling any data tools, classify the user's intent:
@@ -557,12 +681,14 @@ class ChatAgent:
         # LiteLLM gateway — already OpenAI-compatible
         base_url = GEMINI_BASE_URL.rstrip('/')
 
+        import httpx
         self.llm = ChatOpenAI(
             model=GEMINI_MODEL,
             api_key=GEMINI_API_KEY,
             base_url=base_url,
             temperature=0.2,
             max_tokens=4096,
+            http_client=httpx.Client(verify=False)
         )
 
         self.tools_schema = _build_langchain_tools()
@@ -674,10 +800,15 @@ class ChatAgent:
                 if tool_name == "generate_visualization" and "error" not in result:
                     charts.append(result)
 
-                # Truncate large results
+                # Truncate large results gracefully without breaking JSON structure
                 result_str = json.dumps(result, default=str)
                 if len(result_str) > 15000:
-                    result_str = result_str[:15000] + '..."}'
+                    logger.warning(f"Result for {tool_name} too large ({len(result_str)} bytes). Truncating.")
+                    truncated_result = {
+                        "error": "The result from this tool was too large and has been truncated. Please use more specific filters.",
+                        "partial_preview": result_str[:2000]
+                    }
+                    result_str = json.dumps(truncated_result)
 
                 messages.append(
                     ToolMessage(

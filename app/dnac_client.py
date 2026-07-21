@@ -45,7 +45,7 @@ class DNACClient:
         logger.info(
             f"DNAC Response:\n"
             f"  Status Code: {response.status_code}\n"
-            f"  Body: {response.text}"
+            f"  Body: [REDACTED AUTH TOKEN]"
         )
         response.raise_for_status()
         self.token = response.json()['Token']
