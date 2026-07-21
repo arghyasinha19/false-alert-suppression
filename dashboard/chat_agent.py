@@ -45,9 +45,10 @@ GEMINI_CA_BUNDLE = os.getenv("GEMINI_CA_BUNDLE", "")  # Path to root CA .pem fil
 if GEMINI_CA_BUNDLE and not os.path.isabs(GEMINI_CA_BUNDLE):
     GEMINI_CA_BUNDLE = os.path.join(_project_root, GEMINI_CA_BUNDLE)
 
-# Set it globally for the requests library
+# Set it globally for both requests library and Python ssl module
 if GEMINI_CA_BUNDLE:
     os.environ["REQUESTS_CA_BUNDLE"] = GEMINI_CA_BUNDLE
+    os.environ["SSL_CERT_FILE"] = GEMINI_CA_BUNDLE
 
 _config_path = os.path.join(_project_root, "config.yaml")
 with open(_config_path, "r") as _f:
