@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Activity, BarChart3, Monitor, Database, Radio
+  Activity, BarChart3, Monitor, Database, Radio, MessageSquare,
 } from 'lucide-react';
 import FalseAlertMetrics from './FalseAlertMetrics';
 import NetworkOperations from './NetworkOperations';
+import ChatPanel from './ChatPanel';
 import './App.css';
 
-const API_BASE = 'http://127.0.0.1:8000';
+const API_BASE = 'http://127.0.0.1:8004';
 const POLL_INTERVAL = 10000;
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [apiConnected, setApiConnected] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(null);
+  const [chatOpen, setChatOpen] = useState(false);
 
   // Poll alerts
   useEffect(() => {
@@ -83,6 +85,17 @@ function App() {
               <span>{item.label}</span>
             </div>
           ))}
+
+          {/* Chat toggle */}
+          <div
+            className={`sidebar-nav-item ${chatOpen ? 'active' : ''}`}
+            onClick={() => setChatOpen(!chatOpen)}
+            style={{ marginTop: '0.5rem' }}
+          >
+            <MessageSquare size={18} />
+            <span>Ops Assistant</span>
+            {!chatOpen && <div className="chat-fab-badge" />}
+          </div>
         </nav>
 
         <div className="sidebar-status">
@@ -127,6 +140,9 @@ function App() {
           )}
         </div>
       </main>
+
+      {/* Chat Panel */}
+      <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} />
     </div>
   );
 }

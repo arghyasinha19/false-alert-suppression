@@ -1,7 +1,10 @@
 import os
 import sys
-from fastapi import FastAPI
+import json
+import asyncio
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 import logging
 from datetime import datetime, timezone, timedelta
 
@@ -298,3 +301,118 @@ def _derive_location(device_name: str) -> str:
     if len(parts) >= 2:
         return f"{parts[0]}-{parts[1]}"
     return parts[0] if parts else "Unknown"
+
+
+# -------------------------------------------------------------------------
+# Chat endpoint
+# -------------------------------------------------------------------------
+
+@app.post("/api/chat")
+async def chat_endpoint(request: Request):
+    """
+    SSE endpoint for the AI chat agent.
+
+    Request body: {"message": str, "history": [{"role":str, "text":str}, ...]}
+
+    Streams Server-Sent Events:
+      {"type": "task",          "label": "Searching MongoDB..."}
+      {"type": "clarification", "text": "...", "suggestions": [...]}
+      {"type": "answer",        "text": "...", "citations": [...], "charts": [...]}
+      {"type": "error",         "text": "..."}
+      {"type": "done"}
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        return StreamingResponse(
+            _sse_error("Invalid JSON request body."),
+            media_type="text/event-stream",
+        )
+
+    user_message = body.get("message", "").strip()
+    history = body.get("history", [])
+
+    if not user_message:
+        return StreamingResponse(
+            _sse_error("Message cannot be empty."),
+            media_type="text/event-stream",
+        )
+
+    async def event_stream():
+        task_events = []
+
+        def on_task(label: str):
+            task_events.append(label)
+
+        # Run agent in a thread to avoid blocking the event loop
+        loop = asyncio.get_event_loop()
+        try:
+            try:
+                from dashboard.chat_agent import ChatAgent
+            except ImportError:
+                from chat_agent import ChatAgent
+            agent = ChatAgent()
+        except Exception as e:
+            yield _sse_encode({"type": "error", "text": str(e)})
+            yield _sse_encode({"type": "done"})
+            return
+
+        # We run the synchronous agent in a thread pool
+        import concurrent.futures
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+
+        future = loop.run_in_executor(
+            executor,
+            lambda: agent.run(user_message, history=history, on_task=on_task),
+        )
+
+        # Poll for task events while agent is running
+        sent_tasks = 0
+        while not future.done():
+            await asyncio.sleep(0.2)
+            while sent_tasks < len(task_events):
+                yield _sse_encode({"type": "task", "label": task_events[sent_tasks]})
+                sent_tasks += 1
+
+        # Flush remaining task events
+        while sent_tasks < len(task_events):
+            yield _sse_encode({"type": "task", "label": task_events[sent_tasks]})
+            sent_tasks += 1
+
+        try:
+            result = future.result()
+        except Exception as e:
+            logger.error(f"Chat agent error: {e}")
+            yield _sse_encode({"type": "error", "text": f"Agent error: {str(e)}"})
+            yield _sse_encode({"type": "done"})
+            return
+
+        # Send result
+        if result.get("clarification"):
+            yield _sse_encode({
+                "type": "clarification",
+                "text": result["clarification"],
+                "suggestions": result.get("suggestions", []),
+            })
+        else:
+            yield _sse_encode({
+                "type": "answer",
+                "text": result.get("text", ""),
+                "citations": result.get("citations", []),
+                "charts": result.get("charts", []),
+            })
+
+        yield _sse_encode({"type": "done"})
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+def _sse_encode(data: dict) -> str:
+    """Encode a dict as an SSE data line."""
+    return f"data: {json.dumps(data, default=str)}\n\n"
+
+
+def _sse_error(message: str):
+    """Generator that yields a single error SSE event."""
+    yield _sse_encode({"type": "error", "text": message})
+    yield _sse_encode({"type": "done"})
