@@ -43,11 +43,24 @@ graph TD
     class M Process;
     M --> E;
     
-    L -->|Yes: Still Active| N[Agent 4: ServiceNow Escalation]
+    L -->|Yes: Still Active| N[Agent 4: ServiceNow Orchestrator]
     class N Process;
-    N --> E;
 
     H -->|Non-Auto Resolving / Uncertain| N;
+
+    N --> O{Incident Status}
+    class O Decision;
+
+    O -->|Active Incident Exists| P[Append Comment]
+    class P Process;
+    O -->|Recently Closed <= 3 days| Q[Re-open Incident]
+    class Q Process;
+    O -->|No/Old Incident| R[Create New Incident]
+    class R Process;
+
+    P --> E
+    Q --> E
+    R --> E
 ```
 
 ### Flow Breakdown
