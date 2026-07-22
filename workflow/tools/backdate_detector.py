@@ -190,7 +190,7 @@ class BackdateDetector:
           - numeric string
           - ISO 8601 string
         """
-        raw = payload.get("raw_timestamp")
+        raw = payload.get("raw_timestamp") or payload.get("timestamp") or payload.get("RAW_TIMESTAMP")
         
         if raw is None:
             return None

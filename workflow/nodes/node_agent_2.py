@@ -78,6 +78,8 @@ def agent_2_logic(state: GraphState) -> Dict[str, Any]:
         or alert.get("issue_name", "")
         or alert.get("description", "")
         or alert.get("details", {}).get("description", "")
+        or alert.get("details", {}).get("Assurance Issue Details", "")
+        or alert.get("details", {}).get("Assurance Issue Name", "")
         or alert.get("name", "")
     )
     
