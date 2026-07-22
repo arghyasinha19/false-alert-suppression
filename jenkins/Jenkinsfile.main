@@ -30,23 +30,38 @@ pipeline {
         stage('Execute Main Agentic Workflow') {
             steps {
                 sh """
-                # Call the FastAPI server
-                curl -s -X POST "http://127.0.0.1:8001/api/v1/invoke" \\
-                     -H "Content-Type: application/json" \\
-                     -d '{
-                           "instance_id": "${params.INSTANCE_ID}",
-                           "event_id": "${params.EVENT_ID}",
-                           "device_id": "${params.DEVICE_ID}",
-                           "device_name": "${params.DEVICE_NAME}",
-                           "severity": "${params.SEVERITY}",
-                           "category": "${params.CATEGORY}",
-                           "status": "${params.STATUS}",
-                           "raw_timestamp": "${params.RAW_TIMESTAMP}",
-                           "correlation_id": "${params.CORRELATION_ID}",
-                           "source": "${params.SOURCE}",
-                           "issue_name": "${params.ISSUE_NAME}",
-                           "issue_details": "${params.ISSUE_DETAILS}"
-                         }' > status.json
+                # Safely invoke the FastAPI server via Python (handles quotes & special chars)
+                python3 -c "
+import sys, json, urllib.request
+
+payload = {
+    'instance_id': sys.argv[1],
+    'event_id': sys.argv[2],
+    'device_id': sys.argv[3],
+    'device_name': sys.argv[4],
+    'severity': sys.argv[5],
+    'category': sys.argv[6],
+    'status': sys.argv[7],
+    'raw_timestamp': sys.argv[8],
+    'correlation_id': sys.argv[9],
+    'source': sys.argv[10],
+    'issue_name': sys.argv[11],
+    'issue_details': sys.argv[12],
+}
+
+data = json.dumps(payload).encode('utf-8')
+req = urllib.request.Request('http://127.0.0.1:8001/api/v1/invoke', data=data, headers={'Content-Type': 'application/json'})
+try:
+    with urllib.request.urlopen(req) as resp:
+        res_bytes = resp.read()
+        with open('status.json', 'wb') as f:
+            f.write(res_bytes)
+except urllib.error.HTTPError as e:
+    err_bytes = e.read()
+    with open('status.json', 'wb') as f:
+        f.write(err_bytes)
+    print(f'HTTP Error {e.code}: {err_bytes.decode(\"utf-8\", errors=\"ignore\")}', file=sys.stderr)
+" "${params.INSTANCE_ID}" "${params.EVENT_ID}" "${params.DEVICE_ID}" "${params.DEVICE_NAME}" "${params.SEVERITY}" "${params.CATEGORY}" "${params.STATUS}" "${params.RAW_TIMESTAMP}" "${params.CORRELATION_ID}" "${params.SOURCE}" "${params.ISSUE_NAME}" "${params.ISSUE_DETAILS}"
                          
                 # Parse exit code based on overall_status
                 python3 -c "

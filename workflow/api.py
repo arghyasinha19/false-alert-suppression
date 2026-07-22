@@ -3,10 +3,10 @@ import sys
 import logging
 import json
 from datetime import datetime, timezone
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Union
 
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 # Ensure project root is in python path
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -45,18 +45,25 @@ async def startup_event():
 
 # Define the expected request payload matching run.py inputs
 class AlertPayload(BaseModel):
-    instance_id: Optional[str] = None
-    event_id: str
-    device_id: str
-    device_name: str
-    severity: Optional[str] = None
+    instance_id: Optional[Union[str, int]] = None
+    event_id: Optional[Union[str, int]] = None
+    device_id: Optional[Union[str, int]] = None
+    device_name: Optional[Union[str, int]] = None
+    severity: Optional[Union[str, int, float]] = None
     category: Optional[str] = None
     status: Optional[str] = None
-    raw_timestamp: Optional[str] = None
-    correlation_id: Optional[str] = None
+    raw_timestamp: Optional[Union[str, int, float]] = None
+    correlation_id: Optional[Union[str, int]] = None
     source: Optional[str] = None
     issue_name: Optional[str] = None
     issue_details: Optional[str] = None
+
+    @field_validator("event_id", "device_id", "device_name", "instance_id", "severity", "raw_timestamp", "correlation_id", mode="before")
+    @classmethod
+    def coerce_to_str_or_none(cls, v: Any) -> Any:
+        if v is None:
+            return None
+        return str(v)
 
 class InvokeResponse(BaseModel):
     overall_status: str

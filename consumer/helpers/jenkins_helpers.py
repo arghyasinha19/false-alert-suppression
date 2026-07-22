@@ -242,16 +242,16 @@ class JenkinsHelper:
         
 def map_dnac_to_jenkins_params(flat: Dict[str, Any]) -> Dict[str, Any]:
     return {
-        "INSTANCE_ID": flat.get("instanceId"),
-        "EVENT_ID": flat.get("eventId"),
-        "DEVICE_ID": flat.get("network.deviceId"),
-        "DEVICE_NAME": flat.get("details.Device"),
-        "SEVERITY": flat.get("severity"),
-        "CATEGORY": flat.get("category"),
-        "STATUS": flat.get("details.Assurance_Issue_Status"),
-        "RAW_TIMESTAMP": flat.get("timestamp"),
-        "CORRELATION_ID": flat.get("correlationId"),
-        "SOURCE": flat.get("_source"),
-        "ISSUE_NAME": flat.get("details.Assurance_Issue_Name"),
-        "ISSUE_DETAILS": flat.get("details.Assurance_Issue_Details"),
+        "INSTANCE_ID": flat.get("instanceId") or flat.get("instance_id") or "",
+        "EVENT_ID": flat.get("eventId") or flat.get("event_id") or "",
+        "DEVICE_ID": flat.get("network.deviceId") or flat.get("network_deviceId") or flat.get("device_id") or "",
+        "DEVICE_NAME": flat.get("details.Device") or flat.get("details_Device") or flat.get("device_name") or flat.get("device") or "",
+        "SEVERITY": flat.get("severity") if flat.get("severity") is not None else "",
+        "CATEGORY": flat.get("category") or "",
+        "STATUS": flat.get("details.Assurance_Issue_Status") or flat.get("details_Assurance_Issue_Status") or flat.get("status") or "",
+        "RAW_TIMESTAMP": flat.get("timestamp") or flat.get("raw_timestamp") or "",
+        "CORRELATION_ID": flat.get("correlationId") or flat.get("correlation_id") or "",
+        "SOURCE": flat.get("_source") or flat.get("source") or "",
+        "ISSUE_NAME": flat.get("details.Assurance_Issue_Name") or flat.get("details_Assurance_Issue_Name") or flat.get("issue_name") or "",
+        "ISSUE_DETAILS": flat.get("details.Assurance_Issue_Details") or flat.get("details_Assurance_Issue_Details") or flat.get("issue_details") or flat.get("description") or "",
     }
