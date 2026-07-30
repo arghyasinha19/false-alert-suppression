@@ -102,7 +102,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
       const ranges = { '24H': 86400000, '7D': 604800000, '30D': 2592000000 };
       const cutoff = now - (ranges[timeRange] || 0);
       result = result.filter(a => {
-        const ts = a.alert_details?.timestamp;
+        const ts = a.alert_details?.timestamp || a.alert_details?.raw_timestamp;
         if (!ts) return true;
         const t = typeof ts === 'number' ? (ts > 1e12 ? ts : ts * 1000) : new Date(ts).getTime();
         return t >= cutoff;
@@ -138,7 +138,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
       const predicted = a.results?.agent_2?.data?.predicted_category || '';
       const snowAction = a.results?.agent_4?.data?.action || '';
       const snowInc = a.results?.agent_4?.data?.incident || '';
-      const device = a.alert_details?.device_name || 'Unknown';
+      const device = a.alert_details?.device_name || a.alert_details?.device || 'Unknown';
 
       if (isBackdated) backdated++;
       else if (predicted === 'Auto resolving') autoResolving++;
@@ -166,7 +166,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
       if (snowAction === 'incident_created') deviceStats[device].snowCreated++;
       if (snowAction === 'incident_reopened') deviceStats[device].snowReopened++;
 
-      const ts = a.alert_details?.timestamp;
+      const ts = a.alert_details?.timestamp || a.alert_details?.raw_timestamp;
       if (ts) {
         try {
           const dt = new Date(typeof ts === 'number' ? (ts > 1e12 ? ts : ts * 1000) : ts);
