@@ -113,10 +113,10 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
         const isBackdated = a.results?.agent_1?.data?.is_backdated;
         if (categoryFilter === 'BACKDATED') return isBackdated;
         if (isBackdated) return false;
-        const predicted = a.results?.agent_2?.data?.predicted_category || '';
-        if (categoryFilter === 'AUTO') return predicted === 'Auto resolving';
-        if (categoryFilter === 'NON_AUTO') return predicted === 'Non-Auto Resolving';
-        if (categoryFilter === 'UNCERTAIN') return predicted !== 'Auto resolving' && predicted !== 'Non-Auto Resolving';
+        const predicted = (a.results?.agent_2?.data?.predicted_category || '').toLowerCase();
+        if (categoryFilter === 'AUTO') return predicted === 'auto resolving';
+        if (categoryFilter === 'NON_AUTO') return predicted === 'non-auto resolving';
+        if (categoryFilter === 'UNCERTAIN') return predicted !== 'auto resolving' && predicted !== 'non-auto resolving';
         return true;
       });
     }
@@ -135,14 +135,14 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
 
     filteredAlerts.forEach(a => {
       const isBackdated = a.results?.agent_1?.data?.is_backdated;
-      const predicted = a.results?.agent_2?.data?.predicted_category || '';
+      const predicted = (a.results?.agent_2?.data?.predicted_category || '').toLowerCase();
       const snowAction = a.results?.agent_4?.data?.action || '';
       const snowInc = a.results?.agent_4?.data?.incident || '';
       const device = a.alert_details?.device_name || a.alert_details?.device || 'Unknown';
 
       if (isBackdated) backdated++;
-      else if (predicted === 'Auto resolving') autoResolving++;
-      else if (predicted === 'Non-Auto Resolving') nonAutoResolving++;
+      else if (predicted === 'auto resolving') autoResolving++;
+      else if (predicted === 'non-auto resolving') nonAutoResolving++;
       else uncertain++;
 
       if (snowAction === 'incident_created') {
@@ -161,8 +161,8 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
       }
       deviceStats[device].total++;
       if (isBackdated) deviceStats[device].false++;
-      else if (predicted === 'Auto resolving') deviceStats[device].autoResolving++;
-      else if (predicted === 'Non-Auto Resolving') deviceStats[device].genuine++;
+      else if (predicted === 'auto resolving') deviceStats[device].autoResolving++;
+      else if (predicted === 'non-auto resolving') deviceStats[device].genuine++;
       if (snowAction === 'incident_created') deviceStats[device].snowCreated++;
       if (snowAction === 'incident_reopened') deviceStats[device].snowReopened++;
 
@@ -173,8 +173,8 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
           const hourKey = dt.toISOString().slice(0, 13) + ':00';
           if (!hourlyBuckets[hourKey]) hourlyBuckets[hourKey] = { time: hourKey, Backdated: 0, 'Auto Resolving': 0, 'Non-Auto Resolving': 0, Uncertain: 0 };
           if (isBackdated) hourlyBuckets[hourKey].Backdated++;
-          else if (predicted === 'Auto resolving') hourlyBuckets[hourKey]['Auto Resolving']++;
-          else if (predicted === 'Non-Auto Resolving') hourlyBuckets[hourKey]['Non-Auto Resolving']++;
+          else if (predicted === 'auto resolving') hourlyBuckets[hourKey]['Auto Resolving']++;
+          else if (predicted === 'non-auto resolving') hourlyBuckets[hourKey]['Non-Auto Resolving']++;
           else hourlyBuckets[hourKey].Uncertain++;
         } catch (e) {}
       }
@@ -467,7 +467,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
                     <td>{details.device_name || 'Unknown'}</td>
                     <td><span className={`badge severity-${details.severity || 3}`}>{details.severity || '—'}</span></td>
                     <td style={{ maxWidth: '170px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{details.issue_name || '—'}</td>
-                    <td style={{ fontSize: '0.76rem', color: 'var(--text-secondary)' }}>{details.timestamp ? new Date(details.timestamp).toLocaleString() : '—'}</td>
+                    <td style={{ fontSize: '0.76rem', color: 'var(--text-secondary)' }}>{(details.timestamp || details.raw_timestamp) ? new Date(details.timestamp || details.raw_timestamp).toLocaleString() : '—'}</td>
                     <td><span className={`badge ${isBackdated ? 'backdated' : 'auto-resolving'}`}>{isBackdated ? 'Suppressed' : 'Fresh'}</span></td>
                     <td>
                       <span className={`badge ${mlCategory.toLowerCase().replace(/[\s/]/g, '-')}`}>{mlCategory}</span>
