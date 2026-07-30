@@ -104,7 +104,8 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
       result = result.filter(a => {
         const ts = a.alert_details?.timestamp || a.alert_details?.raw_timestamp;
         if (!ts) return true;
-        const t = typeof ts === 'number' ? (ts > 1e12 ? ts : ts * 1000) : new Date(ts).getTime();
+        const parsedTs = !isNaN(ts) ? Number(ts) : ts;
+        const t = typeof parsedTs === 'number' ? (parsedTs > 1e12 ? parsedTs : parsedTs * 1000) : new Date(parsedTs).getTime();
         return t >= cutoff;
       });
     }
@@ -169,7 +170,8 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
       const ts = a.alert_details?.timestamp || a.alert_details?.raw_timestamp;
       if (ts) {
         try {
-          const dt = new Date(typeof ts === 'number' ? (ts > 1e12 ? ts : ts * 1000) : ts);
+          const parsedTs = !isNaN(ts) ? Number(ts) : ts;
+          const dt = new Date(typeof parsedTs === 'number' ? (parsedTs > 1e12 ? parsedTs : parsedTs * 1000) : parsedTs);
           const hourKey = dt.toISOString().slice(0, 13) + ':00';
           if (!hourlyBuckets[hourKey]) hourlyBuckets[hourKey] = { time: hourKey, Backdated: 0, 'Auto Resolving': 0, 'Non-Auto Resolving': 0, Uncertain: 0 };
           if (isBackdated) hourlyBuckets[hourKey].Backdated++;
@@ -467,7 +469,14 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
                     <td>{details.device_name || 'Unknown'}</td>
                     <td><span className={`badge severity-${details.severity || 3}`}>{details.severity || '—'}</span></td>
                     <td style={{ maxWidth: '170px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{details.issue_name || '—'}</td>
-                    <td style={{ fontSize: '0.76rem', color: 'var(--text-secondary)' }}>{(details.timestamp || details.raw_timestamp) ? new Date(details.timestamp || details.raw_timestamp).toLocaleString() : '—'}</td>
+                    <td style={{ fontSize: '0.76rem', color: 'var(--text-secondary)' }}>
+                      {(() => {
+                        const ts = details.timestamp || details.raw_timestamp;
+                        if (!ts) return '—';
+                        const pTs = !isNaN(ts) ? Number(ts) : ts;
+                        return new Date(typeof pTs === 'number' ? (pTs > 1e12 ? pTs : pTs * 1000) : pTs).toLocaleString();
+                      })()}
+                    </td>
                     <td><span className={`badge ${isBackdated ? 'backdated' : 'auto-resolving'}`}>{isBackdated ? 'Suppressed' : 'Fresh'}</span></td>
                     <td>
                       <span className={`badge ${mlCategory.toLowerCase().replace(/[\s/]/g, '-')}`}>{mlCategory}</span>
