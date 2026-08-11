@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import {
   BarChart3, AlertTriangle, CheckCircle, Clock, ShieldCheck,
   Activity, Server, TrendingDown, Ticket, Ban, Filter,
-  Zap, Award, FileText, RotateCcw, MessageSquarePlus, PlusCircle
+  Zap, Award, FileText, RotateCcw, MessageSquarePlus, PlusCircle, X
 } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar,
@@ -81,10 +81,204 @@ function generateMockData() {
   return alerts;
 }
 
+/* ── Resizable column hook ── */
+function useResizableColumns() {
+  const tableRef = useRef(null);
+  const startX = useRef(0);
+  const startWidth = useRef(0);
+  const activeCol = useRef(null);
+
+  const onMouseDown = useCallback((e, colIndex) => {
+    e.preventDefault();
+    const table = tableRef.current;
+    if (!table) return;
+    const th = table.querySelectorAll('thead th')[colIndex];
+    if (!th) return;
+    startX.current = e.clientX;
+    startWidth.current = th.offsetWidth;
+    activeCol.current = th;
+
+    const onMouseMove = (ev) => {
+      const diff = ev.clientX - startX.current;
+      const newWidth = Math.max(60, startWidth.current + diff);
+      activeCol.current.style.width = newWidth + 'px';
+      activeCol.current.style.minWidth = newWidth + 'px';
+    };
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      activeCol.current = null;
+    };
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }, []);
+
+  return { tableRef, onMouseDown };
+}
+
+/* ── Event Detail Modal ── */
+function EventDetailModal({ alert, onClose }) {
+  if (!alert) return null;
+  const details = alert.alert_details || {};
+  const results = alert.results || {};
+  const isBackdated = results.agent_1?.data?.is_backdated;
+  const mlCategory = isBackdated ? 'Backdated' : (results.agent_2?.data?.predicted_category || 'Unknown');
+  const confidence = results.agent_2?.data?.confidence;
+  const queueStatus = results.agent_3?.data?.queue_status;
+  const snowAction = results.agent_4?.data?.action;
+  const snowInc = results.agent_4?.data?.incident;
+  const liveStatus = alert.live_snow_status;
+
+  const formatTs = (ts) => {
+    if (!ts) return '—';
+    const pTs = !isNaN(ts) ? Number(ts) : ts;
+    return new Date(typeof pTs === 'number' ? (pTs > 1e12 ? pTs : pTs * 1000) : pTs).toLocaleString();
+  };
+
+  return (
+    <div className="event-modal-overlay" onClick={onClose}>
+      <div className="event-modal" onClick={e => e.stopPropagation()}>
+        <div className="event-modal-header">
+          <h2><Zap size={18} style={{ color: 'var(--accent-blue)' }} /> {details.event_id || 'Event Details'}</h2>
+          <button className="event-modal-close" onClick={onClose}><X size={18} /></button>
+        </div>
+        <div className="event-modal-body">
+          {/* Alert Information */}
+          <div className="event-modal-section">
+            <h3>Alert Information</h3>
+            <div className="event-modal-grid">
+              <div className="event-modal-field">
+                <span className="label">Event ID</span>
+                <span className="value">{details.event_id || '—'}</span>
+              </div>
+              <div className="event-modal-field">
+                <span className="label">Device Name</span>
+                <span className="value">{details.device_name || '—'}</span>
+              </div>
+              <div className="event-modal-field">
+                <span className="label">Device ID</span>
+                <span className="value">{details.device_id || '—'}</span>
+              </div>
+              <div className="event-modal-field">
+                <span className="label">Severity</span>
+                <span className="value"><span className={`badge severity-${details.severity || 3}`}>{details.severity || '—'}</span></span>
+              </div>
+              <div className="event-modal-field">
+                <span className="label">Category</span>
+                <span className="value">{details.category || '—'}</span>
+              </div>
+              <div className="event-modal-field">
+                <span className="label">Status</span>
+                <span className="value"><span className={`badge ${details.status === 'resolved' ? 'auto-resolving' : 'non-auto-resolving'}`}>{details.status || '—'}</span></span>
+              </div>
+              <div className="event-modal-field">
+                <span className="label">Timestamp</span>
+                <span className="value">{formatTs(details.timestamp || details.raw_timestamp)}</span>
+              </div>
+              <div className="event-modal-field">
+                <span className="label">Issue Name</span>
+                <span className="value">{details.issue_name || '—'}</span>
+              </div>
+            </div>
+            {details.issue_details && (
+              <div className="event-modal-field full-width">
+                <span className="label">Issue Details</span>
+                <span className="value">{details.issue_details}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Pipeline Results */}
+          <div className="event-modal-section">
+            <h3>Pipeline Results</h3>
+            <div className="event-modal-pipeline">
+              {/* Agent 1 */}
+              <div className={`pipeline-step ${isBackdated ? 'backdated' : 'fresh'}`}>
+                <div className="pipeline-step-header">
+                  <span className="pipeline-step-num">1</span>
+                  <span className="pipeline-step-title">Backdated Check</span>
+                  <span className={`badge ${isBackdated ? 'backdated' : 'auto-resolving'}`}>{isBackdated ? 'Suppressed' : 'Fresh'}</span>
+                </div>
+                <p>Alert was {isBackdated ? 'identified as backdated and suppressed from further processing.' : 'identified as a fresh alert and passed to classification.'}</p>
+              </div>
+
+              {/* Agent 2 */}
+              {!isBackdated && (
+                <div className={`pipeline-step ${mlCategory.toLowerCase().replace(/[\s/]/g, '-')}`}>
+                  <div className="pipeline-step-header">
+                    <span className="pipeline-step-num">2</span>
+                    <span className="pipeline-step-title">ML Classification</span>
+                    <span className={`badge ${mlCategory.toLowerCase().replace(/[\s/]/g, '-')}`}>{mlCategory}</span>
+                  </div>
+                  <p>Predicted category: <strong>{mlCategory}</strong>{confidence && <> with confidence <strong>{confidence}</strong></>}.</p>
+                </div>
+              )}
+
+              {/* Agent 3 */}
+              {queueStatus && (
+                <div className="pipeline-step queued">
+                  <div className="pipeline-step-header">
+                    <span className="pipeline-step-num">3</span>
+                    <span className="pipeline-step-title">Queue / Re-check</span>
+                    <span className="badge delayed">Queued</span>
+                  </div>
+                  <p>Alert queued for delayed re-check. Queue status: <strong>{queueStatus}</strong>.</p>
+                </div>
+              )}
+
+              {/* Agent 4 */}
+              {snowAction && (
+                <div className="pipeline-step snow">
+                  <div className="pipeline-step-header">
+                    <span className="pipeline-step-num">4</span>
+                    <span className="pipeline-step-title">ServiceNow</span>
+                    <span className={`badge ${snowAction === 'incident_created' ? 'snow-new' : snowAction === 'incident_reopened' ? 'snow-reopen' : 'snow-comment'}`}>{snowAction.replace(/_/g, ' ')}</span>
+                  </div>
+                  <div className="event-modal-grid">
+                    <div className="event-modal-field">
+                      <span className="label">Action</span>
+                      <span className="value">{snowAction.replace(/_/g, ' ')}</span>
+                    </div>
+                    {snowInc && (
+                      <div className="event-modal-field">
+                        <span className="label">Incident #</span>
+                        <span className="value" style={{ color: 'var(--accent-blue)', fontWeight: 700 }}>{snowInc}</span>
+                      </div>
+                    )}
+                    {liveStatus && (
+                      <div className="event-modal-field">
+                        <span className="label">Live Status</span>
+                        <span className="value">{liveStatus}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Raw JSON */}
+          <div className="event-modal-section">
+            <h3>Raw Event Data</h3>
+            <pre className="event-modal-raw">{JSON.stringify(alert, null, 2)}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function FalseAlertMetrics({ alerts: rawAlerts }) {
   const [deviceFilter, setDeviceFilter] = useState('ALL');
   const [timeRange, setTimeRange] = useState('ALL');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
+  const [selectedEvent, setSelectedEvent] = useState(null);
+
+  const { tableRef: traceTableRef, onMouseDown: onTraceColResize } = useResizableColumns();
 
   const alerts = rawAlerts;
 
@@ -432,18 +626,18 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
           )}
         </h3>
         <div style={{ overflowX: 'auto', maxHeight: '460px', overflowY: 'auto' }}>
-          <table className="data-table">
+          <table className="data-table resizable-table" ref={traceTableRef}>
             <thead>
               <tr>
-                <th>Event ID</th>
-                <th>Device</th>
-                <th>Severity</th>
-                <th>Issue</th>
-                <th>Timestamp</th>
-                <th>Agent 1</th>
-                <th>ML Classification</th>
-                <th>Agent 3</th>
-                <th>ServiceNow</th>
+                {['Event ID', 'Device', 'Severity', 'Issue', 'Timestamp', 'Agent 1', 'ML Classification', 'Agent 3', 'ServiceNow'].map((header, idx) => (
+                  <th key={header} style={{ position: 'relative' }}>
+                    {header}
+                    <span
+                      className="col-resize-handle"
+                      onMouseDown={(e) => onTraceColResize(e, idx)}
+                    />
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -465,7 +659,15 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
                 }
                 return (
                   <tr key={i}>
-                    <td style={{ fontWeight: 700, fontSize: '0.8rem' }}>{details.event_id || `EVT-${i}`}</td>
+                    <td>
+                      <button
+                        className="event-id-link"
+                        onClick={() => setSelectedEvent(alert)}
+                        title="Click to view full event details"
+                      >
+                        {details.event_id || `EVT-${i}`}
+                      </button>
+                    </td>
                     <td>{details.device_name || 'Unknown'}</td>
                     <td><span className={`badge severity-${details.severity || 3}`}>{details.severity || '—'}</span></td>
                     <td style={{ maxWidth: '170px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{details.issue_name || '—'}</td>
@@ -494,6 +696,9 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
           </table>
         </div>
       </div>
+
+      {/* Event Detail Modal */}
+      <EventDetailModal alert={selectedEvent} onClose={() => setSelectedEvent(null)} />
     </>
   );
 }
