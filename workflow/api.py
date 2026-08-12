@@ -132,23 +132,23 @@ async def invoke_workflow(alert: AlertPayload):
             runtime_error=str(e)
         )
 
-def check_dnac_status(device_id: str, event_id: str, instance_id: str = None) -> bool:
+def check_dnac_status(
+    device_id: str = None,
+    event_id: str = None,
+    instance_id: str = None,
+    device_name: str = None,
+    issue_name: str = None,
+    issue_details: str = None
+) -> Union[bool, str]:
     """
-    Check DNAC to see if the alert is still active by calling
-    DNACClient.get_issue_status().
-
-    Uses instance_id (the DNAC issue ID) as the primary lookup key.
-    Falls back to event_id if instance_id is not available.
-
-    Returns True if still active, False if resolved/cleared.
+    Check DNAC to see if the alert is still active.
+    Returns:
+      - True if still active in DNAC (primary check or fallback active match)
+      - False if resolved in DNAC (primary check or fallback resolved match)
+      - "Uncertain" if alert cannot be found in active or resolved lists
     """
     import yaml
     from app.dnac_client import DNACClient
-
-    issue_id = instance_id or event_id
-    if not issue_id:
-        logger.warning("No instance_id or event_id available. Cannot check DNAC status. Assuming still active.")
-        return True
 
     try:
         config_path = os.path.join(project_root, "config.yaml")
@@ -158,24 +158,63 @@ def check_dnac_status(device_id: str, event_id: str, instance_id: str = None) ->
         dnac_config = config.get("dnac", {})
         client = DNACClient(dnac_config)
 
-        logger.info(f"Querying DNAC for issue status: issue_id={issue_id}, device_id={device_id}, event_id={event_id}")
-        status = client.get_issue_status(issue_id)
+        # 1. Primary check using instance_id
+        if instance_id:
+            status = client.get_issue_status(instance_id)
+            logger.info(f"DNAC primary status check for instance_id={instance_id}: status={status}")
+            if status != "NOT_FOUND":
+                if status.upper() in ("RESOLVED", "DELETED", "CLEARED", "IGNORED"):
+                    return False
+                else:
+                    return True
+            logger.info(f"instance_id={instance_id} returned NOT_FOUND (404). Triggering device fallback check.")
 
-        if status.upper() in ("RESOLVED", "DELETED", "CLEARED"):
-            logger.info(f"DNAC reports issue {issue_id} as '{status}' — alert has auto-resolved.")
+        # Helper function for description matching
+        def is_match(issue: dict) -> bool:
+            target_texts = [str(t).strip().lower() for t in [issue_name, issue_details, event_id] if t]
+            if not target_texts:
+                return False
+            issue_texts = [
+                str(issue.get(k, "")).strip().lower()
+                for k in ["name", "issueName", "description", "issueDescription", "issueDetails", "title", "summary", "eventId"]
+                if issue.get(k)
+            ]
+            for target in target_texts:
+                for itext in issue_texts:
+                    if target in itext or itext in target:
+                        return True
             return False
-        else:
-            logger.warning(f"DNAC reports issue {issue_id} as '{status}' — alert is STILL ACTIVE.")
-            return True
+
+        # 2. Fallback Step A: Check active device issues
+        logger.info(f"Checking active issues for device_id={device_id}, device_name={device_name}")
+        active_issues = client.get_device_issues(device_id=device_id, device_name=device_name, issue_status="ACTIVE")
+        for issue in active_issues:
+            iss_status = str(issue.get("issueStatus", issue.get("status", "ACTIVE"))).upper()
+            if iss_status not in ["RESOLVED", "IGNORED", "CLEARED", "DELETED"]:
+                if is_match(issue):
+                    logger.info(f"Fallback check: Found matching active issue on device {device_id}/{device_name}")
+                    return True
+
+        # 3. Fallback Step B: Check resolved device issues
+        logger.info(f"Checking resolved issues for device_id={device_id}, device_name={device_name}")
+        resolved_issues = client.get_device_issues(device_id=device_id, device_name=device_name, issue_status="RESOLVED")
+        for issue in resolved_issues:
+            iss_status = str(issue.get("issueStatus", issue.get("status", "RESOLVED"))).upper()
+            if iss_status in ["RESOLVED", "IGNORED", "CLEARED", "DELETED"]:
+                if is_match(issue):
+                    logger.info(f"Fallback check: Found matching resolved issue on device {device_id}/{device_name}")
+                    return False
+
+        # 4. Fallback Step C: If not found in active or resolved list -> Uncertain
+        logger.warning(f"Fallback check: Issue not found in active or resolved issues for device {device_id}/{device_name}. Marking as Uncertain.")
+        return "Uncertain"
 
     except FileNotFoundError:
-        logger.error(f"config.yaml not found at {config_path}. Cannot initialize DNACClient. Assuming alert still active.")
-        return True
+        logger.error(f"config.yaml not found at {config_path}. Cannot initialize DNACClient. Defaulting to Uncertain.")
+        return "Uncertain"
     except Exception as e:
-        logger.error(f"Failed to check DNAC status for issue {issue_id}: {e}", exc_info=True)
-        # Fail-safe: assume still active so it gets escalated
-        logger.warning("Defaulting to 'still active' due to DNAC check failure.")
-        return True
+        logger.error(f"Failed to check DNAC status for device {device_id}: {e}", exc_info=True)
+        return "Uncertain"
 
 @app.post("/api/v1/invoke/delayed", response_model=InvokeResponse, tags=["Workflow"])
 async def invoke_delayed_workflow(alert: AlertPayload):
@@ -190,13 +229,26 @@ async def invoke_delayed_workflow(alert: AlertPayload):
     logger.info(f"Invoking delayed check for event_id: {alert.event_id}")
     final_state = None
     try:
-        is_active = check_dnac_status(alert.device_id, alert.event_id, instance_id=alert.instance_id)
-        if is_active:
+        status = check_dnac_status(
+            device_id=alert.device_id,
+            event_id=alert.event_id,
+            instance_id=alert.instance_id,
+            device_name=alert.device_name,
+            issue_name=alert.issue_name,
+            issue_details=alert.issue_details
+        )
+        if status is True or status == "ACTIVE":
             logger.warning(f"Alert {alert.event_id} STILL ACTIVE. Forcing escalation.")
             initial_state["results"]["agent_2"] = {
                 "data": {"predicted_category": "Non-Auto Resolving"}
             }
-            
+            agent4_result = agent_4_servicenow(initial_state)
+            initial_state["results"]["agent_4"] = agent4_result
+        elif status == "Uncertain":
+            logger.warning(f"Alert {alert.event_id} status UNCERTAIN in DNAC. Forcing escalation to be safe.")
+            initial_state["results"]["agent_2"] = {
+                "data": {"predicted_category": "Uncertain"}
+            }
             agent4_result = agent_4_servicenow(initial_state)
             initial_state["results"]["agent_4"] = agent4_result
         else:

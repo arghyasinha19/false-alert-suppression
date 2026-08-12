@@ -228,9 +228,9 @@ class DNACClient:
                 f"DNAC Response:\n"
                 f"  Status Code: 404 (Not Found)\n"
                 f"  Body: {response.text}\n"
-                f"  -> Issue {issue_id} not found. Assuming resolved/cleared."
+                f"  -> Issue {issue_id} not found."
             )
-            return "RESOLVED"
+            return "NOT_FOUND"
             
         if not response.ok:
             logger.error(
@@ -255,3 +255,47 @@ class DNACClient:
         
         logger.info(f"DNAC issue {issue_id} status is: {status}")
         return status
+
+    def get_device_issues(
+        self,
+        device_id: str = None,
+        device_name: str = None,
+        issue_status: str = None
+    ) -> list:
+        """
+        Query DNAC for issues associated with a device (and optionally filtered by issueStatus).
+        Returns a list of issue objects (dicts).
+        """
+        url = f"{self.base_url}/dna/intent/api/v1/issues"
+        params = {}
+        if device_id:
+            params["deviceUuid"] = device_id
+        if device_name:
+            params["deviceName"] = device_name
+        if issue_status:
+            params["issueStatus"] = issue_status
+
+        logger.info(
+            f"DNAC Request:\n"
+            f"  Method: GET\n"
+            f"  URL: {url}\n"
+            f"  Params: {json.dumps(params)}"
+        )
+
+        try:
+            response = requests.get(url, headers=self._get_headers(), params=params, verify=self.verify_ssl)
+            if response.status_code in (404, 204):
+                logger.info(f"DNAC Response: {response.status_code} (No issues found for device)")
+                return []
+            response.raise_for_status()
+            data = response.json()
+            resp_obj = data.get("response", data)
+            if isinstance(resp_obj, list):
+                return resp_obj
+            elif isinstance(resp_obj, dict):
+                return [resp_obj]
+            return []
+        except Exception as e:
+            logger.error(f"Failed to fetch device issues from DNAC: {e}")
+            return []
+
