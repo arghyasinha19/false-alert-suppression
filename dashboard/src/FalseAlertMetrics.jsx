@@ -352,12 +352,13 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
 
       // Device stats
       if (!deviceStats[device]) {
-        deviceStats[device] = { device, genuine: 0, false: 0, autoResolving: 0, total: 0, snowCreated: 0, snowReopened: 0 };
+        deviceStats[device] = { device, genuine: 0, false: 0, autoResolving: 0, uncertain: 0, total: 0, snowCreated: 0, snowReopened: 0 };
       }
       deviceStats[device].total++;
       if (isBackdated) deviceStats[device].false++;
       else if (predicted === 'auto resolving') deviceStats[device].autoResolving++;
       else if (predicted === 'non-auto resolving') deviceStats[device].genuine++;
+      else deviceStats[device].uncertain++;
       if (snowAction === 'incident_created') deviceStats[device].snowCreated++;
       if (snowAction === 'incident_reopened') deviceStats[device].snowReopened++;
 
@@ -400,6 +401,31 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
 
   const getRankClass = (rank) => rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : 'default';
 
+  const getBarColor = (d) => {
+    const auto = d.autoResolving || 0;
+    const unc = d.uncertain || 0;
+    const gen = d.genuine || 0;
+    const f = d.false || 0;
+
+    if (auto >= gen && auto >= unc && auto > 0) return 'var(--accent-green)';
+    if (unc >= gen && unc >= auto && unc > 0) return 'var(--accent-blue)';
+    if (gen > 0 && gen >= auto && gen >= unc) return 'var(--accent-red)';
+    if (f > 0) return 'var(--accent-blue)';
+    return 'var(--accent-blue)';
+  };
+
+  const TRACE_COLUMNS = [
+    { key: 'event_id', label: 'Event ID', width: '220px', minWidth: '160px' },
+    { key: 'device', label: 'Device', width: '180px', minWidth: '130px' },
+    { key: 'severity', label: 'Severity', width: '85px', minWidth: '70px' },
+    { key: 'issue', label: 'Issue', width: '200px', minWidth: '140px' },
+    { key: 'timestamp', label: 'Timestamp', width: '160px', minWidth: '130px' },
+    { key: 'agent1', label: 'Agent 1', width: '100px', minWidth: '85px' },
+    { key: 'ml', label: 'ML Classification', width: '180px', minWidth: '140px' },
+    { key: 'agent3', label: 'Agent 3', width: '95px', minWidth: '80px' },
+    { key: 'snow', label: 'ServiceNow', width: '190px', minWidth: '140px' },
+  ];
+
   return (
     <>
       {/* Filter Bar */}
@@ -421,131 +447,113 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
         ))}
       </div>
 
-      {/* KPI Cards Row 1 */}
+      {/* KPI Header Grid */}
       <div className="kpi-grid">
-        <div className="glass-card kpi-card highlight-blue">
-          <div className="kpi-icon blue"><Activity size={20} /></div>
+        <div className="glass-card kpi-card clickable" onClick={() => setCategoryFilter('ALL')}>
+          <div className="kpi-icon-wrapper blue">
+            <Activity size={20} />
+          </div>
           <div className="kpi-content">
-            <h3>Total Processed</h3>
-            <p className="value">{kpi.total}</p>
-            <p className="sub-value">alerts ingested</p>
+            <span className="kpi-title">Total Alerts Received</span>
+            <div className="kpi-value">{kpi.total}</div>
+            <div className="kpi-subtext">Processed by pipeline</div>
           </div>
         </div>
-        <div className="glass-card kpi-card highlight-green">
-          <div className="kpi-icon green"><ShieldCheck size={20} /></div>
+
+        <div className="glass-card kpi-card clickable" onClick={() => setCategoryFilter('BACKDATED')}>
+          <div className="kpi-icon-wrapper purple">
+            <Clock size={20} />
+          </div>
           <div className="kpi-content">
-            <h3>Suppression Rate</h3>
-            <p className="value" style={{ color: 'var(--accent-green)' }}>{kpi.suppressionRate}%</p>
-            <p className="sub-value">noise eliminated</p>
+            <span className="kpi-title">Backdated / Suppressed</span>
+            <div className="kpi-value">{kpi.backdated}</div>
+            <div className="kpi-subtext">Agent 1 suppressed</div>
           </div>
         </div>
-        <div className="glass-card kpi-card highlight-cyan">
-          <div className="kpi-icon cyan"><Ban size={20} /></div>
+
+        <div className="glass-card kpi-card clickable" onClick={() => setCategoryFilter('AUTO')}>
+          <div className="kpi-icon-wrapper green">
+            <CheckCircle2 size={20} />
+          </div>
           <div className="kpi-content">
-            <h3>Tickets Avoided</h3>
-            <p className="value">{kpi.ticketsAvoided}</p>
-            <p className="sub-value">SNOW tickets prevented</p>
+            <span className="kpi-title">Auto-Resolving</span>
+            <div className="kpi-value">{kpi.autoResolving}</div>
+            <div className="kpi-subtext">Agent 2 predicted</div>
           </div>
         </div>
-        <div className="glass-card kpi-card highlight-red">
-          <div className="kpi-icon red"><Ticket size={20} /></div>
+
+        <div className="glass-card kpi-card clickable" onClick={() => setCategoryFilter('NON_AUTO')}>
+          <div className="kpi-icon-wrapper red">
+            <AlertTriangle size={20} />
+          </div>
           <div className="kpi-content">
-            <h3>SNOW Tickets</h3>
-            <p className="value">{kpi.totalSnowTickets}</p>
-            <p className="sub-value">{kpi.snowCreated} new · {kpi.snowAppended} comments · {kpi.snowReopened} reopened</p>
+            <span className="kpi-title">Non-Auto Resolving</span>
+            <div className="kpi-value">{kpi.nonAutoResolving}</div>
+            <div className="kpi-subtext">Escalated to ServiceNow</div>
+          </div>
+        </div>
+
+        <div className="glass-card kpi-card clickable" onClick={() => setCategoryFilter('UNCERTAIN')}>
+          <div className="kpi-icon-wrapper orange">
+            <ShieldAlert size={20} />
+          </div>
+          <div className="kpi-content">
+            <span className="kpi-title">Uncertain</span>
+            <div className="kpi-value">{kpi.uncertain}</div>
+            <div className="kpi-subtext">Flagged for review</div>
           </div>
         </div>
       </div>
 
-      {/* KPI Cards Row 2 */}
-      <div className="kpi-grid">
-        <div className="glass-card kpi-card" onClick={() => setCategoryFilter('BACKDATED')}>
-          <div className="kpi-icon blue"><Clock size={20} /></div>
-          <div className="kpi-content">
-            <h3>Backdated / Suppressed</h3>
-            <p className="value">{kpi.backdated}</p>
+      {/* Suppression Rate & SNOW Impact Summary */}
+      <div className="metrics-summary-grid">
+        <div className="glass-card summary-card green">
+          <div className="summary-header">
+            <ShieldCheck size={20} />
+            <span>Suppression Rate</span>
           </div>
+          <div className="summary-value">{kpi.suppressionRate}%</div>
+          <p className="summary-desc">{kpi.ticketsAvoided} out of {kpi.total} total alerts prevented from cluttering SOC queues.</p>
         </div>
-        <div className="glass-card kpi-card" onClick={() => setCategoryFilter('AUTO')}>
-          <div className="kpi-icon green"><CheckCircle size={20} /></div>
-          <div className="kpi-content">
-            <h3>Auto-Resolving</h3>
-            <p className="value">{kpi.autoResolving}</p>
-            <p className="sub-value">queued for delayed re-check</p>
-          </div>
-        </div>
-        <div className="glass-card kpi-card" onClick={() => setCategoryFilter('NON_AUTO')}>
-          <div className="kpi-icon red"><AlertTriangle size={20} /></div>
-          <div className="kpi-content">
-            <h3>Non-Auto Resolving</h3>
-            <p className="value">{kpi.nonAutoResolving}</p>
-            <p className="sub-value">escalated to ServiceNow</p>
-          </div>
-        </div>
-        <div className="glass-card kpi-card" onClick={() => setCategoryFilter('UNCERTAIN')}>
-          <div className="kpi-icon yellow"><Zap size={20} /></div>
-          <div className="kpi-content">
-            <h3>Uncertain</h3>
-            <p className="value">{kpi.uncertain}</p>
-            <p className="sub-value">low ML confidence</p>
-          </div>
-        </div>
-      </div>
 
-      {/* ===== SNOW TICKET DETAIL CARDS ===== */}
-      <p className="section-title"><FileText size={14} /> ServiceNow Ticket Details</p>
-      <div className="snow-detail-grid">
-        <div className="snow-detail-card">
-          <h4><PlusCircle size={16} style={{ color: 'var(--accent-blue)' }} /> New Incidents Created ({snowDetails.newDevices.length})</h4>
-          {snowDetails.newDevices.length === 0 ? (
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>No new incidents in this period.</p>
-          ) : (
-            <ul className="snow-device-list">
-              {snowDetails.newDevices.map((item, i) => (
-                <li key={i}>
-                  <span className="snow-device-name">{item.device}</span>
-                  <span className="snow-device-inc">{item.incident}</span>
-                </li>
-              ))}
-            </ul>
-          )}
+        <div className="glass-card summary-card blue">
+          <div className="summary-header">
+            <TrendingUp size={20} />
+            <span>ServiceNow Tickets Avoided</span>
+          </div>
+          <div className="summary-value">{kpi.ticketsAvoided}</div>
+          <p className="summary-desc">Direct engineering hours saved across operational teams.</p>
         </div>
-        <div className="snow-detail-card">
-          <h4><RotateCcw size={16} style={{ color: 'var(--accent-orange)' }} /> Incidents Re-opened ({snowDetails.reopenDevices.length})</h4>
-          {snowDetails.reopenDevices.length === 0 ? (
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>No re-opened incidents in this period.</p>
-          ) : (
-            <ul className="snow-device-list">
-              {snowDetails.reopenDevices.map((item, i) => (
-                <li key={i}>
-                  <span className="snow-device-name">{item.device}</span>
-                  <span className="snow-device-inc">{item.incident}</span>
-                </li>
-              ))}
-            </ul>
-          )}
+
+        <div className="glass-card summary-card purple">
+          <div className="summary-header">
+            <Ticket size={20} />
+            <span>ServiceNow Total Actions</span>
+          </div>
+          <div className="summary-value">{kpi.totalSnowTickets}</div>
+          <p className="summary-desc">{kpi.snowCreated} created, {kpi.snowAppended} appended, {kpi.snowReopened} reopened.</p>
         </div>
       </div>
 
       {/* Charts Row */}
       <div className="charts-grid">
         <div className="glass-card chart-card">
-          <h3><TrendingDown size={16} /> Alert Volume Trend</h3>
+          <h3><TrendingUp size={16} /> Alert Volume Trend</h3>
           <div style={{ height: '280px' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={kpi.hourlySeries}>
+              <AreaChart data={kpi.hourlySeries} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="gradBackdated" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#2563eb" stopOpacity={0.2} />
-                    <stop offset="100%" stopColor="#2563eb" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0.0} />
                   </linearGradient>
                   <linearGradient id="gradAuto" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#059669" stopOpacity={0.2} />
-                    <stop offset="100%" stopColor="#059669" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#059669" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#059669" stopOpacity={0.0} />
                   </linearGradient>
                   <linearGradient id="gradNonAuto" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#dc2626" stopOpacity={0.2} />
-                    <stop offset="100%" stopColor="#dc2626" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#dc2626" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#dc2626" stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
@@ -580,25 +588,25 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
       <div className="glass-card table-card">
         <h3><Award size={16} /> Device Ranking — by Alert Profile</h3>
         <div style={{ overflowX: 'auto' }}>
-          <table className="rank-table">
+          <table className="rank-table" style={{ minWidth: '950px' }}>
             <thead>
               <tr>
                 <th style={{ width: '50px' }}>Rank</th>
-                <th>Device</th>
-                <th>Total</th>
-                <th>Genuine Alerts</th>
-                <th>False / Suppressed</th>
-                <th>Auto-Resolving</th>
-                <th>SNOW Created</th>
-                <th>SNOW Reopened</th>
-                <th style={{ minWidth: '100px' }}>Volume</th>
+                <th style={{ width: '180px', minWidth: '130px' }}>Device</th>
+                <th style={{ width: '70px' }}>Total</th>
+                <th style={{ width: '120px' }}>Genuine Alerts</th>
+                <th style={{ width: '130px' }}>False / Suppressed</th>
+                <th style={{ width: '120px' }}>Auto-Resolving</th>
+                <th style={{ width: '120px' }}>SNOW Created</th>
+                <th style={{ width: '120px' }}>SNOW Reopened</th>
+                <th style={{ width: '120px', minWidth: '100px' }}>Volume</th>
               </tr>
             </thead>
             <tbody>
               {deviceRanking.slice(0, 15).map(d => (
                 <tr key={d.device}>
                   <td><span className={`rank-number ${getRankClass(d.rank)}`}>{d.rank}</span></td>
-                  <td style={{ fontWeight: 700, fontSize: '0.82rem' }}>{d.device}</td>
+                  <td style={{ fontWeight: 700, fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={d.device}>{d.device}</td>
                   <td style={{ fontWeight: 700 }}>{d.total}</td>
                   <td><span className="badge non-auto">{d.genuine}</span></td>
                   <td><span className="badge backdated">{d.false}</span></td>
@@ -607,7 +615,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
                   <td>{d.snowReopened > 0 ? <span className="badge snow-reopen">{d.snowReopened}</span> : <span style={{ color: 'var(--text-tertiary)' }}>—</span>}</td>
                   <td>
                     <div className="mini-bar">
-                      <div className="mini-bar-fill" style={{ width: `${d.pct}%`, background: d.genuine > d.false ? 'var(--accent-red)' : 'var(--accent-blue)' }} />
+                      <div className="mini-bar-fill" style={{ width: `${d.pct}%`, background: getBarColor(d) }} />
                     </div>
                   </td>
                 </tr>
@@ -626,12 +634,12 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
           )}
         </h3>
         <div style={{ overflowX: 'auto', maxHeight: '460px', overflowY: 'auto' }}>
-          <table className="data-table resizable-table" ref={traceTableRef}>
+          <table className="data-table resizable-table" ref={traceTableRef} style={{ minWidth: '1410px' }}>
             <thead>
               <tr>
-                {['Event ID', 'Device', 'Severity', 'Issue', 'Timestamp', 'Agent 1', 'ML Classification', 'Agent 3', 'ServiceNow'].map((header, idx) => (
-                  <th key={header} style={{ position: 'relative' }}>
-                    {header}
+                {TRACE_COLUMNS.map((col, idx) => (
+                  <th key={col.key} style={{ width: col.width, minWidth: col.minWidth, position: 'relative' }}>
+                    {col.label}
                     <span
                       className="col-resize-handle"
                       onMouseDown={(e) => onTraceColResize(e, idx)}
@@ -659,19 +667,25 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
                 }
                 return (
                   <tr key={i}>
-                    <td>
+                    <td style={{ width: TRACE_COLUMNS[0].width, minWidth: TRACE_COLUMNS[0].minWidth, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       <button
                         className="event-id-link"
                         onClick={() => setSelectedEvent(alert)}
-                        title="Click to view full event details"
+                        title={details.event_id || `EVT-${i}`}
                       >
                         {details.event_id || `EVT-${i}`}
                       </button>
                     </td>
-                    <td>{details.device_name || 'Unknown'}</td>
-                    <td><span className={`badge severity-${details.severity || 3}`}>{details.severity || '—'}</span></td>
-                    <td style={{ maxWidth: '170px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{details.issue_name || '—'}</td>
-                    <td style={{ fontSize: '0.76rem', color: 'var(--text-secondary)' }}>
+                    <td style={{ width: TRACE_COLUMNS[1].width, minWidth: TRACE_COLUMNS[1].minWidth, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={details.device_name || 'Unknown'}>
+                      {details.device_name || 'Unknown'}
+                    </td>
+                    <td style={{ width: TRACE_COLUMNS[2].width, minWidth: TRACE_COLUMNS[2].minWidth }}>
+                      <span className={`badge severity-${details.severity || 3}`}>{details.severity || '—'}</span>
+                    </td>
+                    <td style={{ width: TRACE_COLUMNS[3].width, minWidth: TRACE_COLUMNS[3].minWidth, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={details.issue_name || '—'}>
+                      {details.issue_name || '—'}
+                    </td>
+                    <td style={{ width: TRACE_COLUMNS[4].width, minWidth: TRACE_COLUMNS[4].minWidth, fontSize: '0.76rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {(() => {
                         const ts = details.timestamp || details.raw_timestamp;
                         if (!ts) return '—';
@@ -679,13 +693,19 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
                         return new Date(typeof pTs === 'number' ? (pTs > 1e12 ? pTs : pTs * 1000) : pTs).toLocaleString();
                       })()}
                     </td>
-                    <td><span className={`badge ${isBackdated ? 'backdated' : 'auto-resolving'}`}>{isBackdated ? 'Suppressed' : 'Fresh'}</span></td>
-                    <td>
+                    <td style={{ width: TRACE_COLUMNS[5].width, minWidth: TRACE_COLUMNS[5].minWidth }}>
+                      <span className={`badge ${isBackdated ? 'backdated' : 'auto-resolving'}`}>{isBackdated ? 'Suppressed' : 'Fresh'}</span>
+                    </td>
+                    <td style={{ width: TRACE_COLUMNS[6].width, minWidth: TRACE_COLUMNS[6].minWidth, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       <span className={`badge ${mlCategory.toLowerCase().replace(/[\s/]/g, '-')}`}>{mlCategory}</span>
                       {confidence && <span style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', marginLeft: '3px' }}>({confidence})</span>}
                     </td>
-                    <td>{queueStatus ? <span className="badge delayed">Queued</span> : '—'}</td>
-                    <td style={{ fontSize: '0.78rem', color: snowInc ? 'var(--accent-blue)' : 'var(--text-tertiary)', fontWeight: snowInc ? 600 : 400 }}>{snowDisplay}</td>
+                    <td style={{ width: TRACE_COLUMNS[7].width, minWidth: TRACE_COLUMNS[7].minWidth }}>
+                      {queueStatus ? <span className="badge delayed">Queued</span> : '—'}
+                    </td>
+                    <td style={{ width: TRACE_COLUMNS[8].width, minWidth: TRACE_COLUMNS[8].minWidth, fontSize: '0.78rem', color: snowInc ? 'var(--accent-blue)' : 'var(--text-tertiary)', fontWeight: snowInc ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={snowDisplay}>
+                      {snowDisplay}
+                    </td>
                   </tr>
                 );
               })}

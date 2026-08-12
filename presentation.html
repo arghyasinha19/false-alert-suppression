@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>False Alert Suppression System - Presentation</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --bg-card: #111827;
+            --bg-card-hover: #1f293d;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-rose: #f43f5e;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --glass-bg: rgba(17, 24, 39, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            user-select: none;
+        }
+
+        /* Top Progress Bar */
+        .progress-bar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            z-index: 100;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 33.33%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-purple));
+            transition: width 0.3s ease;
+        }
+
+        /* Header Navigation */
+        .header-nav {
+            position: fixed;
+            top: 16px;
+            left: 28px;
+            right: 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 90;
+            pointer-events: none;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #fff;
+            pointer-events: auto;
+            background: var(--glass-bg);
+            padding: 8px 18px;
+            border-radius: 30px;
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(12px);
+        }
+
+        .brand-logo i {
+            color: var(--accent-cyan);
+        }
+
+        .nav-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            pointer-events: auto;
+        }
+
+        .btn-icon {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(12px);
+        }
+
+        .btn-icon:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+            color: var(--accent-cyan);
+        }
+
+        /* Presentation Canvas */
+        .deck-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            width: 92vw;
+            max-width: 1400px;
+            height: 84vh;
+            max-height: 840px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 36px 44px;
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(0.96) translateY(20px);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1) translateY(0);
+            z-index: 10;
+        }
+
+        /* Slide Typography */
+        .slide-header {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .slide-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: var(--accent-cyan);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+
+        .slide-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+
+        .slide-subtitle {
+            font-size: 1rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            font-weight: 400;
+        }
+
+        .slide-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Grid Layouts */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            height: 100%;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        /* Card Styles */
+        .card {
+            background: rgba(17, 24, 39, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(59, 130, 246, 0.4);
+            transform: translateY(-2px);
+            background: rgba(31, 41, 61, 0.5);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .icon-blue { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+        .icon-cyan { background: rgba(6, 182, 212, 0.2); color: var(--accent-cyan); }
+        .icon-purple { background: rgba(139, 92, 246, 0.2); color: var(--accent-purple); }
+        .icon-emerald { background: rgba(16, 185, 129, 0.2); color: var(--accent-emerald); }
+        .icon-amber { background: rgba(245, 158, 11, 0.2); color: var(--accent-amber); }
+        .icon-rose { background: rgba(244, 63, 94, 0.2); color: var(--accent-rose); }
+
+        .card-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .card-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Highlight Stat Banner */
+        .stat-banner {
+            background: linear-gradient(135deg, rgba(244, 63, 94, 0.12), rgba(245, 158, 11, 0.12));
+            border: 1px solid rgba(244, 63, 94, 0.3);
+            border-radius: 20px;
+            padding: 24px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .stat-number-large {
+            font-size: 4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #f43f5e, #fb923c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+        }
+
+        .stat-text-box h3 {
+            font-size: 1.4rem;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .stat-text-box p {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            max-width: 650px;
+        }
+
+        /* Diagram Container & Switcher */
+        .diagram-wrapper {
+            background: #0b0f19;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: auto;
+            position: relative;
+        }
+
+        .tab-switcher {
+            display: flex;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px;
+            border-radius: 12px;
+            width: fit-content;
+        }
+
+        .tab-btn {
+            padding: 6px 18px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background: var(--accent-blue);
+            color: #fff;
+        }
+
+        /* SVG Diagram Styling */
+        .svg-diagram {
+            width: 100%;
+            height: 100%;
+            max-height: 520px;
+        }
+
+        /* Bottom Control Bar */
+        .bottom-nav {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 10px 24px;
+            border-radius: 40px;
+            backdrop-filter: blur(16px);
+            z-index: 90;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-size: 1.1rem;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--accent-cyan);
+        }
+
+        .slide-counter {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+            min-width: 90px;
+            text-align: center;
+        }
+
+        .dots-container {
+            display: flex;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dot.active {
+            background: var(--accent-cyan);
+            width: 28px;
+            border-radius: 10px;
+        }
+
+        .code-pill {
+            font-family: 'Fira Code', monospace;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--accent-cyan);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+        }
+
+        /* Overview Overlay Grid */
+        .overview-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(9, 13, 22, 0.95);
+            backdrop-filter: blur(20px);
+            z-index: 200;
+            display: none;
+            padding: 60px 40px;
+            overflow-y: auto;
+        }
+
+        .overview-modal.active {
+            display: block;
+        }
+
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .overview-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .overview-card:hover {
+            border-color: var(--accent-blue);
+            transform: scale(1.02);
+        }
+
+        .overview-num {
+            font-size: 0.85rem;
+            color: var(--accent-cyan);
+            font-weight: 700;
+        }
+
+        .overview-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Progress Bar -->
+    <div class="progress-bar-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="header-nav">
+        <div class="brand-logo">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>False Alert Suppression</span>
+        </div>
+        <div class="nav-controls">
+            <button class="btn-icon" id="gridToggleBtn" title="Slide Overview (M)"><i class="fa-solid fa-border-all"></i></button>
+            <button class="btn-icon" id="fullscreenBtn" title="Toggle Fullscreen (F)"><i class="fa-solid fa-expand"></i></button>
+        </div>
+    </header>
+
+    <!-- Presentation Deck Canvas -->
+    <main class="deck-container">
+
+        <!-- SLIDE 1: Problem Statement -->
+        <section class="slide active" id="slide-1">
+            <div class="slide-header">
+                <div>
+                    <div class="slide-tag"><i class="fa-solid fa-triangle-exclamation"></i> Slide 1 of 3 &bull; Problem Statement</div>
+                    <h2 class="slide-title">Network Alert Noise & High False Alert Volume</h2>
+                    <p class="slide-subtitle">Unvalidated Cisco DNAC alerts create severe ticket pollution and drain SOC engineering resources</p>
+                </div>
+            </div>
+            <div class="slide-body">
+                <!-- Highlight Banner with 48% False Alert Stat -->
+                <div class="stat-banner">
+                    <div class="stat-number-large">48%</div>
+                    <div class="stat-text-box">
+                        <h3>Critical Problem: 48% Volume of False Network Alerts</h3>
+                        <p>Almost half of all incoming Cisco DNAC network notifications represent transient, self-healing events or stale backdated syslog messages that do not require human intervention.</p>
+                    </div>
+                </div>
+
+                <div class="grid-3">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon icon-rose"><i class="fa-solid fa-bell-slash"></i></div>
+                            <div class="card-title">Transient Flapping Events</div>
+                        </div>
+                        <p class="card-desc">Temporary link flaps, momentary CPU spikes, and transient BGP peer drops automatically self-heal within 5 to 10 minutes. Naively ticketing these events immediately generates unnecessary work.</p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon icon-amber"><i class="fa-solid fa-copy"></i></div>
+                            <div class="card-title">ServiceNow Ticket Pollution</div>
+                        </div>
+                        <p class="card-desc">Legacy monitoring systems flood ServiceNow with duplicate incidents for single network issues, cluttering SOC queues and obscuring genuine critical outages.</p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon icon-purple"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                            <div class="card-title">Stale / Backdated Syslogs</div>
+                        </div>
+                        <p class="card-desc">Delayed network telemetry pushes historical alerts (>24 hours old) into the pipeline, wasting SOC engineering hours investigating issues that have already passed.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 2: Solution Architecture & AI ChatOps Agent -->
+        <section class="slide" id="slide-2">
+            <div class="slide-header">
+                <div>
+                    <div class="slide-tag"><i class="fa-solid fa-sitemap"></i> Slide 2 of 3 &bull; Solution Architecture</div>
+                    <h2 class="slide-title">System Architecture & AI ChatOps Agent</h2>
+                    <p class="slide-subtitle">Multi-Agent LangGraph engine, RabbitMQ delay loop, and Gemini-Powered Tool-Calling AI Agent</p>
+                </div>
+                <div class="tab-switcher">
+                    <button class="tab-btn active" onclick="switchDiagram('system')">System Pipeline</button>
+                    <button class="tab-btn" onclick="switchDiagram('control')">Control Flow Logic</button>
+                    <button class="tab-btn" onclick="switchDiagram('chat')">AI ChatOps Agent</button>
+                </div>
+            </div>
+            <div class="slide-body" style="height: 68vh;">
+                <!-- SYSTEM DIAGRAM (PURE INLINE SVG) -->
+                <div class="diagram-wrapper" id="systemDiagramContainer">
+                    <svg class="svg-diagram" viewBox="0 0 1200 520" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="gradBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#1e3a8a" />
+                                <stop offset="100%" stop-color="#3b82f6" />
+                            </linearGradient>
+                            <linearGradient id="gradGreen" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#064e3b" />
+                                <stop offset="100%" stop-color="#10b981" />
+                            </linearGradient>
+                            <linearGradient id="gradAmber" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#78350f" />
+                                <stop offset="100%" stop-color="#f59e0b" />
+                            </linearGradient>
+                            <linearGradient id="gradPurple" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#581c87" />
+                                <stop offset="100%" stop-color="#8b5cf6" />
+                            </linearGradient>
+                            <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#60a5fa"/>
+                            </marker>
+                            <marker id="arrowGreen" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#34d399"/>
+                            </marker>
+                        </defs>
+
+                        <!-- Ingestion Stage -->
+                        <g transform="translate(30, 40)">
+                            <rect width="180" height="70" rx="12" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
+                            <text x="90" y="32" fill="#ffffff" font-size="14" font-weight="bold" text-anchor="middle">Cisco DNAC Webhook</text>
+                            <text x="90" y="52" fill="#94a3b8" font-size="11" text-anchor="middle">Alert Payload Ingestion</text>
+                        </g>
+
+                        <line x1="210" y1="75" x2="265" y2="75" stroke="#60a5fa" stroke-width="2" marker-end="url(#arrow)"/>
+
+                        <g transform="translate(270, 40)">
+                            <rect width="180" height="70" rx="12" fill="url(#gradBlue)" stroke="#60a5fa" stroke-width="2"/>
+                            <text x="90" y="32" fill="#ffffff" font-size="14" font-weight="bold" text-anchor="middle">Main Consumer</text>
+                            <text x="90" y="52" fill="#bfdbfe" font-size="11" text-anchor="middle">Triggers Jenkins Job</text>
+                        </g>
+
+                        <line x1="450" y1="75" x2="505" y2="75" stroke="#60a5fa" stroke-width="2" marker-end="url(#arrow)"/>
+
+                        <!-- LangGraph Container -->
+                        <g transform="translate(510, 20)">
+                            <rect width="660" height="230" rx="16" fill="rgba(15, 23, 42, 0.8)" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="6,6"/>
+                            <text x="330" y="24" fill="#c084fc" font-size="14" font-weight="bold" text-anchor="middle">LangGraph Multi-Agent Orchestration Pipeline</text>
+                            
+                            <!-- Agents -->
+                            <g transform="translate(20, 45)">
+                                <rect width="130" height="60" rx="10" fill="url(#gradPurple)"/>
+                                <text x="65" y="28" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle">Agent 1</text>
+                                <text x="65" y="46" fill="#e9d5ff" font-size="10" text-anchor="middle">Backdated Filter</text>
+                            </g>
+
+                            <line x1="150" y1="75" x2="175" y2="75" stroke="#c084fc" stroke-width="2" marker-end="url(#arrow)"/>
+
+                            <g transform="translate(180, 45)">
+                                <rect width="130" height="60" rx="10" fill="url(#gradPurple)"/>
+                                <text x="65" y="28" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle">Agent 2</text>
+                                <text x="65" y="46" fill="#e9d5ff" font-size="10" text-anchor="middle">DistilBERT Classifier</text>
+                            </g>
+
+                            <line x1="310" y1="75" x2="335" y2="75" stroke="#c084fc" stroke-width="2" marker-end="url(#arrow)"/>
+
+                            <g transform="translate(340, 45)">
+                                <rect width="140" height="60" rx="10" fill="url(#gradAmber)"/>
+                                <text x="70" y="28" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle">Agent 3</text>
+                                <text x="70" y="46" fill="#fef3c7" font-size="10" text-anchor="middle">DLX Delay Scheduler</text>
+                            </g>
+
+                            <line x1="480" y1="75" x2="505" y2="75" stroke="#c084fc" stroke-width="2" marker-end="url(#arrow)"/>
+
+                            <g transform="translate(510, 45)">
+                                <rect width="130" height="60" rx="10" fill="url(#gradGreen)"/>
+                                <text x="65" y="28" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle">Agent 4</text>
+                                <text x="65" y="46" fill="#a7f3d0" font-size="10" text-anchor="middle">ServiceNow Engine</text>
+                            </g>
+
+                            <!-- Bottom Row Agents -->
+                            <g transform="translate(180, 140)">
+                                <rect width="130" height="55" rx="10" fill="#334155"/>
+                                <text x="65" y="28" fill="#ffffff" font-size="11" font-weight="bold" text-anchor="middle">Supervisor Router</text>
+                                <text x="65" y="44" fill="#cbd5e1" font-size="9" text-anchor="middle">Conditional Logic</text>
+                            </g>
+
+                            <g transform="translate(340, 140)">
+                                <rect width="140" height="55" rx="10" fill="#334155"/>
+                                <text x="70" y="28" fill="#ffffff" font-size="11" font-weight="bold" text-anchor="middle">Email & Reporter</text>
+                                <text x="70" y="44" fill="#cbd5e1" font-size="9" text-anchor="middle">Audit Trace Logger</text>
+                            </g>
+                        </g>
+
+                        <!-- RabbitMQ DLX Section -->
+                        <g transform="translate(120, 310)">
+                            <rect width="360" height="170" rx="16" fill="rgba(120, 53, 15, 0.4)" stroke="#f59e0b" stroke-width="2"/>
+                            <text x="180" y="26" fill="#fbbf24" font-size="14" font-weight="bold" text-anchor="middle">RabbitMQ 15-Min DLX Delay Mechanism</text>
+
+                            <g transform="translate(20, 50)">
+                                <rect width="140" height="60" rx="10" fill="url(#gradAmber)"/>
+                                <text x="70" y="28" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle">Wait Queue (wait.q)</text>
+                                <text x="70" y="46" fill="#fef3c7" font-size="10" text-anchor="middle">15m Message TTL</text>
+                            </g>
+
+                            <line x1="160" y1="80" x2="195" y2="80" stroke="#fbbf24" stroke-width="2" marker-end="url(#arrow)"/>
+
+                            <g transform="translate(200, 50)">
+                                <rect width="140" height="60" rx="10" fill="url(#gradAmber)"/>
+                                <text x="70" y="28" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle">Active Queue</text>
+                                <text x="70" y="46" fill="#fef3c7" font-size="10" text-anchor="middle">DLX Eviction Pickup</text>
+                            </g>
+
+                            <text x="180" y="145" fill="#fde68a" font-size="11" text-anchor="middle">&bull; Re-checks Cisco DNAC REST API after 15 mins &bull;</text>
+                        </g>
+
+                        <!-- Connections from Agent 3 to RabbitMQ -->
+                        <path d="M 920 105 L 920 280 L 300 280 L 300 310" fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#arrow)"/>
+
+                        <!-- ServiceNow & MongoDB -->
+                        <g transform="translate(540, 340)">
+                            <rect width="280" height="120" rx="14" fill="url(#gradGreen)"/>
+                            <text x="140" y="32" fill="#ffffff" font-size="15" font-weight="bold" text-anchor="middle">ServiceNow Instance</text>
+                            <text x="140" y="56" fill="#a7f3d0" font-size="11" text-anchor="middle">&bull; Append Comment Worknotes</text>
+                            <text x="140" y="74" fill="#a7f3d0" font-size="11" text-anchor="middle">&bull; Re-open Ticket (&le; 3 Days)</text>
+                            <text x="140" y="92" fill="#a7f3d0" font-size="11" text-anchor="middle">&bull; Net-New Incident Creation</text>
+                        </g>
+
+                        <line x1="1080" y1="105" x2="1080" y2="400" stroke="#34d399" stroke-width="2"/>
+                        <line x1="1080" y1="400" x2="820" y2="400" stroke="#34d399" stroke-width="2" marker-end="url(#arrowGreen)"/>
+
+                        <g transform="translate(870, 340)">
+                            <rect width="300" height="120" rx="14" fill="#1e293b" stroke="#06b6d4" stroke-width="2"/>
+                            <text x="150" y="32" fill="#ffffff" font-size="15" font-weight="bold" text-anchor="middle">MongoDB & React Dashboard</text>
+                            <text x="150" y="56" fill="#67e8f9" font-size="11" text-anchor="middle">&bull; Upsert Alert Results Payload</text>
+                            <text x="150" y="74" fill="#67e8f9" font-size="11" text-anchor="middle">&bull; FastAPI Bridge REST Integration</text>
+                            <text x="150" y="92" fill="#67e8f9" font-size="11" text-anchor="middle">&bull; 15s Auto-Polling Traceability Matrix</text>
+                        </g>
+                    </svg>
+                </div>
+
+                <!-- CONTROL FLOW DIAGRAM (PURE INLINE SVG) -->
+                <div class="diagram-wrapper" id="controlDiagramContainer" style="display: none;">
+                    <svg class="svg-diagram" viewBox="0 0 1200 520" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <marker id="arrowControl" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#38bdf8"/>
+                            </marker>
+                        </defs>
+
+                        <g transform="translate(40, 220)">
+                            <rect width="160" height="80" rx="12" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+                            <text x="80" y="38" fill="#ffffff" font-size="13" font-weight="bold" text-anchor="middle">DNAC Webhook</text>
+                            <text x="80" y="56" fill="#94a3b8" font-size="10" text-anchor="middle">Alert Received</text>
+                        </g>
+
+                        <line x1="200" y1="260" x2="245" y2="260" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrowControl)"/>
+
+                        <g transform="translate(250, 220)">
+                            <rect width="170" height="80" rx="12" fill="#1e3a8a" stroke="#60a5fa" stroke-width="2"/>
+                            <text x="85" y="38" fill="#ffffff" font-size="13" font-weight="bold" text-anchor="middle">Agent 1: Backdate</text>
+                            <text x="85" y="56" fill="#bfdbfe" font-size="10" text-anchor="middle">Timestamp > 24h Check</text>
+                        </g>
+
+                        <line x1="420" y1="260" x2="475" y2="260" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrowControl)"/>
+
+                        <path d="M 335 220 L 335 90 L 980 90" fill="none" stroke="#f43f5e" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#arrowControl)"/>
+                        <text x="345" y="150" fill="#f43f5e" font-size="11" font-weight="bold">Yes: Suppress Alert</text>
+
+                        <g transform="translate(480, 220)">
+                            <rect width="180" height="80" rx="12" fill="#581c87" stroke="#c084fc" stroke-width="2"/>
+                            <text x="90" y="38" fill="#ffffff" font-size="13" font-weight="bold" text-anchor="middle">Agent 2: ML Classifier</text>
+                            <text x="90" y="56" fill="#e9d5ff" font-size="10" text-anchor="middle">DistilBERT ONNX Model</text>
+                        </g>
+
+                        <path d="M 570 300 L 570 380 L 640 380" fill="none" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrowControl)"/>
+                        <text x="580" y="340" fill="#fbbf24" font-size="11" font-weight="bold">Auto-Resolving</text>
+
+                        <g transform="translate(645, 340)">
+                            <rect width="180" height="80" rx="12" fill="#78350f" stroke="#f59e0b" stroke-width="2"/>
+                            <text x="90" y="38" fill="#ffffff" font-size="13" font-weight="bold" text-anchor="middle">Agent 3: 15m DLX Wait</text>
+                            <text x="90" y="56" fill="#fef3c7" font-size="10" text-anchor="middle">Re-check DNAC API</text>
+                        </g>
+
+                        <line x1="660" y1="260" x2="885" y2="260" stroke="#34d399" stroke-width="2" marker-end="url(#arrowControl)"/>
+                        <text x="730" y="250" fill="#34d399" font-size="11" font-weight="bold">Non-Auto Resolving</text>
+
+                        <path d="M 825 380 L 930 380 L 930 305" fill="none" stroke="#34d399" stroke-width="2" marker-end="url(#arrowControl)"/>
+                        <text x="840" y="370" fill="#34d399" font-size="10" font-weight="bold">Still Active</text>
+
+                        <path d="M 735 420 L 735 470 L 1050 470 L 1050 130" fill="none" stroke="#f43f5e" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#arrowControl)"/>
+                        <text x="750" y="460" fill="#f43f5e" font-size="10" font-weight="bold">Self-Healed: Suppress & Exit</text>
+
+                        <g transform="translate(890, 220)">
+                            <rect width="180" height="80" rx="12" fill="#064e3b" stroke="#10b981" stroke-width="2"/>
+                            <text x="90" y="38" fill="#ffffff" font-size="13" font-weight="bold" text-anchor="middle">Agent 4: ServiceNow</text>
+                            <text x="90" y="56" fill="#a7f3d0" font-size="10" text-anchor="middle">Comment / Reopen / Create</text>
+                        </g>
+
+                        <g transform="translate(980, 50)">
+                            <rect width="180" height="70" rx="12" fill="#1e293b" stroke="#06b6d4" stroke-width="2"/>
+                            <text x="90" y="32" fill="#ffffff" font-size="13" font-weight="bold" text-anchor="middle">Reporter Node</text>
+                            <text x="90" y="50" fill="#67e8f9" font-size="10" text-anchor="middle">MongoDB Trace Upsert</text>
+                        </g>
+                    </svg>
+                </div>
+
+                <!-- AI CHATOPS AGENT DIAGRAM & TECHNICAL DETAILS (NEW TAB) -->
+                <div class="diagram-wrapper" id="chatDiagramContainer" style="display: none; padding: 20px;">
+                    <div style="width: 100%; height: 100%; display: flex; flex-direction: column; gap: 16px;">
+                        <!-- Agentic Tool-Calling Pipeline Flow SVG -->
+                        <div style="background: rgba(17, 24, 39, 0.8); border: 1px solid var(--border-color); border-radius: 14px; padding: 12px; height: 190px;">
+                            <svg class="svg-diagram" viewBox="0 0 1100 160" xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <marker id="arrowChat" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#06b6d4"/>
+                                    </marker>
+                                </defs>
+                                <!-- User Input -->
+                                <g transform="translate(20, 45)">
+                                    <rect width="150" height="65" rx="10" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
+                                    <text x="75" y="30" fill="#fff" font-size="12" font-weight="bold" text-anchor="middle">User Natural Query</text>
+                                    <text x="75" y="48" fill="#93c5fd" font-size="10" text-anchor="middle">React Chat Interface</text>
+                                </g>
+                                <line x1="170" y1="77" x2="215" y2="77" stroke="#06b6d4" stroke-width="2" marker-end="url(#arrowChat)"/>
+
+                                <!-- Intent Analyzer -->
+                                <g transform="translate(220, 45)">
+                                    <rect width="160" height="65" rx="10" fill="#581c87" stroke="#c084fc" stroke-width="2"/>
+                                    <text x="80" y="30" fill="#fff" font-size="12" font-weight="bold" text-anchor="middle">1. Intent Classification</text>
+                                    <text x="80" y="48" fill="#e9d5ff" font-size="9" text-anchor="middle">Text / Chart / Ambiguous</text>
+                                </g>
+                                <line x1="380" y1="77" x2="425" y2="77" stroke="#06b6d4" stroke-width="2" marker-end="url(#arrowChat)"/>
+
+                                <!-- Gemini LLM Tool Loop -->
+                                <g transform="translate(430, 25)">
+                                    <rect width="210" height="105" rx="12" fill="url(#gradBlue)" stroke="#60a5fa" stroke-width="2"/>
+                                    <text x="105" y="28" fill="#fff" font-size="13" font-weight="bold" text-anchor="middle">2. Gemini 2.0 Flash Core</text>
+                                    <text x="105" y="48" fill="#bfdbfe" font-size="10" text-anchor="middle">Function Calling Loop</text>
+                                    <text x="105" y="70" fill="#93c5fd" font-size="9" text-anchor="middle">&bull; MongoDB First Policy &bull;</text>
+                                    <text x="105" y="88" fill="#93c5fd" font-size="9" text-anchor="middle">&bull; Live DNAC API Fallback &bull;</text>
+                                </g>
+                                <line x1="640" y1="77" x2="685" y2="77" stroke="#06b6d4" stroke-width="2" marker-end="url(#arrowChat)"/>
+
+                                <!-- Tool Execution Registry -->
+                                <g transform="translate(690, 45)">
+                                    <rect width="180" height="65" rx="10" fill="#78350f" stroke="#f59e0b" stroke-width="2"/>
+                                    <text x="90" y="30" fill="#fff" font-size="12" font-weight="bold" text-anchor="middle">3. 8 Tool Registry</text>
+                                    <text x="90" y="48" fill="#fef3c7" font-size="9" text-anchor="middle">Mongo & DNAC Rest Executors</text>
+                                </g>
+                                <line x1="870" y1="77" x2="915" y2="77" stroke="#06b6d4" stroke-width="2" marker-end="url(#arrowChat)"/>
+
+                                <!-- Response + Chart Spec -->
+                                <g transform="translate(920, 45)">
+                                    <rect width="160" height="65" rx="10" fill="#064e3b" stroke="#10b981" stroke-width="2"/>
+                                    <text x="80" y="30" fill="#fff" font-size="12" font-weight="bold" text-anchor="middle">4. Dynamic Output</text>
+                                    <text x="80" y="48" fill="#a7f3d0" font-size="9" text-anchor="middle">Citations & Recharts Spec</text>
+                                </g>
+                            </svg>
+                        </div>
+
+                        <!-- 4 Technical Feature Cards of AI ChatOps -->
+                        <div class="grid-4" style="height: calc(100% - 200px);">
+                            <div class="card" style="padding: 16px;">
+                                <div class="card-header">
+                                    <div class="card-icon icon-purple"><i class="fa-solid fa-robot"></i></div>
+                                    <div class="card-title" style="font-size: 1rem;">Gemini Agentic Tool Calling</div>
+                                </div>
+                                <p class="card-desc" style="font-size: 0.82rem;">Driven by <span class="code-pill">gemini-2.0-flash</span> function calling. Executes multi-turn tool calling loops with 8 specialized python functions for querying alerts, device status, KPI trends, and DNAC REST endpoints.</p>
+                            </div>
+
+                            <div class="card" style="padding: 16px;">
+                                <div class="card-header">
+                                    <div class="card-icon icon-cyan"><i class="fa-solid fa-layer-group"></i></div>
+                                    <div class="card-title" style="font-size: 1rem;">Dual-Tier Retrieval Architecture</div>
+                                </div>
+                                <p class="card-desc" style="font-size: 0.82rem;">Enforces a <strong>MongoDB First Policy</strong> for instant sub-second local queries. Gracefully falls back to live Cisco DNAC REST APIs (<span class="code-pill">/device-health</span>, <span class="code-pill">/issues</span>) for real-time hardware status verification.</p>
+                            </div>
+
+                            <div class="card" style="padding: 16px;">
+                                <div class="card-header">
+                                    <div class="card-icon icon-amber"><i class="fa-solid fa-filter-circle-xmark"></i></div>
+                                    <div class="card-title" style="font-size: 1rem;">Intent Classification & Clarification</div>
+                                </div>
+                                <p class="card-desc" style="font-size: 0.82rem;">Classifies query intent upfront into <span class="code-pill">TEXT_ONLY</span>, <span class="code-pill">VISUALIZATION</span>, or <span class="code-pill">AMBIGUOUS</span>. Intercepts ambiguous requests to prompt operators with interactive clarifying options.</p>
+                            </div>
+
+                            <div class="card" style="padding: 16px;">
+                                <div class="card-header">
+                                    <div class="card-icon icon-emerald"><i class="fa-solid fa-chart-simple"></i></div>
+                                    <div class="card-title" style="font-size: 1rem;">Dynamic Recharts Spec & Citations</div>
+                                </div>
+                                <p class="card-desc" style="font-size: 0.82rem;">The <span class="code-pill">generate_visualization</span> tool emits structured JSON chart specs rendered natively in React (<span class="code-pill">bar</span>, <span class="code-pill">line</span>, <span class="code-pill">pie</span>, <span class="code-pill">area</span>) alongside verifiable data provenance citations.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 3: Benefits & Business Impact -->
+        <section class="slide" id="slide-3">
+            <div class="slide-header">
+                <div>
+                    <div class="slide-tag"><i class="fa-solid fa-chart-line"></i> Slide 3 of 3 &bull; Strategic Impact</div>
+                    <h2 class="slide-title">Business Impact & Operational Benefits</h2>
+                    <p class="slide-subtitle">Proven MTTR reduction, AI ChatOps operations, zero ticket pollution, and full auditability</p>
+                </div>
+            </div>
+            <div class="slide-body">
+                <div class="grid-4">
+                    <div class="card" style="text-align: center; border-color: rgba(244, 63, 94, 0.4);">
+                        <div style="font-size: 3rem; font-weight: 800; color: var(--accent-rose);">48%</div>
+                        <div class="card-title" style="margin-top: 4px;">False Alert Suppression</div>
+                        <p class="card-desc">Eliminates 48% volume of non-actionable false alerts before any ServiceNow tickets are generated.</p>
+                    </div>
+
+                    <div class="card" style="text-align: center; border-color: rgba(6, 182, 212, 0.4);">
+                        <div style="font-size: 3rem; font-weight: 800; color: var(--accent-cyan);">85%</div>
+                        <div class="card-title" style="margin-top: 4px;">MTTR Reduction</div>
+                        <p class="card-desc">Automated 15-minute verification eliminates manual SOC engineering triage on transient link flaps.</p>
+                    </div>
+
+                    <div class="card" style="text-align: center; border-color: rgba(59, 130, 246, 0.4);">
+                        <div style="font-size: 3rem; font-weight: 800; color: var(--accent-blue);">0%</div>
+                        <div class="card-title" style="margin-top: 4px;">Duplicate Tickets</div>
+                        <p class="card-desc">Agent 4 appends work notes to active incidents or re-opens tickets closed &le; 3 days ago.</p>
+                    </div>
+
+                    <div class="card" style="text-align: center; border-color: rgba(139, 92, 246, 0.4);">
+                        <div style="font-size: 3rem; font-weight: 800; color: var(--accent-purple);">100%</div>
+                        <div class="card-title" style="margin-top: 4px;">AI ChatOps Provenance</div>
+                        <p class="card-desc">Natural language AI queries with full tool-calling audit trail and verifiable citations.</p>
+                    </div>
+                </div>
+
+                <div class="grid-2" style="margin-top: 10px;">
+                    <div class="card" style="background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.3);">
+                        <div class="card-header">
+                            <div class="card-icon icon-emerald"><i class="fa-solid fa-user-shield"></i></div>
+                            <div>
+                                <h4 style="color: #fff; font-size: 1.1rem;">SOC Operational Efficiency & AI Chat Assistant</h4>
+                                <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 2px;">Prevents engineer fatigue, eliminates MongoDB/SQL query barriers with natural language AI troubleshooting, and streams real-time chart visualizations.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="background: rgba(59, 130, 246, 0.08); border-color: rgba(59, 130, 246, 0.3);">
+                        <div class="card-header">
+                            <div class="card-icon icon-blue"><i class="fa-solid fa-cubes"></i></div>
+                            <div>
+                                <h4 style="color: #fff; font-size: 1.1rem;">Modular Multi-Vendor Platform</h4>
+                                <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 2px;">LangGraph agent structure and Gemini function calling enable seamless extension to Arista CloudVision, Juniper MIST, and Cisco Meraki.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bottom Controls Bar -->
+    <nav class="bottom-nav">
+        <button class="nav-btn" id="prevBtn" title="Previous Slide (Left Arrow / PageUp)"><i class="fa-solid fa-chevron-left"></i></button>
+        <div class="dots-container" id="dotsContainer"></div>
+        <span class="slide-counter" id="slideCounter">Slide 1 of 3</span>
+        <button class="nav-btn" id="nextBtn" title="Next Slide (Right Arrow / Space / PageDown)"><i class="fa-solid fa-chevron-right"></i></button>
+    </nav>
+
+    <!-- Slide Overview Modal -->
+    <div class="overview-modal" id="overviewModal">
+        <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto 30px auto;">
+            <h2 style="color: #fff; font-size: 1.8rem;"><i class="fa-solid fa-border-all"></i> Presentation Overview</h2>
+            <button class="btn-icon" id="closeOverviewBtn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="overview-grid" id="overviewGrid"></div>
+    </div>
+
+    <!-- Interactive Script -->
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        let currentSlide = 0;
+
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const slideCounter = document.getElementById('slideCounter');
+        const progressBar = document.getElementById('progressBar');
+        const dotsContainer = document.getElementById('dotsContainer');
+        const overviewModal = document.getElementById('overviewModal');
+        const gridToggleBtn = document.getElementById('gridToggleBtn');
+        const closeOverviewBtn = document.getElementById('closeOverviewBtn');
+        const overviewGrid = document.getElementById('overviewGrid');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+        // Create Dots and Grid Items
+        slides.forEach((slide, index) => {
+            const dot = document.createElement('div');
+            dot.classList.add('dot');
+            if (index === 0) dot.classList.add('active');
+            dot.addEventListener('click', () => goToSlide(index));
+            dotsContainer.appendChild(dot);
+
+            const titleElem = slide.querySelector('.slide-title');
+            const slideTitle = titleElem ? titleElem.innerText : `Slide ${index + 1}`;
+
+            const card = document.createElement('div');
+            card.classList.add('overview-card');
+            card.innerHTML = `
+                <span class="overview-num">SLIDE ${index + 1} OF ${totalSlides}</span>
+                <h3 class="overview-title">${slideTitle}</h3>
+                <span style="font-size: 0.8rem; color: var(--accent-blue);"><i class="fa-solid fa-arrow-right"></i> Click to View</span>
+            `;
+            card.addEventListener('click', () => {
+                goToSlide(index);
+                closeOverview();
+            });
+            overviewGrid.appendChild(card);
+        });
+
+        const dots = document.querySelectorAll('.dot');
+
+        function updateSlide() {
+            slides.forEach((slide, index) => {
+                if (index === currentSlide) {
+                    slide.classList.add('active');
+                } else {
+                    slide.classList.remove('active');
+                }
+            });
+
+            dots.forEach((dot, index) => {
+                if (index === currentSlide) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+
+            slideCounter.innerText = `Slide ${currentSlide + 1} of ${totalSlides}`;
+            const progressPercent = ((currentSlide + 1) / totalSlides) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+        }
+
+        function goToSlide(index) {
+            if (index >= 0 && index < totalSlides) {
+                currentSlide = index;
+                updateSlide();
+            }
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                updateSlide();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlide();
+            }
+        }
+
+        function toggleOverview() {
+            overviewModal.classList.toggle('active');
+        }
+
+        function closeOverview() {
+            overviewModal.classList.remove('active');
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => console.log(err));
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        // Switch Diagram View on Slide 2
+        function switchDiagram(type) {
+            const sysContainer = document.getElementById('systemDiagramContainer');
+            const ctrlContainer = document.getElementById('controlDiagramContainer');
+            const chatContainer = document.getElementById('chatDiagramContainer');
+            const btns = document.querySelectorAll('.tab-btn');
+
+            sysContainer.style.display = 'none';
+            ctrlContainer.style.display = 'none';
+            chatContainer.style.display = 'none';
+            btns.forEach(b => b.classList.remove('active'));
+
+            if (type === 'system') {
+                sysContainer.style.display = 'flex';
+                btns[0].classList.add('active');
+            } else if (type === 'control') {
+                ctrlContainer.style.display = 'flex';
+                btns[1].classList.add('active');
+            } else if (type === 'chat') {
+                chatContainer.style.display = 'flex';
+                btns[2].classList.add('active');
+            }
+        }
+
+        // Event Listeners
+        nextBtn.addEventListener('click', nextSlide);
+        prevBtn.addEventListener('click', prevSlide);
+        gridToggleBtn.addEventListener('click', toggleOverview);
+        closeOverviewBtn.addEventListener('click', closeOverview);
+        fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+        // Keyboard Navigation
+        document.addEventListener('keydown', (e) => {
+            if (overviewModal.classList.contains('active')) {
+                if (e.key === 'Escape' || e.key === 'm' || e.key === 'M') {
+                    closeOverview();
+                }
+                return;
+            }
+
+            if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft' || e.key === 'PageUp' || e.key === 'Backspace') {
+                prevSlide();
+            } else if (e.key === 'Home') {
+                goToSlide(0);
+            } else if (e.key === 'End') {
+                goToSlide(totalSlides - 1);
+            } else if (e.key === 'm' || e.key === 'M') {
+                toggleOverview();
+            } else if (e.key === 'f' || e.key === 'F') {
+                toggleFullscreen();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -431,7 +431,12 @@
   padding: 0.75rem 0.85rem;
   text-align: left;
   border-bottom: 1px solid var(--card-border);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-sizing: border-box;
 }
+
 
 .data-table th {
   color: var(--text-tertiary);
@@ -857,6 +862,11 @@
   transition: all var(--transition-fast);
   text-decoration: none;
   white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .event-id-link:hover {
