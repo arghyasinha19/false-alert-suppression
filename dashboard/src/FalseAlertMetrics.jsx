@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback, useRef } from 'react';
 import {
-  BarChart3, AlertTriangle, CheckCircle, Clock, ShieldCheck,
-  Activity, Server, TrendingDown, Ticket, Ban, Filter,
+  BarChart3, AlertTriangle, CheckCircle, CheckCircle2, Clock, ShieldCheck, ShieldAlert,
+  Activity, Server, TrendingDown, TrendingUp, Ticket, Ban, Filter,
   Zap, Award, FileText, RotateCcw, MessageSquarePlus, PlusCircle, X
 } from 'lucide-react';
 import {
