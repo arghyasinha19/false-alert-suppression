@@ -447,98 +447,117 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
         ))}
       </div>
 
-      {/* KPI Header Grid */}
+      {/* KPI Cards Row 1 */}
       <div className="kpi-grid">
-        <div className="glass-card kpi-card clickable" onClick={() => setCategoryFilter('ALL')}>
-          <div className="kpi-icon-wrapper blue">
-            <Activity size={20} />
-          </div>
+        <div className="glass-card kpi-card highlight-blue">
+          <div className="kpi-icon blue"><Activity size={20} /></div>
           <div className="kpi-content">
-            <span className="kpi-title">Total Alerts Received</span>
-            <div className="kpi-value">{kpi.total}</div>
-            <div className="kpi-subtext">Processed by pipeline</div>
+            <h3>Total Processed</h3>
+            <p className="value">{kpi.total}</p>
+            <p className="sub-value">alerts ingested</p>
           </div>
         </div>
-
-        <div className="glass-card kpi-card clickable" onClick={() => setCategoryFilter('BACKDATED')}>
-          <div className="kpi-icon-wrapper purple">
-            <Clock size={20} />
-          </div>
+        <div className="glass-card kpi-card highlight-green">
+          <div className="kpi-icon green"><ShieldCheck size={20} /></div>
           <div className="kpi-content">
-            <span className="kpi-title">Backdated / Suppressed</span>
-            <div className="kpi-value">{kpi.backdated}</div>
-            <div className="kpi-subtext">Agent 1 suppressed</div>
+            <h3>Suppression Rate</h3>
+            <p className="value" style={{ color: 'var(--accent-green)' }}>{kpi.suppressionRate}%</p>
+            <p className="sub-value">noise eliminated</p>
           </div>
         </div>
-
-        <div className="glass-card kpi-card clickable" onClick={() => setCategoryFilter('AUTO')}>
-          <div className="kpi-icon-wrapper green">
-            <CheckCircle2 size={20} />
-          </div>
+        <div className="glass-card kpi-card highlight-cyan">
+          <div className="kpi-icon cyan"><Ban size={20} /></div>
           <div className="kpi-content">
-            <span className="kpi-title">Auto-Resolving</span>
-            <div className="kpi-value">{kpi.autoResolving}</div>
-            <div className="kpi-subtext">Agent 2 predicted</div>
+            <h3>Tickets Avoided</h3>
+            <p className="value">{kpi.ticketsAvoided}</p>
+            <p className="sub-value">SNOW tickets prevented</p>
           </div>
         </div>
-
-        <div className="glass-card kpi-card clickable" onClick={() => setCategoryFilter('NON_AUTO')}>
-          <div className="kpi-icon-wrapper red">
-            <AlertTriangle size={20} />
-          </div>
+        <div className="glass-card kpi-card highlight-red">
+          <div className="kpi-icon red"><Ticket size={20} /></div>
           <div className="kpi-content">
-            <span className="kpi-title">Non-Auto Resolving</span>
-            <div className="kpi-value">{kpi.nonAutoResolving}</div>
-            <div className="kpi-subtext">Escalated to ServiceNow</div>
-          </div>
-        </div>
-
-        <div className="glass-card kpi-card clickable" onClick={() => setCategoryFilter('UNCERTAIN')}>
-          <div className="kpi-icon-wrapper orange">
-            <ShieldAlert size={20} />
-          </div>
-          <div className="kpi-content">
-            <span className="kpi-title">Uncertain</span>
-            <div className="kpi-value">{kpi.uncertain}</div>
-            <div className="kpi-subtext">Flagged for review</div>
+            <h3>SNOW Tickets</h3>
+            <p className="value">{kpi.totalSnowTickets}</p>
+            <p className="sub-value">{kpi.snowCreated} new · {kpi.snowAppended} comments · {kpi.snowReopened} reopened</p>
           </div>
         </div>
       </div>
 
-      {/* Suppression Rate & SNOW Impact Summary */}
-      <div className="metrics-summary-grid">
-        <div className="glass-card summary-card green">
-          <div className="summary-header">
-            <ShieldCheck size={20} />
-            <span>Suppression Rate</span>
+      {/* KPI Cards Row 2 */}
+      <div className="kpi-grid">
+        <div className="glass-card kpi-card" onClick={() => setCategoryFilter('BACKDATED')}>
+          <div className="kpi-icon blue"><Clock size={20} /></div>
+          <div className="kpi-content">
+            <h3>Backdated / Suppressed</h3>
+            <p className="value">{kpi.backdated}</p>
           </div>
-          <div className="summary-value">{kpi.suppressionRate}%</div>
-          <p className="summary-desc">{kpi.ticketsAvoided} out of {kpi.total} total alerts prevented from cluttering SOC queues.</p>
         </div>
-
-        <div className="glass-card summary-card blue">
-          <div className="summary-header">
-            <TrendingUp size={20} />
-            <span>ServiceNow Tickets Avoided</span>
+        <div className="glass-card kpi-card" onClick={() => setCategoryFilter('AUTO')}>
+          <div className="kpi-icon green"><CheckCircle size={20} /></div>
+          <div className="kpi-content">
+            <h3>Auto-Resolving</h3>
+            <p className="value">{kpi.autoResolving}</p>
+            <p className="sub-value">queued for delayed re-check</p>
           </div>
-          <div className="summary-value">{kpi.ticketsAvoided}</div>
-          <p className="summary-desc">Direct engineering hours saved across operational teams.</p>
         </div>
-
-        <div className="glass-card summary-card purple">
-          <div className="summary-header">
-            <Ticket size={20} />
-            <span>ServiceNow Total Actions</span>
+        <div className="glass-card kpi-card" onClick={() => setCategoryFilter('NON_AUTO')}>
+          <div className="kpi-icon red"><AlertTriangle size={20} /></div>
+          <div className="kpi-content">
+            <h3>Non-Auto Resolving</h3>
+            <p className="value">{kpi.nonAutoResolving}</p>
+            <p className="sub-value">escalated to ServiceNow</p>
           </div>
-          <div className="summary-value">{kpi.totalSnowTickets}</div>
-          <p className="summary-desc">{kpi.snowCreated} created, {kpi.snowAppended} appended, {kpi.snowReopened} reopened.</p>
+        </div>
+        <div className="glass-card kpi-card" onClick={() => setCategoryFilter('UNCERTAIN')}>
+          <div className="kpi-icon yellow"><Zap size={20} /></div>
+          <div className="kpi-content">
+            <h3>Uncertain</h3>
+            <p className="value">{kpi.uncertain}</p>
+            <p className="sub-value">low ML confidence</p>
+          </div>
         </div>
       </div>
+
+      {/* ===== SNOW TICKET DETAIL CARDS ===== */}
+      <p className="section-title"><FileText size={14} /> ServiceNow Ticket Details</p>
+      <div className="snow-detail-grid">
+        <div className="snow-detail-card">
+          <h4><PlusCircle size={16} style={{ color: 'var(--accent-blue)' }} /> New Incidents Created ({snowDetails.newDevices.length})</h4>
+          {snowDetails.newDevices.length === 0 ? (
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>No new incidents in this period.</p>
+          ) : (
+            <ul className="snow-device-list">
+              {snowDetails.newDevices.map((item, i) => (
+                <li key={i}>
+                  <span className="snow-device-name">{item.device}</span>
+                  <span className="snow-device-inc">{item.incident}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div className="snow-detail-card">
+          <h4><RotateCcw size={16} style={{ color: 'var(--accent-orange)' }} /> Incidents Re-opened ({snowDetails.reopenDevices.length})</h4>
+          {snowDetails.reopenDevices.length === 0 ? (
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>No re-opened incidents in this period.</p>
+          ) : (
+            <ul className="snow-device-list">
+              {snowDetails.reopenDevices.map((item, i) => (
+                <li key={i}>
+                  <span className="snow-device-name">{item.device}</span>
+                  <span className="snow-device-inc">{item.incident}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+
 
       {/* Charts Row */}
       <div className="charts-grid">
         <div className="glass-card chart-card">
-          <h3><TrendingUp size={16} /> Alert Volume Trend</h3>
+          <h3><TrendingDown size={16} /> Alert Volume Trend</h3>
           <div style={{ height: '280px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={kpi.hourlySeries} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
