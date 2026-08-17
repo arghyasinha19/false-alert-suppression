@@ -32,6 +32,9 @@ from app.dnac_client import DNACClient
 
 import yaml
 
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 logger = logging.getLogger("chat_agent")
 
 # ---------------------------------------------------------------------------
@@ -41,18 +44,31 @@ GEMINI_BASE_URL = os.getenv("GEMINI_BASE_URL", "https://generativelanguage.googl
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
 GEMINI_CA_BUNDLE = os.getenv("GEMINI_CA_BUNDLE", "")  # Path to root CA .pem file
-# Resolve relative paths against the project root
-if GEMINI_CA_BUNDLE and not os.path.isabs(GEMINI_CA_BUNDLE):
-    GEMINI_CA_BUNDLE = os.path.join(_project_root, GEMINI_CA_BUNDLE)
 
-# Set it globally for both requests library and Python ssl module
-if GEMINI_CA_BUNDLE:
-    os.environ["REQUESTS_CA_BUNDLE"] = GEMINI_CA_BUNDLE
-    os.environ["SSL_CERT_FILE"] = GEMINI_CA_BUNDLE
+# Option to suppress CA bundle and rely on SSL verify=False
+SUPPRESS_CA_BUNDLE = os.getenv("SUPPRESS_CA_BUNDLE", "true").lower() in ("true", "1", "yes")
+
+if SUPPRESS_CA_BUNDLE:
+    # Completely suppress CA bundle environment variables
+    os.environ.pop("REQUESTS_CA_BUNDLE", None)
+    os.environ.pop("SSL_CERT_FILE", None)
+    logger.info("CA Certificate bundle suppressed (using SSL verify=False).")
+elif GEMINI_CA_BUNDLE:
+    if not os.path.isabs(GEMINI_CA_BUNDLE):
+        GEMINI_CA_BUNDLE = os.path.join(_project_root, GEMINI_CA_BUNDLE)
+    if os.path.exists(GEMINI_CA_BUNDLE):
+        os.environ["REQUESTS_CA_BUNDLE"] = GEMINI_CA_BUNDLE
+        os.environ["SSL_CERT_FILE"] = GEMINI_CA_BUNDLE
+    else:
+        logger.warning(f"GEMINI_CA_BUNDLE specified as '{GEMINI_CA_BUNDLE}' but file does not exist. Skipping.")
 
 _config_path = os.path.join(_project_root, "config.yaml")
-with open(_config_path, "r") as _f:
-    _config = yaml.safe_load(_f)
+_config = {}
+if os.path.exists(_config_path):
+    with open(_config_path, "r") as _f:
+        _config = yaml.safe_load(_f) or {}
+else:
+    logger.warning(f"config.yaml not found at {_config_path}. Using empty config defaults.")
 
 # ---------------------------------------------------------------------------
 # Tool implementations
@@ -946,3 +962,56 @@ class ChatAgent:
         elif tool_name == "generate_visualization":
             return f"Generated {result.get('chart_type', '?')} chart: {result.get('title', '?')}"
         return f"{tool_name} completed"
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+    
+    print("=" * 60)
+    print("  DNAC Ops Assistant — Standalone CLI Debugger")
+    print("=" * 60)
+    
+    try:
+        agent = ChatAgent()
+    except Exception as e:
+        print(f"\n[FATAL ERROR INITIALIZING CHAT AGENT]: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+        
+    if len(sys.argv) > 1:
+        prompt = " ".join(sys.argv[1:])
+        print(f"\n[Prompt]: {prompt}\n")
+        try:
+            res = agent.run(prompt, on_task=lambda t: print(f"  [Task Step]: {t}"))
+            print("\n" + "=" * 60)
+            print("RESULT:")
+            print(json.dumps(res, indent=2, default=str))
+            print("=" * 60)
+        except Exception as e:
+            print(f"\n[ERROR DURING CHAT RUN]: {e}")
+            import traceback
+            traceback.print_exc()
+    else:
+        print("\nEntering interactive mode. Type your query (or 'exit' to quit):\n")
+        history = []
+        while True:
+            try:
+                user_input = input("\nYou: ").strip()
+                if not user_input or user_input.lower() in ("exit", "quit"):
+                    break
+                res = agent.run(user_input, history=history, on_task=lambda t: print(f"  [Task Step]: {t}"))
+                print(f"\nAssistant: {res.get('text', res.get('clarification', ''))}")
+                if res.get("citations"):
+                    print(f"\nCitations: {json.dumps(res['citations'], indent=2)}")
+                if res.get("charts"):
+                    print(f"\nCharts: {json.dumps(res['charts'], indent=2)}")
+                history.append({"role": "user", "text": user_input})
+                history.append({"role": "assistant", "text": res.get("text", "")})
+            except KeyboardInterrupt:
+                break
+            except Exception as ex:
+                print(f"\n[ERROR]: {ex}")
+                import traceback
+                traceback.print_exc()
+
