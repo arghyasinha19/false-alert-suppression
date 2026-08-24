@@ -68,31 +68,32 @@ def get_alerts():
     try:
         # Fetch all, omitting the internal MongoDB _id
         alerts = list(collection.find({}, {"_id": 0}))
+    except Exception as e:
+        logger.error(f"Error fetching alerts from MongoDB: {e}")
+        return {"error": str(e), "alerts": []}
 
-        # Extract unique incident numbers
+    # Enrich with live ServiceNow statuses (best-effort — never blocks alerts)
+    try:
         incident_numbers = set()
         for a in alerts:
             inc = safe_get(a, "results", "agent_4", "data", "incident")
             if inc and inc != "Unknown":
                 incident_numbers.add(inc)
 
-        # Bulk fetch live statuses from ServiceNow
         snow_statuses = {}
         if incident_numbers:
             from workflow.tools.servicenow_client import ServiceNowClient
             snow_client = ServiceNowClient()
             snow_statuses = snow_client.get_incidents_by_numbers(list(incident_numbers))
 
-        # Enrich the alerts with the live status
         for a in alerts:
             inc = safe_get(a, "results", "agent_4", "data", "incident")
             if inc in snow_statuses:
                 a["live_snow_status"] = snow_statuses[inc]
-
-        return {"alerts": alerts}
     except Exception as e:
-        logger.error(f"Error fetching alerts: {e}")
-        return {"error": str(e), "alerts": []}
+        logger.warning(f"ServiceNow enrichment failed (alerts still returned): {e}")
+
+    return {"alerts": alerts}
 
 
 @app.get("/api/devices")
