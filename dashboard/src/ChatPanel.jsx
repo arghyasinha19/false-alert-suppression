@@ -6,7 +6,7 @@ import {
 import ChatChart from './ChatChart';
 import './ChatPanel.css';
 
-const API_BASE = 'http://127.0.0.1:8004';
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8004';
 
 /* -----------------------------------------------------------------------
    Simple markdown renderer (bold, lists, code, paragraphs)

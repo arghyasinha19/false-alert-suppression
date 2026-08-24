@@ -8,8 +8,14 @@ from fastapi.responses import StreamingResponse
 import logging
 from datetime import datetime, timezone, timedelta
 
-# Ensure root dir in path to import MongoDBClient
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+# Ensure root dir and dashboard dir are in sys.path to prevent import errors
+dashboard_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(dashboard_dir)
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+if dashboard_dir not in sys.path:
+    sys.path.insert(0, dashboard_dir)
+
 from workflow.tools.mongodb_client import MongoDBClient
 
 # Set up logging to both console and file
@@ -93,7 +99,8 @@ def get_alerts():
 def get_devices():
     """
     Return a unique list of devices with aggregated stats:
-    latest status, total alert count, location (derived from name), active alerts, etc.
+    latest status, total alert count, location (derived from name),
+    active alerts, resolved alerts (split by dnac_live_status), etc.
     """
     collection = mongo.get_collection("alert_results")
     if collection is None:
@@ -119,6 +126,7 @@ def get_devices():
                     "snow_incidents": 0,
                     "last_alert_time": None,
                     "active_alerts": [],
+                    "resolved_alerts": [],
                 }
 
             entry = device_map[name]
@@ -142,20 +150,34 @@ def get_devices():
             if ts:
                 entry["last_alert_time"] = ts
 
-            # Collect active alerts for NOC view
-            status_str = details.get("status", "")
-            if str(status_str).lower() == "active" or not is_backdated:
-                entry["active_alerts"].append({
-                    "event_id": details.get("event_id"),
-                    "severity": details.get("severity"),
-                    "issue_name": details.get("issue_name"),
-                    "issue_details": details.get("issue_details"),
-                    "category": details.get("category"),
-                    "timestamp": ts,
-                    "predicted_category": predicted if not is_backdated else "Backdated",
-                    "snow_incident": safe_get(a, "results", "agent_4", "data", "incident"),
-                    "snow_action": snow_action,
-                })
+            # DNAC live status (written by dnac_sync.py)
+            dnac_status = a.get("dnac_live_status")
+            dnac_checked = a.get("dnac_last_checked")
+
+            # Build the alert object with DNAC metadata
+            alert_obj = {
+                "event_id": details.get("event_id"),
+                "severity": details.get("severity"),
+                "issue_name": details.get("issue_name"),
+                "issue_details": details.get("issue_details"),
+                "category": details.get("category"),
+                "timestamp": ts,
+                "predicted_category": predicted if not is_backdated else "Backdated",
+                "snow_incident": safe_get(a, "results", "agent_4", "data", "incident"),
+                "snow_action": snow_action,
+                "dnac_live_status": dnac_status,
+                "dnac_last_checked": dnac_checked,
+            }
+
+            # Split into active vs resolved based on dnac_live_status
+            if is_backdated:
+                # Backdated alerts go into resolved
+                entry["resolved_alerts"].append(alert_obj)
+            elif dnac_status == "RESOLVED":
+                entry["resolved_alerts"].append(alert_obj)
+            else:
+                # ACTIVE, UNCERTAIN, or not yet checked → active
+                entry["active_alerts"].append(alert_obj)
 
         devices = list(device_map.values())
         return {"devices": devices}
@@ -343,6 +365,7 @@ async def chat_endpoint(request: Request):
 
     user_message = body.get("message", "").strip()
     history = body.get("history", [])
+    logger.info(f"Received Chat Message: '{user_message}' (history length: {len(history)})")
 
     if not user_message:
         return StreamingResponse(
@@ -414,6 +437,7 @@ async def chat_endpoint(request: Request):
                 "charts": result.get("charts", []),
             })
 
+        logger.info(f"Chat response completed for message: '{user_message}'")
         yield _sse_encode({"type": "done"})
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")

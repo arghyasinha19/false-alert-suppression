@@ -1,8 +1,9 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import {
   MapPin, Server, AlertTriangle, CheckCircle, HelpCircle,
   Search, X, Clock, Wifi, WifiOff, Shield, AlertOctagon,
-  Activity, Ticket, PlusCircle, RotateCcw, MessageSquarePlus
+  Activity, Ticket, PlusCircle, RotateCcw, MessageSquarePlus,
+  ChevronDown, ChevronUp, Radio, RefreshCw
 } from 'lucide-react';
 
 const LOCATION_LABELS = {
@@ -27,7 +28,9 @@ function deriveLocation(name) {
 function getLocationLabel(loc) { return LOCATION_LABELS[loc] || `📍 ${loc}`; }
 
 function getDeviceHealth(device) {
-  const activeAlerts = device.active_alerts || [];
+  const activeAlerts = (device.active_alerts || []).filter(
+    a => a.dnac_live_status !== 'RESOLVED'
+  );
   const hasCritical = activeAlerts.some(a => a.severity <= 1);
   const hasWarning = activeAlerts.some(a => a.severity === 2);
   if (hasCritical) return 'critical';
@@ -43,6 +46,53 @@ function getSnowSummary(device) {
   const reopened = alerts.filter(a => a.snow_action === 'incident_reopened');
   const commented = alerts.filter(a => a.snow_action === 'comment_appended');
   return { created, reopened, commented };
+}
+
+function parseTimestamp(ts) {
+  if (ts === null || ts === undefined || ts === '') return null;
+
+  // 1. Direct number
+  if (typeof ts === 'number') {
+    if (isNaN(ts)) return null;
+    const ms = ts > 1e12 ? ts : ts * 1000;
+    const d = new Date(ms);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // 2. String — try numeric first (handles "1776942958809", "1776942958809.0", " 1776942958809 ")
+  if (typeof ts === 'string') {
+    const trimmed = ts.trim();
+    const asNum = Number(trimmed);
+    if (trimmed.length > 0 && !isNaN(asNum) && isFinite(asNum)) {
+      const ms = asNum > 1e12 ? asNum : asNum * 1000;
+      const d = new Date(ms);
+      if (!isNaN(d.getTime())) return d;
+    }
+    // 3. Try ISO / date string parse
+    const d = new Date(trimmed);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  return null;
+}
+
+function formatTimestamp(ts, fallback = '—') {
+  const d = parseTimestamp(ts);
+  return d ? d.toLocaleString() : fallback;
+}
+
+function formatTimeOnly(ts, fallback = '—') {
+  const d = parseTimestamp(ts);
+  return d ? d.toLocaleTimeString() : fallback;
+}
+
+function timeAgo(date) {
+  if (!date) return '';
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 5) return 'just now';
+  if (seconds < 60) return `${seconds}s ago`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  return `${Math.floor(seconds / 3600)}h ago`;
 }
 
 function generateMockDevices() {
@@ -101,10 +151,13 @@ function generateMockDevices() {
   });
 }
 
-export default function NetworkOperations({ devices: rawDevices }) {
+export default function NetworkOperations({ devices: rawDevices, lastRefresh, pollInterval = 15000 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [resolvedExpanded, setResolvedExpanded] = useState(false);
+  const [secondsAgo, setSecondsAgo] = useState(0);
+  const selectedDeviceNameRef = useRef(null);
 
   const devices = rawDevices;
 
@@ -117,6 +170,28 @@ export default function NetworkOperations({ devices: rawDevices }) {
     }
     return () => document.body.classList.remove('panel-open');
   }, [panelOpen]);
+
+  // Auto-sync the selected device when data refreshes
+  useEffect(() => {
+    if (panelOpen && selectedDeviceNameRef.current && devices.length > 0) {
+      const updated = devices.find(d => d.device_name === selectedDeviceNameRef.current);
+      if (updated) {
+        setSelectedDevice(updated);
+      }
+    }
+  }, [devices, panelOpen]);
+
+  // Tick the "Updated Xs ago" counter every second
+  useEffect(() => {
+    if (!lastRefresh) return;
+    setSecondsAgo(0);
+    const timer = setInterval(() => {
+      setSecondsAgo(Math.floor((Date.now() - lastRefresh.getTime()) / 1000));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [lastRefresh]);
+
+  const progressPct = Math.min(100, (secondsAgo / (pollInterval / 1000)) * 100);
 
   const filteredDevices = useMemo(() => {
     if (!searchQuery) return devices;
@@ -150,11 +225,40 @@ export default function NetworkOperations({ devices: rawDevices }) {
     return { total: devices.length, healthy, warning, critical, unknown };
   }, [devices]);
 
-  const openDevicePanel = (device) => { setSelectedDevice(device); setPanelOpen(true); };
-  const closePanel = () => { setPanelOpen(false); setTimeout(() => setSelectedDevice(null), 300); };
+  const openDevicePanel = (device) => {
+    setSelectedDevice(device);
+    selectedDeviceNameRef.current = device.device_name;
+    setPanelOpen(true);
+    setResolvedExpanded(false);
+  };
+  const closePanel = () => {
+    setPanelOpen(false);
+    setTimeout(() => {
+      setSelectedDevice(null);
+      selectedDeviceNameRef.current = null;
+    }, 300);
+  };
 
   return (
     <>
+      {/* Live Refresh Indicator */}
+      <div className="noc-refresh-bar">
+        <div className="noc-refresh-left">
+          <span className="noc-live-dot" />
+          <span className="noc-live-label">Live</span>
+          <span className="noc-refresh-text">
+            {lastRefresh ? `Updated ${secondsAgo}s ago` : 'Connecting...'}
+          </span>
+        </div>
+        <div className="noc-refresh-right">
+          <RefreshCw size={12} className={secondsAgo < 2 ? 'spin-once' : ''} />
+          <span>Auto-refresh {Math.round(pollInterval / 1000)}s</span>
+        </div>
+        <div className="noc-refresh-progress">
+          <div className="noc-refresh-progress-fill" style={{ width: `${progressPct}%` }} />
+        </div>
+      </div>
+
       {/* Health Summary KPIs */}
       <div className="noc-summary-grid">
         <div className="glass-card kpi-card highlight-blue">
@@ -229,7 +333,7 @@ export default function NetworkOperations({ devices: rawDevices }) {
                       {health === 'critical' ? 'Critical' : health === 'warning' ? 'Warning' : 'Healthy'}
                     </span>
                     {device.last_alert_time && (
-                      <span><Clock size={12} /> Last: {new Date(device.last_alert_time).toLocaleTimeString()}</span>
+                      <span><Clock size={12} /> Last: {formatTimeOnly(device.last_alert_time)}</span>
                     )}
                     <span><Activity size={12} /> {device.total_alerts} total alerts</span>
                   </div>
@@ -277,6 +381,8 @@ export default function NetworkOperations({ devices: rawDevices }) {
       <div className={`detail-panel ${panelOpen ? 'open' : ''}`}>
         {selectedDevice && (() => {
           const snow = getSnowSummary(selectedDevice);
+          const activeAlerts = selectedDevice.active_alerts || [];
+          const resolvedAlerts = selectedDevice.resolved_alerts || [];
           return (
             <>
               <div className="detail-panel-header">
@@ -336,34 +442,93 @@ export default function NetworkOperations({ devices: rawDevices }) {
 
                 <div className="section-divider" />
 
-                {/* Active Alerts */}
-                <h3 style={{ fontSize: '0.88rem', marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <AlertTriangle size={15} /> Active Alerts ({(selectedDevice.active_alerts || []).length})
-                </h3>
+                {/* ══════ ACTIVE ALERTS SECTION ══════ */}
+                <div className="alert-section active-section">
+                  <h3 className="alert-section-header active">
+                    <span className="alert-section-dot active" />
+                    <AlertTriangle size={15} />
+                    Active Alerts ({activeAlerts.length})
+                  </h3>
 
-                {(selectedDevice.active_alerts || []).length === 0 ? (
-                  <div className="empty-state" style={{ padding: '1.5rem' }}><Shield size={28} /><p>No active alerts for this device.</p></div>
-                ) : (
-                  (selectedDevice.active_alerts || []).map((alert, i) => (
-                    <div key={i} className="detail-alert-item">
-                      <h4 style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span className={`badge severity-${alert.severity || 3}`}>SEV {alert.severity || '?'}</span>
-                        {alert.issue_name || 'Unknown Alert'}
-                      </h4>
-                      <p>{alert.issue_details || 'No details available.'}</p>
-                      <div className="detail-meta-grid">
-                        <div className="detail-meta-item"><div className="label">Event ID</div><div className="value">{alert.event_id || '—'}</div></div>
-                        <div className="detail-meta-item"><div className="label">Category</div><div className="value">{alert.category || '—'}</div></div>
-                        <div className="detail-meta-item">
-                          <div className="label">Classification</div>
-                          <div className="value"><span className={`badge ${(alert.predicted_category || '').toLowerCase().replace(/[\s/]/g, '-')}`}>{alert.predicted_category || '—'}</span></div>
+                  {activeAlerts.length === 0 ? (
+                    <div className="empty-state" style={{ padding: '1.5rem' }}><Shield size={28} /><p>No active alerts — all clear.</p></div>
+                  ) : (
+                    activeAlerts.map((alert, i) => (
+                      <div key={i} className="detail-alert-item">
+                        <h4 style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                          <span className={`badge severity-${alert.severity || 3}`}>SEV {alert.severity || '?'}</span>
+                          {alert.issue_name || 'Unknown Alert'}
+                          {alert.dnac_live_status && (
+                            <span className={`badge dnac-status-${(alert.dnac_live_status || '').toLowerCase()}`}>
+                              {alert.dnac_live_status}
+                            </span>
+                          )}
+                        </h4>
+                        <p>{alert.issue_details || 'No details available.'}</p>
+                        <div className="detail-meta-grid">
+                          <div className="detail-meta-item"><div className="label">Event ID</div><div className="value">{alert.event_id || '—'}</div></div>
+                          <div className="detail-meta-item"><div className="label">Category</div><div className="value">{alert.category || '—'}</div></div>
+                          <div className="detail-meta-item">
+                            <div className="label">Classification</div>
+                            <div className="value"><span className={`badge ${(alert.predicted_category || '').toLowerCase().replace(/[\s/]/g, '-')}`}>{alert.predicted_category || '—'}</span></div>
+                          </div>
+                          <div className="detail-meta-item"><div className="label">Time</div><div className="value">{formatTimestamp(alert.timestamp)}</div></div>
+                          {alert.dnac_last_checked && (
+                            <div className="detail-meta-item"><div className="label">DNAC Checked</div><div className="value">{formatTimestamp(alert.dnac_last_checked)}</div></div>
+                          )}
+                          {alert.snow_incident && (<div className="detail-meta-item"><div className="label">SNOW Incident</div><div className="value" style={{ color: 'var(--accent-blue)', fontWeight: 700 }}>{alert.snow_incident}</div></div>)}
+                          {alert.snow_action && (<div className="detail-meta-item"><div className="label">SNOW Action</div><div className="value">{alert.snow_action.replace(/_/g, ' ')}</div></div>)}
                         </div>
-                        <div className="detail-meta-item"><div className="label">Time</div><div className="value">{alert.timestamp ? new Date(alert.timestamp).toLocaleString() : '—'}</div></div>
-                        {alert.snow_incident && (<div className="detail-meta-item"><div className="label">SNOW Incident</div><div className="value" style={{ color: 'var(--accent-blue)', fontWeight: 700 }}>{alert.snow_incident}</div></div>)}
-                        {alert.snow_action && (<div className="detail-meta-item"><div className="label">SNOW Action</div><div className="value">{alert.snow_action.replace(/_/g, ' ')}</div></div>)}
                       </div>
-                    </div>
-                  ))
+                    ))
+                  )}
+                </div>
+
+                {/* ══════ RESOLVED ALERTS SECTION ══════ */}
+                {resolvedAlerts.length > 0 && (
+                  <div className="alert-section resolved-section">
+                    <div className="section-divider" />
+                    <h3
+                      className="alert-section-header resolved clickable"
+                      onClick={() => setResolvedExpanded(prev => !prev)}
+                    >
+                      <span className="alert-section-dot resolved" />
+                      <CheckCircle size={15} />
+                      Historical Resolved Alerts ({resolvedAlerts.length})
+                      <span className="expand-toggle">
+                        {resolvedExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      </span>
+                    </h3>
+
+                    {resolvedExpanded && (
+                      <div className="resolved-alerts-list">
+                        {resolvedAlerts.map((alert, i) => (
+                          <div key={i} className="detail-alert-item resolved">
+                            <h4 style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                              <span className={`badge severity-${alert.severity || 3}`}>SEV {alert.severity || '?'}</span>
+                              {alert.issue_name || 'Unknown Alert'}
+                              <span className="badge dnac-status-resolved">RESOLVED</span>
+                            </h4>
+                            <p>{alert.issue_details || 'No details available.'}</p>
+                            <div className="detail-meta-grid">
+                              <div className="detail-meta-item"><div className="label">Event ID</div><div className="value">{alert.event_id || '—'}</div></div>
+                              <div className="detail-meta-item"><div className="label">Category</div><div className="value">{alert.category || '—'}</div></div>
+                              <div className="detail-meta-item">
+                                <div className="label">Classification</div>
+                                <div className="value"><span className={`badge ${(alert.predicted_category || '').toLowerCase().replace(/[\s/]/g, '-')}`}>{alert.predicted_category || '—'}</span></div>
+                              </div>
+                              <div className="detail-meta-item"><div className="label">Time</div><div className="value">{formatTimestamp(alert.timestamp)}</div></div>
+                              {alert.dnac_last_checked && (
+                                <div className="detail-meta-item"><div className="label">DNAC Checked</div><div className="value">{formatTimestamp(alert.dnac_last_checked)}</div></div>
+                              )}
+                              {alert.snow_incident && (<div className="detail-meta-item"><div className="label">SNOW Incident</div><div className="value" style={{ color: 'var(--accent-blue)', fontWeight: 700 }}>{alert.snow_incident}</div></div>)}
+                              {alert.snow_action && (<div className="detail-meta-item"><div className="label">SNOW Action</div><div className="value">{alert.snow_action.replace(/_/g, ' ')}</div></div>)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </>

@@ -7,8 +7,8 @@ import NetworkOperations from './NetworkOperations';
 import ChatPanel from './ChatPanel';
 import './App.css';
 
-const API_BASE = 'http://127.0.0.1:8004';
-const POLL_INTERVAL = 10000;
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8004';
+const POLL_INTERVAL = 15000;
 
 function App() {
   const [activeView, setActiveView] = useState('metrics');
@@ -136,7 +136,7 @@ function App() {
             <FalseAlertMetrics alerts={alerts} />
           )}
           {activeView === 'noc' && (
-            <NetworkOperations devices={devices} />
+            <NetworkOperations devices={devices} lastRefresh={lastRefresh} pollInterval={POLL_INTERVAL} />
           )}
         </div>
       </main>

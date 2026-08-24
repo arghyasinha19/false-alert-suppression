@@ -1148,3 +1148,203 @@
   .detail-panel { width: 100vw; }
   .event-modal-grid { grid-template-columns: 1fr; }
 }
+
+/* ==========================================================================
+   NOC: Live Refresh Indicator Bar
+   ========================================================================== */
+
+.noc-refresh-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  margin-bottom: 1rem;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.noc-refresh-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 1;
+}
+
+.noc-refresh-right {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+  z-index: 1;
+}
+
+.noc-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-green);
+  box-shadow: 0 0 6px var(--accent-green);
+  animation: noc-pulse 2s ease-in-out infinite;
+}
+
+@keyframes noc-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--accent-green); }
+  50% { opacity: 0.6; box-shadow: 0 0 12px var(--accent-green); }
+}
+
+.noc-live-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent-green);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.noc-refresh-text {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.noc-refresh-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.noc-refresh-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+  transition: width 1s linear;
+  border-radius: 0 1px 1px 0;
+}
+
+/* Spin animation for refresh icon */
+.spin-once {
+  animation: spin-once 0.6s ease-in-out;
+}
+
+@keyframes spin-once {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ==========================================================================
+   NOC: DNAC Status Badges
+   ========================================================================== */
+
+.badge.dnac-status-active {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.badge.dnac-status-resolved {
+  background: rgba(5, 150, 105, 0.12);
+  color: #059669;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.badge.dnac-status-uncertain {
+  background: rgba(217, 119, 6, 0.12);
+  color: #d97706;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ==========================================================================
+   NOC: Alert Section Headers (Active / Resolved)
+   ========================================================================== */
+
+.alert-section {
+  margin-bottom: 0.5rem;
+}
+
+.alert-section-header {
+  font-size: 0.88rem;
+  margin-bottom: 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.alert-section-header.clickable {
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 0.15s;
+}
+
+.alert-section-header.clickable:hover {
+  opacity: 0.8;
+}
+
+.alert-section-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.alert-section-dot.active {
+  background: #dc2626;
+  box-shadow: 0 0 6px rgba(220, 38, 38, 0.5);
+  animation: noc-pulse-red 2s ease-in-out infinite;
+}
+
+@keyframes noc-pulse-red {
+  0%, 100% { opacity: 1; box-shadow: 0 0 6px rgba(220, 38, 38, 0.5); }
+  50% { opacity: 0.6; box-shadow: 0 0 12px rgba(220, 38, 38, 0.5); }
+}
+
+.alert-section-dot.resolved {
+  background: #059669;
+}
+
+.alert-section-header.resolved {
+  color: var(--text-secondary);
+}
+
+.expand-toggle {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  color: var(--text-tertiary);
+}
+
+/* ==========================================================================
+   NOC: Resolved Alerts List (Muted Styling)
+   ========================================================================== */
+
+.resolved-alerts-list {
+  animation: fade-in 0.2s ease-out;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.detail-alert-item.resolved {
+  opacity: 0.7;
+  border-left-color: var(--accent-green) !important;
+}
+
+.detail-alert-item.resolved:hover {
+  opacity: 0.9;
+}
