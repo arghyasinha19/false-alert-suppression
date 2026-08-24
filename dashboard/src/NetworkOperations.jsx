@@ -40,6 +40,15 @@ function getDeviceHealth(device) {
   return 'unknown';
 }
 
+function getDnacSyncStatus(device) {
+  const allAlerts = [...(device.active_alerts || []), ...(device.resolved_alerts || [])];
+  if (allAlerts.length === 0) return 'no-alerts';
+  const statuses = allAlerts.map(a => a.dnac_live_status || 'PENDING');
+  if (statuses.every(s => s === 'PENDING')) return 'pending';
+  if (statuses.some(s => s === 'UNCERTAIN')) return 'partial';
+  return 'synced';
+}
+
 function getSnowSummary(device) {
   const alerts = device.active_alerts || [];
   const created = alerts.filter(a => a.snow_action === 'incident_created');
@@ -326,6 +335,12 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
                   <div className="device-tile-header">
                     <span className="device-tile-name">{device.device_name}</span>
                     <span className={`device-tile-status-dot ${health}`} />
+                    {(() => {
+                      const syncStatus = getDnacSyncStatus(device);
+                      if (syncStatus === 'pending') return <span className="badge dnac-status-pending" style={{fontSize:'0.6rem',padding:'1px 5px'}}>DNAC Pending</span>;
+                      if (syncStatus === 'partial') return <span className="badge dnac-status-uncertain" style={{fontSize:'0.6rem',padding:'1px 5px'}}>DNAC Uncertain</span>;
+                      return null;
+                    })()
                   </div>
                   <div className="device-tile-meta">
                     <span>
@@ -458,11 +473,11 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
                         <h4 style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                           <span className={`badge severity-${alert.severity || 3}`}>SEV {alert.severity || '?'}</span>
                           {alert.issue_name || 'Unknown Alert'}
-                          {alert.dnac_live_status && (
-                            <span className={`badge dnac-status-${(alert.dnac_live_status || '').toLowerCase()}`}>
-                              {alert.dnac_live_status}
-                            </span>
-                          )}
+                          <span className={`badge dnac-status-${(alert.dnac_live_status || 'pending').toLowerCase()}`}
+                            title={alert.dnac_error ? `DNAC Error: ${alert.dnac_error}` : ''}
+                          >
+                            {alert.dnac_live_status || 'PENDING'}
+                          </span>
                         </h4>
                         <p>{alert.issue_details || 'No details available.'}</p>
                         <div className="detail-meta-grid">

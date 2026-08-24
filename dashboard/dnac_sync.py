@@ -158,6 +158,21 @@ def run_sync_cycle(collection) -> dict:
             logger.error(
                 f"  [{group_key}] DNAC check failed: {e}"
             )
+            # Still write UNCERTAIN status so the dashboard always shows the device
+            dnac_status = "UNCERTAIN"
+            try:
+                collection.update_many(
+                    {"_id": {"$in": [a["_id"] for a in group_alerts]}},
+                    {
+                        "$set": {
+                            "dnac_live_status": dnac_status,
+                            "dnac_error": str(e),
+                            "dnac_last_checked": utc_now_iso(),
+                        }
+                    },
+                )
+            except Exception as write_err:
+                logger.error(f"  [{group_key}] Failed to write UNCERTAIN status: {write_err}")
 
     summary = {
         "checked": checked,

@@ -155,6 +155,7 @@ def get_devices():
             dnac_checked = a.get("dnac_last_checked")
 
             # Build the alert object with DNAC metadata
+            dnac_error = a.get("dnac_error")
             alert_obj = {
                 "event_id": details.get("event_id"),
                 "severity": details.get("severity"),
@@ -165,8 +166,9 @@ def get_devices():
                 "predicted_category": predicted if not is_backdated else "Backdated",
                 "snow_incident": safe_get(a, "results", "agent_4", "data", "incident"),
                 "snow_action": snow_action,
-                "dnac_live_status": dnac_status,
+                "dnac_live_status": dnac_status or "PENDING",
                 "dnac_last_checked": dnac_checked,
+                "dnac_error": dnac_error,
             }
 
             # Split into active vs resolved based on dnac_live_status

@@ -1268,6 +1268,15 @@
   letter-spacing: 0.04em;
 }
 
+.badge.dnac-status-pending {
+  background: rgba(107, 114, 128, 0.12);
+  color: #6b7280;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 /* ==========================================================================
    NOC: Alert Section Headers (Active / Resolved)
    ========================================================================== */
