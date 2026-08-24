@@ -335,12 +335,12 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
                   <div className="device-tile-header">
                     <span className="device-tile-name">{device.device_name}</span>
                     <span className={`device-tile-status-dot ${health}`} />
-                    {(() => {
-                      const syncStatus = getDnacSyncStatus(device);
-                      if (syncStatus === 'pending') return <span className="badge dnac-status-pending" style={{fontSize:'0.6rem',padding:'1px 5px'}}>DNAC Pending</span>;
-                      if (syncStatus === 'partial') return <span className="badge dnac-status-uncertain" style={{fontSize:'0.6rem',padding:'1px 5px'}}>DNAC Uncertain</span>;
-                      return null;
-                    })()
+                    {getDnacSyncStatus(device) === 'pending' && (
+                      <span className="badge dnac-status-pending" style={{fontSize:'0.6rem',padding:'1px 5px'}}>DNAC Pending</span>
+                    )}
+                    {getDnacSyncStatus(device) === 'partial' && (
+                      <span className="badge dnac-status-uncertain" style={{fontSize:'0.6rem',padding:'1px 5px'}}>DNAC Uncertain</span>
+                    )}
                   </div>
                   <div className="device-tile-meta">
                     <span>
