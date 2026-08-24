@@ -1,3 +1,5 @@
+// Added comments for the UI
+
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import {
   MapPin, Server, AlertTriangle, CheckCircle, HelpCircle,
@@ -9,7 +11,7 @@ import {
 const LOCATION_LABELS = {
   'UK-MAL': '🇬🇧 United Kingdom — Maldon',
   'UK-LON': '🇬🇧 United Kingdom — London',
-  'US-NY':  '🇺🇸 United States — New York',
+  'US-NY': '🇺🇸 United States — New York',
   'US-CHI': '🇺🇸 United States — Chicago',
   'SG-SIN': '🇸🇬 Singapore',
   'DE-FRA': '🇩🇪 Germany — Frankfurt',
@@ -336,10 +338,10 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
                     <span className="device-tile-name">{device.device_name}</span>
                     <span className={`device-tile-status-dot ${health}`} />
                     {getDnacSyncStatus(device) === 'pending' && (
-                      <span className="badge dnac-status-pending" style={{fontSize:'0.6rem',padding:'1px 5px'}}>DNAC Pending</span>
+                      <span className="badge dnac-status-pending" style={{ fontSize: '0.6rem', padding: '1px 5px' }}>DNAC Pending</span>
                     )}
                     {getDnacSyncStatus(device) === 'partial' && (
-                      <span className="badge dnac-status-uncertain" style={{fontSize:'0.6rem',padding:'1px 5px'}}>DNAC Uncertain</span>
+                      <span className="badge dnac-status-uncertain" style={{ fontSize: '0.6rem', padding: '1px 5px' }}>DNAC Uncertain</span>
                     )}
                   </div>
                   <div className="device-tile-meta">
