@@ -27,7 +27,7 @@ if dashboard_dir not in sys.path:
     sys.path.insert(0, dashboard_dir)
 
 from workflow.tools.mongodb_client import MongoDBClient
-from workflow.run_delayed import check_dnac_status
+from dnac_monitor import check_dashboard_dnac_status
 
 # ── Logging ──────────────────────────────────────────────────────────
 log_dir = os.path.join(project_root, "logs")
@@ -117,7 +117,7 @@ def run_sync_cycle(collection) -> dict:
         issue_details = rep.get("issue_details")
 
         try:
-            status = check_dnac_status(
+            dnac_status = check_dashboard_dnac_status(
                 instance_id=instance_id,
                 device_id=device_id,
                 device_name=device_name,
@@ -126,14 +126,6 @@ def run_sync_cycle(collection) -> dict:
                 event_id=event_id,
             )
             checked += 1
-
-            # Map return value to a string status
-            if status is True:
-                dnac_status = "ACTIVE"
-            elif status is False:
-                dnac_status = "RESOLVED"
-            else:
-                dnac_status = "UNCERTAIN"
 
             logger.info(
                 f"  [{group_key}] -> {dnac_status} "
@@ -158,21 +150,6 @@ def run_sync_cycle(collection) -> dict:
             logger.error(
                 f"  [{group_key}] DNAC check failed: {e}"
             )
-            # Still write UNCERTAIN status so the dashboard always shows the device
-            dnac_status = "UNCERTAIN"
-            try:
-                collection.update_many(
-                    {"_id": {"$in": [a["_id"] for a in group_alerts]}},
-                    {
-                        "$set": {
-                            "dnac_live_status": dnac_status,
-                            "dnac_error": str(e),
-                            "dnac_last_checked": utc_now_iso(),
-                        }
-                    },
-                )
-            except Exception as write_err:
-                logger.error(f"  [{group_key}] Failed to write UNCERTAIN status: {write_err}")
 
     summary = {
         "checked": checked,
