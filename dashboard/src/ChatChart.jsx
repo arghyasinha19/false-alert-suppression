@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  Legend, ResponsiveContainer, Brush, ReferenceArea, Label,
+  Legend, ResponsiveContainer, ReferenceArea,
 } from 'recharts';
 import { ZoomIn, RotateCcw, Maximize2 } from 'lucide-react';
 
@@ -57,7 +57,7 @@ function AngledTick({ x, y, payload, maxLen = 14 }) {
 /* ====================================================================
    ZoomableChart — wraps Bar / Line / Area with drag-to-zoom
    ==================================================================== */
-function ZoomableChart({ data, x_key, renderInner, chartType: ChartType, margin, showBrush }) {
+function ZoomableChart({ data, x_key, renderInner, chartType: ChartType, margin }) {
   const [refAreaLeft, setRefAreaLeft] = useState(null);
   const [refAreaRight, setRefAreaRight] = useState(null);
   const [zoomLeft, setZoomLeft] = useState(null);
@@ -130,7 +130,7 @@ function ZoomableChart({ data, x_key, renderInner, chartType: ChartType, margin,
       <ResponsiveContainer width="100%" height={280}>
         <ChartType
           data={visibleData}
-          margin={margin || { top: 10, right: 20, left: 4, bottom: needsAngle ? 40 : 8 }}
+          margin={margin || { top: 10, right: 20, left: 4, bottom: needsAngle ? 32 : 4 }}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
@@ -140,14 +140,7 @@ function ZoomableChart({ data, x_key, renderInner, chartType: ChartType, margin,
             dataKey={x_key}
             tick={needsAngle ? <AngledTick maxLen={16} /> : { fontSize: 11, fill: 'var(--text-secondary, #475569)' }}
             interval={visibleData.length > 20 ? Math.floor(visibleData.length / 10) : 0}
-          >
-            <Label
-              value={humanizeKey(x_key)}
-              position="insideBottom"
-              offset={needsAngle ? -32 : -2}
-              style={{ fontSize: 11, fill: 'var(--text-tertiary, #94a3b8)', fontWeight: 500 }}
-            />
-          </XAxis>
+          />
           <YAxis
             tick={{ fontSize: 11, fill: 'var(--text-secondary, #475569)' }}
             allowDecimals={false}
@@ -166,15 +159,6 @@ function ZoomableChart({ data, x_key, renderInner, chartType: ChartType, margin,
             />
           )}
 
-          {showBrush && !isZoomed && data.length > 6 && (
-            <Brush
-              dataKey={x_key}
-              height={20}
-              stroke="var(--accent-blue, #2563eb)"
-              travellerWidth={8}
-              fill="var(--bg-tertiary, #f8f9fb)"
-            />
-          )}
         </ChartType>
       </ResponsiveContainer>
     </div>
@@ -229,7 +213,7 @@ function ChatChart({ spec }) {
           data={data}
           x_key={x_key}
           chartType={BarChart}
-          showBrush={data.length > 8}
+          showBrush={false}
           renderInner={() => (
             <>
               <Legend wrapperStyle={{ fontSize: '0.78rem' }} />

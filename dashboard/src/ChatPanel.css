@@ -317,7 +317,64 @@
   flex-shrink: 0;
 }
 
-/* -- Chart container ---------------------------------------------------- */
+/* -- Collapsible sources (in-message) ----------------------------------- */
+.chat-sources-collapsible {
+  margin-top: 0.6rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--card-border, #e2e8f0);
+}
+
+.chat-sources-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-tertiary, #94a3b8);
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  transition: all 0.15s ease;
+}
+
+.chat-sources-toggle:hover {
+  color: var(--accent-blue, #2563eb);
+  background: var(--accent-blue-light, #eff6ff);
+  border-color: rgba(37, 99, 235, 0.12);
+}
+
+.chat-sources-content {
+  margin-top: 0.4rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--radius-sm, 8px);
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid var(--card-border, #e2e8f0);
+  font-size: 0.76rem;
+  color: var(--text-secondary, #475569);
+  animation: fadeIn 0.2s ease;
+}
+
+.chat-sources-content p {
+  margin: 0 0 0.3em;
+}
+
+.chat-sources-content p:last-child {
+  margin-bottom: 0;
+}
+
+.chat-sources-content ul,
+.chat-sources-content ol {
+  margin: 0.2em 0;
+  padding-left: 1.2em;
+}
+
+.chat-sources-content li {
+  margin-bottom: 0.15em;
+}
+
+
 .chat-chart-container {
   margin-top: 0.5rem;
   border-radius: var(--radius-md, 12px);

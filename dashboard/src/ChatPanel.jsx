@@ -106,7 +106,7 @@ function renderMarkdown(text) {
     // Empty line
     if (!trimmed) return;
 
-    // Heading-like (## Sources etc.)
+    // Heading-like (## heading etc.)
     const headingMatch = trimmed.match(/^#{1,3}\s+(.+)/);
     if (headingMatch) {
       elements.push(
@@ -124,6 +124,70 @@ function renderMarkdown(text) {
   flushList();
   return elements;
 }
+
+/* -----------------------------------------------------------------------
+   Split assistant text into main content + sources section
+   ----------------------------------------------------------------------- */
+function splitSources(text) {
+  if (!text) return { main: '', sources: '' };
+
+  // Match "## Sources", "### Sources", "**Sources**", "Sources:" at line start
+  const sourcePatterns = [
+    /^#{1,3}\s+sources?\s*$/im,
+    /^\*\*sources?\*\*\s*$/im,
+    /^sources?\s*:\s*$/im,
+  ];
+
+  for (const pattern of sourcePatterns) {
+    const match = text.match(pattern);
+    if (match && match.index != null) {
+      return {
+        main: text.slice(0, match.index).trimEnd(),
+        sources: text.slice(match.index).trim(),
+      };
+    }
+  }
+
+  return { main: text, sources: '' };
+}
+
+/* -----------------------------------------------------------------------
+   CollapsibleSources — hidden by default, click to expand
+   ----------------------------------------------------------------------- */
+function CollapsibleSources({ sourcesText }) {
+  const [open, setOpen] = useState(false);
+
+  if (!sourcesText) return null;
+
+  return (
+    <div className="chat-sources-collapsible">
+      <button className="chat-sources-toggle" onClick={() => setOpen(!open)}>
+        {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+        <Database size={11} />
+        Sources
+      </button>
+      {open && (
+        <div className="chat-sources-content">
+          {renderMarkdown(sourcesText)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* -----------------------------------------------------------------------
+   renderAssistantContent — renders main text + collapsible sources
+   ----------------------------------------------------------------------- */
+function renderAssistantContent(text) {
+  const { main, sources } = splitSources(text);
+  return (
+    <>
+      {renderMarkdown(main)}
+      {sources && <CollapsibleSources sourcesText={sources} />}
+    </>
+  );
+}
+
 
 /* -----------------------------------------------------------------------
    Citations (collapsible)
@@ -445,7 +509,7 @@ function ChatPanel({ isOpen, onClose }) {
                 )}
               </div>
               <div className="chat-msg-bubble">
-                {msg.role === 'assistant' ? renderMarkdown(msg.text) : msg.text}
+                {msg.role === 'assistant' ? renderAssistantContent(msg.text) : msg.text}
               </div>
 
               {/* Charts */}
