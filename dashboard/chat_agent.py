@@ -745,7 +745,7 @@ class ChatAgent:
         )
 
         self.tools_schema = _build_langchain_tools()
-        self.max_tool_rounds = 5
+        self.max_tool_rounds = 10
 
     def run(
         self,
