@@ -777,8 +777,35 @@ class ChatAgent:
         llm_with_tools = self.llm.bind_tools(self.tools_schema)
 
         for _round in range(self.max_tool_rounds):
+            # Prune context if messages are getting too large
+            messages = self._prune_messages(messages)
+
             try:
                 response: AIMessage = llm_with_tools.invoke(messages)
+            except (IndexError, KeyError) as e:
+                # Gemini returned empty/malformed response (often due to context overflow).
+                # Attempt a final text-only response with whatever data we have.
+                logger.warning(f"LLM response parsing failed (round {_round}): {e}. Attempting text-only fallback.")
+                try:
+                    fallback_response = self.llm.invoke(messages)
+                    final_text = fallback_response.content or ""
+                    if final_text.strip():
+                        return {
+                            "text": final_text,
+                            "citations": citations,
+                            "charts": charts,
+                            "clarification": None,
+                            "suggestions": None,
+                        }
+                except Exception:
+                    pass
+                return {
+                    "text": "I encountered an issue processing the DNAC response. The query may have returned too much data. Try a more specific question (e.g., include the exact device name or a specific metric).",
+                    "citations": citations,
+                    "charts": charts,
+                    "clarification": None,
+                    "suggestions": None,
+                }
             except Exception as e:
                 err_msg = str(e)
                 if GEMINI_API_KEY:
@@ -822,7 +849,7 @@ class ChatAgent:
             messages.append(response)
 
             for tc in tool_calls:
-                tool_name = tc["name"]
+                tool_name = tc.get("name", "unknown")
                 tool_args = tc.get("args", {})
                 tool_call_id = tc.get("id", tool_name)
 
@@ -842,26 +869,27 @@ class ChatAgent:
                         logger.error(f"Tool {tool_name} failed: {e}")
                         result = {"error": str(e)}
 
-                # Track citations
+                # Track citations (uses full result for accurate summary)
                 citations.append({
                     "tool": tool_name,
                     "args": tool_args,
                     "summary": self._summarize_result(tool_name, result),
                 })
 
-                # Track chart specs
+                # Track chart specs (needs full data for rendering)
                 if tool_name == "generate_visualization" and "error" not in result:
                     charts.append(result)
 
-                # Truncate large results gracefully without breaking JSON structure
-                result_str = json.dumps(result, default=str)
-                if len(result_str) > 15000:
-                    logger.warning(f"Result for {tool_name} too large ({len(result_str)} bytes). Truncating.")
-                    truncated_result = {
-                        "error": "The result from this tool was too large and has been truncated. Please use more specific filters.",
-                        "partial_preview": result_str[:2000]
-                    }
-                    result_str = json.dumps(truncated_result)
+                # Compact the result before sending back to LLM
+                compact = self._compact_tool_result(tool_name, result)
+                result_str = json.dumps(compact, default=str)
+
+                # Safety cap — should rarely trigger after compaction
+                if len(result_str) > 4000:
+                    result_str = json.dumps({
+                        "note": "Result compacted. Use more specific filters.",
+                        "preview": result_str[:2000],
+                    })
 
                 messages.append(
                     ToolMessage(
@@ -882,6 +910,193 @@ class ChatAgent:
     # -----------------------------------------------------------------------
     # Helpers
     # -----------------------------------------------------------------------
+    def _prune_messages(self, messages: list, max_total_chars: int = 40000) -> list:
+        """
+        Prune message history if total content is too large.
+        Keeps system prompt, user messages, and the most recent tool results intact.
+        Truncates older ToolMessage content to stay within context limits.
+        """
+        total = sum(len(getattr(m, "content", "") or "") for m in messages)
+        if total <= max_total_chars:
+            return messages
+
+        logger.warning(f"Context too large ({total} chars). Pruning older tool results.")
+
+        # Find ToolMessages from oldest to newest, truncate oldest ones first
+        tool_indices = [
+            i for i, m in enumerate(messages) if isinstance(m, ToolMessage)
+        ]
+
+        for idx in tool_indices:
+            if total <= max_total_chars:
+                break
+            content = messages[idx].content or ""
+            if len(content) > 500:
+                old_len = len(content)
+                messages[idx] = ToolMessage(
+                    content=json.dumps({"note": "Previous result pruned to save context.", "preview": content[:400]}),
+                    tool_call_id=messages[idx].tool_call_id,
+                )
+                total -= (old_len - len(messages[idx].content))
+
+        return messages
+
+    def _compact_tool_result(self, tool_name: str, result: dict) -> dict:
+        """
+        Produce a compact version of a tool result for the LLM context.
+        Keeps the data the LLM needs to reason/answer, drops bulk raw records.
+        """
+        if "error" in result:
+            return result
+
+        try:
+            if tool_name == "query_alerts":
+                records = result.get("results", [])
+                samples = []
+                for r in records[:3]:
+                    d = r.get("alert_details", {})
+                    res = r.get("results", {})
+                    a1 = (res.get("agent_1") or {}).get("data") or {}
+                    a2 = (res.get("agent_2") or {}).get("data") or {}
+                    samples.append({
+                        "device": d.get("device_name") or d.get("device"),
+                        "severity": d.get("severity"),
+                        "category": d.get("category"),
+                        "issue_name": d.get("issue_name"),
+                        "timestamp": d.get("timestamp"),
+                        "status": d.get("status"),
+                        "is_backdated": a1.get("is_backdated"),
+                        "predicted": a2.get("predicted_category"),
+                    })
+                return {
+                    "count": result.get("count", len(records)),
+                    "query_used": result.get("query_used"),
+                    "sample_alerts": samples,
+                    "note": f"Showing {len(samples)} of {len(records)} results.",
+                }
+
+            elif tool_name == "get_device_history":
+                records = result.get("alerts", [])
+                samples = []
+                for r in records[:3]:
+                    d = r.get("alert_details", {})
+                    samples.append({
+                        "event_id": d.get("event_id"),
+                        "severity": d.get("severity"),
+                        "issue_name": d.get("issue_name"),
+                        "timestamp": d.get("timestamp"),
+                        "status": d.get("status"),
+                    })
+                return {
+                    "device_name": result.get("device_name"),
+                    "count": result.get("count", len(records)),
+                    "sample_alerts": samples,
+                }
+
+            elif tool_name == "get_kpi_summary":
+                # Drop the large daily_series — LLM has the aggregate numbers
+                compact = {k: v for k, v in result.items() if k != "daily_series"}
+                # Keep only top 5 devices
+                if "top_devices" in compact:
+                    compact["top_devices"] = compact["top_devices"][:5]
+                return compact
+
+            elif tool_name == "query_dnac_device_health":
+                health = result.get("device_health", {})
+                if isinstance(health, list):
+                    compact_items = []
+                    for item in health[:3]:
+                        if isinstance(item, dict):
+                            compact_items.append({
+                                k: item[k] for k in (
+                                    "name", "deviceType", "macAddress",
+                                    "managementIpAddress", "overallHealth",
+                                    "healthScore", "osType", "platformId",
+                                    "location", "reachabilityStatus",
+                                ) if k in item
+                            })
+                    return {
+                        "source": result.get("source"),
+                        "device_count": len(health),
+                        "devices": compact_items,
+                    }
+                return result
+
+            elif tool_name == "call_dnac_rest_api":
+                data = result.get("data", {})
+                resp = data.get("response", data) if isinstance(data, dict) else data
+
+                if isinstance(resp, list):
+                    # Extract key fields from each item
+                    compact_items = []
+                    KEEP_KEYS = {
+                        "id", "instanceId", "name", "hostname", "deviceType",
+                        "managementIpAddress", "macAddress", "status",
+                        "overallHealth", "healthScore", "reachabilityStatus",
+                        "softwareVersion", "platformId", "role", "family",
+                        "serialNumber", "siteNameHierarchy", "issueCount",
+                        "issueStatus", "issueName", "issueSeverity",
+                        "description", "priority", "summary",
+                    }
+                    for item in resp[:5]:
+                        if isinstance(item, dict):
+                            compact_items.append({
+                                k: v for k, v in item.items()
+                                if k in KEEP_KEYS
+                            })
+                        else:
+                            compact_items.append(item)
+                    return {
+                        "source": "dnac_rest_api",
+                        "endpoint": result.get("endpoint"),
+                        "total_items": len(resp),
+                        "items": compact_items,
+                        "note": f"Showing top {len(compact_items)} of {len(resp)} items.",
+                    }
+
+                elif isinstance(resp, dict):
+                    # Single object — keep as-is but cap size
+                    resp_str = json.dumps(resp, default=str)
+                    if len(resp_str) > 3000:
+                        # Keep only top-level keys with short values
+                        compact_obj = {}
+                        for k, v in resp.items():
+                            v_str = json.dumps(v, default=str)
+                            if len(v_str) < 200:
+                                compact_obj[k] = v
+                            else:
+                                compact_obj[k] = f"[{type(v).__name__}, {len(v_str)} chars]"
+                        return {
+                            "source": "dnac_rest_api",
+                            "endpoint": result.get("endpoint"),
+                            "data_summary": compact_obj,
+                        }
+
+                return result
+
+            elif tool_name == "generate_visualization":
+                # LLM doesn't need the full chart data echoed back
+                return {
+                    "status": "chart_generated",
+                    "chart_type": result.get("chart_type"),
+                    "title": result.get("title"),
+                    "data_points": len(result.get("data", [])),
+                }
+
+            # Fallback: unknown tools — cap size
+            result_str = json.dumps(result, default=str)
+            if len(result_str) > 3000:
+                return {"note": "Result available", "preview": result_str[:2000]}
+            return result
+
+        except Exception as e:
+            logger.warning(f"Failed to compact result for {tool_name}: {e}")
+            # Fall back to raw result with size cap
+            result_str = json.dumps(result, default=str)
+            if len(result_str) > 3000:
+                return {"preview": result_str[:2000]}
+            return result
+
     def _build_messages(self, user_message: str, history: list = None) -> list:
         messages = [SystemMessage(content=SYSTEM_PROMPT)]
         if history:
