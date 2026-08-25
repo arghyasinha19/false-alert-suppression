@@ -1,12 +1,16 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   X, Send, Bot, User, ChevronDown, ChevronRight,
-  Database, Radio, BarChart3, CheckCircle2,
+  Database, Radio, BarChart3, CheckCircle2, GripVertical,
 } from 'lucide-react';
 import ChatChart from './ChatChart';
 import './ChatPanel.css';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8004';
+
+const MIN_PANEL_WIDTH = 340;
+const MAX_PANEL_WIDTH = 900;
+const DEFAULT_PANEL_WIDTH = 440;
 
 /* -----------------------------------------------------------------------
    Simple markdown renderer (bold, lists, code, paragraphs)
@@ -192,8 +196,41 @@ function ChatPanel({ isOpen, onClose }) {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [activeTasks, setActiveTasks] = useState([]);
+  const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL_WIDTH);
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
+  const isResizing = useRef(false);
+  const resizeStartX = useRef(0);
+  const resizeStartWidth = useRef(DEFAULT_PANEL_WIDTH);
+
+  // --- Resize handlers ---
+  const handleResizeStart = useCallback((e) => {
+    e.preventDefault();
+    isResizing.current = true;
+    resizeStartX.current = e.clientX;
+    resizeStartWidth.current = panelWidth;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const onMouseMove = (ev) => {
+      if (!isResizing.current) return;
+      // Panel is on the right side, so dragging left increases width
+      const diff = resizeStartX.current - ev.clientX;
+      const newWidth = Math.min(MAX_PANEL_WIDTH, Math.max(MIN_PANEL_WIDTH, resizeStartWidth.current + diff));
+      setPanelWidth(newWidth);
+    };
+
+    const onMouseUp = () => {
+      isResizing.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }, [panelWidth]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -355,7 +392,15 @@ function ChatPanel({ isOpen, onClose }) {
   return (
     <>
       <div className="chat-overlay" onClick={onClose} />
-      <div className="chat-panel">
+      <div className="chat-panel" style={{ width: panelWidth }}>
+        {/* Resize handle */}
+        <div
+          className="chat-resize-handle"
+          onMouseDown={handleResizeStart}
+          title="Drag to resize"
+        >
+          <GripVertical size={14} />
+        </div>
         {/* Header */}
         <div className="chat-header">
           <div className="chat-header-icon">
