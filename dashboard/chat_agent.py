@@ -1038,7 +1038,7 @@ class ChatAgent:
                         "issueStatus", "issueName", "issueSeverity",
                         "description", "priority", "summary",
                     }
-                    for item in resp[:5]:
+                    for item in resp[:50]:
                         if isinstance(item, dict):
                             compact_items.append({
                                 k: v for k, v in item.items()
