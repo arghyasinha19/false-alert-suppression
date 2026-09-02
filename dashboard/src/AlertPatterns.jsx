@@ -6,7 +6,7 @@ import {
 import {
   ComposedChart, Area, Line, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
-  ResponsiveContainer, Brush, Legend, Cell
+  ResponsiveContainer, Legend, Cell
 } from 'recharts';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8004';
@@ -334,9 +334,9 @@ export default function AlertPatterns() {
             ))}
           </div>
         </div>
-        <div style={{ height: '320px' }}>
+        <div style={{ height: '300px' }}>
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={volumeSeries} margin={{ top: 10, right: 30, left: -20, bottom: 0 }}>
+            <ComposedChart data={volumeSeries} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="gradBackdatedP" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#2563eb" stopOpacity={0.35} />
@@ -360,19 +360,48 @@ export default function AlertPatterns() {
                 dataKey="time"
                 stroke="#94a3b8"
                 tick={{ fontSize: 10, fill: '#94a3b8' }}
+                minTickGap={45}
                 tickFormatter={v => {
                   try {
-                    if (granularity === 'daily') return v;
-                    if (granularity === 'weekly') return v;
-                    return new Date(v).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                  } catch { return v; }
+                    const d = new Date(v);
+                    if (isNaN(d.getTime())) return v;
+                    if (granularity === 'daily') {
+                      return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+                    }
+                    if (granularity === 'weekly') {
+                      return v;
+                    }
+                    const timeStr = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+                    const dateStr = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+                    return `${dateStr}, ${timeStr}`;
+                  } catch {
+                    return v;
+                  }
                 }}
               />
               <YAxis yAxisId="left" stroke="#94a3b8" tick={{ fontSize: 10, fill: '#94a3b8' }} />
               {selectedCluster === null && (
                 <YAxis yAxisId="right" orientation="right" stroke="#7c3aed" tick={{ fontSize: 10, fill: '#7c3aed' }} />
               )}
-              <RechartsTooltip contentStyle={TOOLTIP_STYLE} />
+              <RechartsTooltip
+                contentStyle={TOOLTIP_STYLE}
+                labelFormatter={label => {
+                  try {
+                    const d = new Date(label);
+                    if (isNaN(d.getTime())) return label;
+                    return d.toLocaleString([], {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                      hour: 'numeric',
+                      minute: '2-digit',
+                      hour12: true
+                    });
+                  } catch {
+                    return label;
+                  }
+                }}
+              />
               <Legend verticalAlign="top" iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '0.72rem', paddingBottom: '8px' }} />
 
               {selectedCluster === null ? (
@@ -385,10 +414,6 @@ export default function AlertPatterns() {
                 </>
               ) : (
                 <Area yAxisId="left" type="monotone" dataKey="total" stroke="#2563eb" fill="url(#gradBackdatedP)" strokeWidth={2} name="Cluster Alerts" />
-              )}
-
-              {selectedCluster === null && volumeSeries.length > 10 && (
-                <Brush dataKey="time" height={24} stroke="#2563eb" fill="var(--bg-tertiary)" travellerWidth={8} />
               )}
             </ComposedChart>
           </ResponsiveContainer>
