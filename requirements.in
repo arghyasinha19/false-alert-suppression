@@ -15,3 +15,5 @@ scikit-learn
 torch
 transformers
 urllib3
+sentence-transformers
+hdbscan

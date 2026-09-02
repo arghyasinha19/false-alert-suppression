@@ -1348,3 +1348,235 @@
 .detail-alert-item.resolved:hover {
   opacity: 0.9;
 }
+
+/* ==========================================================================
+   ALERT PATTERNS VIEW
+   ========================================================================== */
+
+/* ── Pattern Cluster Card Grid ── */
+.pattern-cluster-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.pattern-card {
+  padding: 1.15rem 1.25rem;
+  cursor: pointer;
+  position: relative;
+  border-left: 3.5px solid var(--accent-bar-color, var(--accent-blue));
+  transition: all var(--transition-normal);
+}
+
+.pattern-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.pattern-card.selected {
+  border-color: var(--accent-bar-color, var(--accent-blue));
+  box-shadow: 0 0 0 2px var(--accent-bar-color, var(--accent-blue)), var(--shadow-lg);
+}
+
+.pattern-card.top-pattern::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, transparent 50%, var(--accent-bar-color, var(--accent-blue)) 50%);
+  border-radius: 0 var(--radius-lg) 0 0;
+  opacity: 0.15;
+}
+
+.pattern-rank-badge {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.7rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--accent-bar-color, var(--accent-blue));
+  opacity: 0.6;
+  letter-spacing: -0.02em;
+}
+
+.pattern-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.65rem;
+}
+
+.pattern-count-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--card-border);
+}
+
+.pattern-card-template {
+  margin-bottom: 0.7rem;
+  line-height: 1.5;
+}
+
+.pattern-template-text {
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  word-break: break-word;
+  line-height: 1.55;
+}
+
+.pattern-var-badge {
+  display: inline;
+  background: var(--accent-blue-light);
+  color: var(--accent-blue);
+  padding: 0.08rem 0.35rem;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+  border: 1px solid rgba(37, 99, 235, 0.12);
+}
+
+.pattern-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.pattern-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+}
+
+.pattern-card-sparkline {
+  margin-bottom: 0.5rem;
+}
+
+/* ── Category Mini Bar ── */
+.category-mini-bar {
+  display: flex;
+  height: 4px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: var(--bg-tertiary);
+}
+
+.category-mini-bar-segment {
+  height: 100%;
+  transition: width var(--transition-fast);
+  min-width: 2px;
+}
+
+/* ── Granularity Toggle ── */
+.granularity-toggle {
+  display: flex;
+  gap: 0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--card-border);
+  background: var(--bg-tertiary);
+}
+
+.granularity-btn {
+  padding: 0.4rem 0.85rem;
+  font-size: 0.76rem;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border-right: 1px solid var(--card-border);
+}
+
+.granularity-btn:last-child {
+  border-right: none;
+}
+
+.granularity-btn:hover {
+  background: var(--accent-blue-light);
+  color: var(--accent-blue);
+}
+
+.granularity-btn.active {
+  background: var(--accent-blue);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ── Noise / Unclustered Section ── */
+.pattern-noise-section {
+  margin-bottom: 1.5rem;
+}
+
+.noise-alert-row {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--card-border);
+  font-size: 0.8rem;
+}
+
+.noise-alert-row:last-child {
+  border-bottom: none;
+}
+
+/* ── Pattern Detail Table ── */
+.pattern-detail-row {
+  transition: background var(--transition-fast);
+}
+
+.pattern-detail-row:hover {
+  background: var(--bg-tertiary);
+}
+
+.pattern-detail-row.expanded {
+  background: var(--accent-blue-light);
+}
+
+.pattern-expanded-content > td {
+  padding: 0 !important;
+}
+
+.pattern-expanded-inner {
+  padding: 1rem 1.25rem 1rem 2.5rem;
+  background: var(--bg-tertiary);
+  border-bottom: 2px solid var(--accent-blue-light);
+  animation: fadeIn 0.25s ease;
+}
+
+.pattern-expanded-devices {
+  margin-bottom: 0.75rem;
+  font-size: 0.8rem;
+  line-height: 1.8;
+}
+
+.pattern-expanded-alerts {
+  font-size: 0.8rem;
+}
+
+.pattern-expanded-alerts .data-table {
+  font-size: 0.76rem;
+}
+
+/* ── Spin animation for loading ── */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}

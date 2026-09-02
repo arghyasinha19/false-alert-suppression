@@ -339,6 +339,128 @@ def _derive_location(device_name: str) -> str:
 
 
 # -------------------------------------------------------------------------
+# Alert Pattern Clustering endpoint
+# -------------------------------------------------------------------------
+
+_clustering_engine = None
+
+def _get_clustering_engine():
+    global _clustering_engine
+    if _clustering_engine is None:
+        try:
+            from alert_clustering import AlertClusteringEngine
+            _clustering_engine = AlertClusteringEngine()
+            logger.info("AlertClusteringEngine initialised.")
+        except Exception as e:
+            logger.error(f"Failed to initialise AlertClusteringEngine: {e}")
+    return _clustering_engine
+
+
+def _build_volume_series(alerts, granularity="hourly"):
+    """Build a time-bucketed volume series from all alerts."""
+    buckets = {}
+    cumulative = 0
+
+    for a in alerts:
+        details = a.get("alert_details") or {}
+        results_data = a.get("results") or {}
+        ts = details.get("timestamp") or details.get("raw_timestamp")
+        if not ts:
+            continue
+
+        try:
+            if isinstance(ts, (int, float)):
+                dt = datetime.fromtimestamp(
+                    ts / 1000 if ts > 1e12 else ts, tz=timezone.utc
+                )
+            else:
+                dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+        except Exception:
+            continue
+
+        if granularity == "daily":
+            key = dt.strftime("%Y-%m-%d")
+        elif granularity == "weekly":
+            # ISO week start
+            key = dt.strftime("%Y-W%W")
+        else:
+            key = dt.strftime("%Y-%m-%d %H:00")
+
+        if key not in buckets:
+            buckets[key] = {
+                "time": key,
+                "Backdated": 0,
+                "Auto Resolving": 0,
+                "Non-Auto Resolving": 0,
+                "Uncertain": 0,
+                "total": 0,
+            }
+
+        is_bd = safe_get(a, "results", "agent_1", "data", "is_backdated", default=False)
+        predicted = safe_get(a, "results", "agent_2", "data", "predicted_category", default="")
+
+        if is_bd:
+            buckets[key]["Backdated"] += 1
+        elif predicted and predicted.lower() == "auto resolving":
+            buckets[key]["Auto Resolving"] += 1
+        elif predicted and predicted.lower() == "non-auto resolving":
+            buckets[key]["Non-Auto Resolving"] += 1
+        else:
+            buckets[key]["Uncertain"] += 1
+
+        buckets[key]["total"] += 1
+
+    # Sort and add cumulative
+    series = sorted(buckets.values(), key=lambda x: x["time"])
+    cumulative = 0
+    for entry in series:
+        cumulative += entry["total"]
+        entry["cumulative"] = cumulative
+
+    return series
+
+
+@app.get("/api/alerts/patterns")
+def get_alert_patterns(granularity: str = "hourly"):
+    """
+    Cluster alerts by semantic similarity using sentence embeddings + HDBSCAN.
+    Returns pattern clusters and volume time series.
+    """
+    collection = mongo.get_collection("alert_results")
+    if collection is None:
+        return {"error": "MongoDB not connected", "patterns": [], "volume_series": []}
+
+    try:
+        alerts = list(collection.find({}, {"_id": 0}))
+    except Exception as e:
+        logger.error(f"Error fetching alerts for patterns: {e}")
+        return {"error": str(e), "patterns": [], "volume_series": []}
+
+    # Cluster
+    engine = _get_clustering_engine()
+    if engine is not None:
+        try:
+            clusters = engine.cluster(alerts)
+            patterns = [c.to_dict() for c in clusters]
+        except Exception as e:
+            logger.error(f"Clustering failed: {e}")
+            patterns = []
+    else:
+        patterns = []
+
+    # Volume series
+    volume_series = _build_volume_series(alerts, granularity)
+
+    return {
+        "patterns": patterns,
+        "volume_series": volume_series,
+        "total_alerts": len(alerts),
+        "total_patterns": len([p for p in patterns if not p.get("noise")]),
+        "noise_count": len([p for p in patterns if p.get("noise")]),
+    }
+
+
+# -------------------------------------------------------------------------
 # Chat endpoint
 # -------------------------------------------------------------------------
 

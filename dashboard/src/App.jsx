@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Activity, BarChart3, Monitor, Database, Radio, MessageSquare,
+  Activity, BarChart3, Monitor, Database, Radio, MessageSquare, Layers,
 } from 'lucide-react';
 import FalseAlertMetrics from './FalseAlertMetrics';
+import AlertPatterns from './AlertPatterns';
 import NetworkOperations from './NetworkOperations';
 import ChatPanel from './ChatPanel';
 import './App.css';
@@ -57,6 +58,12 @@ function App() {
       label: 'Network Operations',
       icon: <Monitor size={18} />,
       description: 'Live device health overview',
+    },
+    {
+      id: 'patterns',
+      label: 'Alert Patterns',
+      icon: <Layers size={18} />,
+      description: 'Pattern clustering & volume',
     },
   ];
 
@@ -116,7 +123,7 @@ function App() {
       <main className="content-area">
         <div className="content-header">
           <h1>
-            {activeView === 'metrics' ? 'False Alert Suppression Metrics' : 'Network Operations Center'}
+            {activeView === 'metrics' ? 'False Alert Suppression Metrics' : activeView === 'patterns' ? 'Alert Pattern Analysis' : 'Network Operations Center'}
           </h1>
           <div className="content-header-actions">
             <div className="live-badge">
@@ -137,6 +144,9 @@ function App() {
           )}
           {activeView === 'noc' && (
             <NetworkOperations devices={devices} lastRefresh={lastRefresh} pollInterval={POLL_INTERVAL} />
+          )}
+          {activeView === 'patterns' && (
+            <AlertPatterns />
           )}
         </div>
       </main>
