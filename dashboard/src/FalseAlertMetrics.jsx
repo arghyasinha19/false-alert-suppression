@@ -2,7 +2,8 @@ import React, { useState, useMemo, useCallback, useRef } from 'react';
 import {
   BarChart3, AlertTriangle, CheckCircle, CheckCircle2, Clock, ShieldCheck, ShieldAlert,
   Activity, Server, TrendingDown, TrendingUp, Ticket, Ban, Filter,
-  Zap, Award, FileText, RotateCcw, MessageSquarePlus, PlusCircle, X
+  Zap, Award, FileText, RotateCcw, MessageSquarePlus, PlusCircle, X,
+  Search, ArrowUpDown, ArrowUp, ArrowDown
 } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar,
@@ -304,12 +305,34 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [simulating, setSimulating] = useState(false);
 
+  // Table-specific filters & sorting
+  const [matrixSearch, setMatrixSearch] = useState('');
+  const [matrixSeverity, setMatrixSeverity] = useState('ALL');
+  const [matrixOutcome, setMatrixOutcome] = useState('ALL');
+  const [matrixSnow, setMatrixSnow] = useState('ALL');
+  const [sortColumn, setSortColumn] = useState('timestamp');
+  const [sortDirection, setSortDirection] = useState('desc');
+
   const { tableRef: traceTableRef, onMouseDown: onTraceColResize } = useResizableColumns();
 
   const alerts = useMemo(() => {
     if (rawAlerts && rawAlerts.length > 0) return rawAlerts;
     return generateMockData();
   }, [rawAlerts]);
+
+  const handleSort = (columnKey) => {
+    if (sortColumn === columnKey) {
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else {
+        setSortColumn(null);
+        setSortDirection('asc');
+      }
+    } else {
+      setSortColumn(columnKey);
+      setSortDirection('asc');
+    }
+  };
 
   const handleSimulate = async (count = 5) => {
     setSimulating(true);
@@ -440,6 +463,129 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
       deviceRanking: ranking.map((d, i) => ({ ...d, rank: i + 1, pct: Math.round(d.total / maxTotal * 100) })),
     };
   }, [filteredAlerts]);
+
+  // Matrix Filtered & Sorted Alerts
+  const matrixAlerts = useMemo(() => {
+    let list = filteredAlerts;
+
+    // 1. Text Search Filter (Event ID, Device, Issue, Incident)
+    if (matrixSearch.trim()) {
+      const q = matrixSearch.trim().toLowerCase();
+      list = list.filter(a => {
+        const det = a.alert_details || {};
+        const res = a.results || {};
+        const eventId = String(det.event_id || '').toLowerCase();
+        const device = String(det.device_name || '').toLowerCase();
+        const issue = String(det.issue_name || det.issue_details || '').toLowerCase();
+        const incident = String(res.agent_4?.data?.incident || '').toLowerCase();
+        return eventId.includes(q) || device.includes(q) || issue.includes(q) || incident.includes(q);
+      });
+    }
+
+    // 2. Severity Filter
+    if (matrixSeverity !== 'ALL') {
+      const targetSev = Number(matrixSeverity);
+      list = list.filter(a => Number(a.alert_details?.severity) === targetSev);
+    }
+
+    // 3. Decision / Classification Filter
+    if (matrixOutcome !== 'ALL') {
+      list = list.filter(a => {
+        const isBd = a.results?.agent_1?.data?.is_backdated;
+        const pred = (a.results?.agent_2?.data?.predicted_category || '').toLowerCase();
+        if (matrixOutcome === 'BACKDATED') return isBd;
+        if (isBd) return false;
+        if (matrixOutcome === 'AUTO') return pred === 'auto resolving';
+        if (matrixOutcome === 'NON_AUTO') return pred === 'non-auto resolving';
+        if (matrixOutcome === 'UNCERTAIN') return pred !== 'auto resolving' && pred !== 'non-auto resolving';
+        return true;
+      });
+    }
+
+    // 4. ServiceNow Filter
+    if (matrixSnow !== 'ALL') {
+      list = list.filter(a => {
+        const action = a.results?.agent_4?.data?.action || '';
+        if (matrixSnow === 'CREATED') return action === 'incident_created';
+        if (matrixSnow === 'APPENDED') return action === 'comment_appended';
+        if (matrixSnow === 'REOPENED') return action === 'incident_reopened';
+        if (matrixSnow === 'NONE') return !action;
+        return true;
+      });
+    }
+
+    // 5. Column Sorting
+    if (sortColumn) {
+      list = [...list].sort((a, b) => {
+        let valA, valB;
+        const detA = a.alert_details || {};
+        const detB = b.alert_details || {};
+        const resA = a.results || {};
+        const resB = b.results || {};
+
+        switch (sortColumn) {
+          case 'event_id':
+            valA = String(detA.event_id || '');
+            valB = String(detB.event_id || '');
+            return sortDirection === 'asc'
+              ? valA.localeCompare(valB, undefined, { numeric: true })
+              : valB.localeCompare(valA, undefined, { numeric: true });
+
+          case 'device':
+            valA = String(detA.device_name || '');
+            valB = String(detB.device_name || '');
+            return sortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+
+          case 'severity':
+            valA = Number(detA.severity || 99);
+            valB = Number(detB.severity || 99);
+            return sortDirection === 'asc' ? valA - valB : valB - valA;
+
+          case 'issue':
+            valA = String(detA.issue_name || detA.issue_details || '');
+            valB = String(detB.issue_name || detB.issue_details || '');
+            return sortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+
+          case 'timestamp': {
+            const dA = parseTimestamp(detA.timestamp || detA.raw_timestamp);
+            const dB = parseTimestamp(detB.timestamp || detB.raw_timestamp);
+            valA = dA ? dA.getTime() : 0;
+            valB = dB ? dB.getTime() : 0;
+            return sortDirection === 'asc' ? valA - valB : valB - valA;
+          }
+
+          case 'agent1': {
+            const isBdA = resA.agent_1?.data?.is_backdated ? 1 : 0;
+            const isBdB = resB.agent_1?.data?.is_backdated ? 1 : 0;
+            return sortDirection === 'asc' ? isBdA - isBdB : isBdB - isBdA;
+          }
+
+          case 'ml': {
+            const catA = String(resA.agent_2?.data?.predicted_category || (resA.agent_1?.data?.is_backdated ? 'Backdated' : 'Unknown'));
+            const catB = String(resB.agent_2?.data?.predicted_category || (resB.agent_1?.data?.is_backdated ? 'Backdated' : 'Unknown'));
+            return sortDirection === 'asc' ? catA.localeCompare(catB) : catB.localeCompare(catA);
+          }
+
+          case 'agent3': {
+            const qA = String(resA.agent_3?.data?.queue_status || '');
+            const qB = String(resB.agent_3?.data?.queue_status || '');
+            return sortDirection === 'asc' ? qA.localeCompare(qB) : qB.localeCompare(qA);
+          }
+
+          case 'snow': {
+            const actA = String(resA.agent_4?.data?.action || '');
+            const actB = String(resB.agent_4?.data?.action || '');
+            return sortDirection === 'asc' ? actA.localeCompare(actB) : actB.localeCompare(actA);
+          }
+
+          default:
+            return 0;
+        }
+      });
+    }
+
+    return list;
+  }, [filteredAlerts, matrixSearch, matrixSeverity, matrixOutcome, matrixSnow, sortColumn, sortDirection]);
 
   const pieData = [
     { name: 'Backdated', value: kpi.backdated },
@@ -749,29 +895,167 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
 
       {/* Detailed Traceability Table */}
       <div className="glass-card table-card">
-        <h3>
-          <Server size={16} /> Detailed Traceability Matrix
-          {(deviceFilter !== 'ALL' || categoryFilter !== 'ALL' || timeRange !== 'ALL') && (
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginLeft: '8px', fontWeight: 400 }}>({filteredAlerts.length} results)</span>
-          )}
-        </h3>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '0.85rem', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Server size={16} /> Detailed Traceability Matrix
+            </h3>
+            <span className="badge" style={{ background: 'rgba(37, 99, 235, 0.1)', color: 'var(--accent-blue)', fontWeight: 600, fontSize: '0.74rem' }}>
+              {matrixAlerts.length} {matrixAlerts.length === 1 ? 'alert' : 'alerts'}
+            </span>
+            {matrixAlerts.length !== filteredAlerts.length && (
+              <span style={{ fontSize: '0.74rem', color: 'var(--text-tertiary)' }}>
+                (of {filteredAlerts.length} total)
+              </span>
+            )}
+          </div>
+
+          {/* Table-specific Search & Filter Bar */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem' }}>
+            {/* Search Input */}
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <Search size={13} style={{ position: 'absolute', left: '10px', color: 'var(--text-tertiary)', pointerEvents: 'none' }} />
+              <input
+                type="text"
+                placeholder="Search matrix..."
+                value={matrixSearch}
+                onChange={(e) => setMatrixSearch(e.target.value)}
+                style={{
+                  padding: '0.38rem 1.8rem 0.38rem 2rem',
+                  fontSize: '0.78rem',
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--card-border)',
+                  borderRadius: '6px',
+                  color: 'var(--text-primary)',
+                  width: '180px',
+                  outline: 'none',
+                }}
+              />
+              {matrixSearch && (
+                <button
+                  onClick={() => setMatrixSearch('')}
+                  style={{
+                    position: 'absolute',
+                    right: '6px',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--text-tertiary)',
+                    padding: 0,
+                    display: 'flex',
+                  }}
+                  title="Clear search"
+                >
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+
+            {/* Severity Filter */}
+            <select
+              className="filter-select"
+              value={matrixSeverity}
+              onChange={(e) => setMatrixSeverity(e.target.value)}
+              style={{ fontSize: '0.76rem', padding: '0.35rem 0.55rem' }}
+            >
+              <option value="ALL">Severity: All</option>
+              <option value="1">P1 — Critical</option>
+              <option value="2">P2 — Major</option>
+              <option value="3">P3 — Warning</option>
+            </select>
+
+            {/* Classification Filter */}
+            <select
+              className="filter-select"
+              value={matrixOutcome}
+              onChange={(e) => setMatrixOutcome(e.target.value)}
+              style={{ fontSize: '0.76rem', padding: '0.35rem 0.55rem' }}
+            >
+              <option value="ALL">Classification: All</option>
+              <option value="BACKDATED">Backdated</option>
+              <option value="AUTO">Auto-Resolving</option>
+              <option value="NON_AUTO">Non-Auto Resolving</option>
+              <option value="UNCERTAIN">Uncertain</option>
+            </select>
+
+            {/* ServiceNow Filter */}
+            <select
+              className="filter-select"
+              value={matrixSnow}
+              onChange={(e) => setMatrixSnow(e.target.value)}
+              style={{ fontSize: '0.76rem', padding: '0.35rem 0.55rem' }}
+            >
+              <option value="ALL">SNOW: All</option>
+              <option value="CREATED">Created</option>
+              <option value="APPENDED">Appended</option>
+              <option value="REOPENED">Reopened</option>
+              <option value="NONE">None (Suppressed)</option>
+            </select>
+
+            {/* Reset Filters / Sorting */}
+            {(matrixSearch || matrixSeverity !== 'ALL' || matrixOutcome !== 'ALL' || matrixSnow !== 'ALL' || sortColumn !== 'timestamp' || sortDirection !== 'desc') && (
+              <button
+                onClick={() => {
+                  setMatrixSearch('');
+                  setMatrixSeverity('ALL');
+                  setMatrixOutcome('ALL');
+                  setMatrixSnow('ALL');
+                  setSortColumn('timestamp');
+                  setSortDirection('desc');
+                }}
+                className="filter-pill"
+                style={{ fontSize: '0.74rem', padding: '0.32rem 0.6rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                title="Reset table filters and sort"
+              >
+                <RotateCcw size={12} /> Reset
+              </button>
+            )}
+          </div>
+        </div>
+
         <div style={{ overflowX: 'auto', maxHeight: '460px', overflowY: 'auto' }}>
           <table className="data-table resizable-table" ref={traceTableRef} style={{ minWidth: '1410px' }}>
             <thead>
               <tr>
-                {TRACE_COLUMNS.map((col, idx) => (
-                  <th key={col.key} style={{ width: col.width, minWidth: col.minWidth, position: 'relative' }}>
-                    {col.label}
-                    <span
-                      className="col-resize-handle"
-                      onMouseDown={(e) => onTraceColResize(e, idx)}
-                    />
-                  </th>
-                ))}
+                {TRACE_COLUMNS.map((col, idx) => {
+                  const isSorted = sortColumn === col.key;
+                  return (
+                    <th
+                      key={col.key}
+                      onClick={(e) => {
+                        if (e.target.classList.contains('col-resize-handle')) return;
+                        handleSort(col.key);
+                      }}
+                      className={`sortable ${isSorted ? 'sort-active' : ''}`}
+                      style={{
+                        width: col.width,
+                        minWidth: col.minWidth,
+                        position: 'relative',
+                        userSelect: 'none',
+                      }}
+                      title={`Click to sort by ${col.label}`}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                        <span>{col.label}</span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', opacity: isSorted ? 1 : 0.4 }}>
+                          {isSorted ? (
+                            sortDirection === 'asc' ? <ArrowUp size={12} color="var(--accent-blue)" /> : <ArrowDown size={12} color="var(--accent-blue)" />
+                          ) : (
+                            <ArrowUpDown size={11} />
+                          )}
+                        </span>
+                      </div>
+                      <span
+                        className="col-resize-handle"
+                        onMouseDown={(e) => onTraceColResize(e, idx)}
+                      />
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
-              {filteredAlerts.map((alert, i) => {
+              {matrixAlerts.map((alert, i) => {
                 const details = alert.alert_details || {};
                 const results = alert.results || {};
                 const isBackdated = results.agent_1?.data?.is_backdated;
@@ -788,7 +1072,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
                   if (liveStatus) snowDisplay += ` · ${liveStatus}`;
                 }
                 return (
-                  <tr key={i}>
+                  <tr key={details.event_id || i}>
                     <td style={{ width: TRACE_COLUMNS[0].width, minWidth: TRACE_COLUMNS[0].minWidth, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       <button
                         className="event-id-link"
@@ -826,8 +1110,25 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
                   </tr>
                 );
               })}
-              {filteredAlerts.length === 0 && (
-                <tr><td colSpan="9" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-tertiary)' }}>No alerts match the current filters.</td></tr>
+              {matrixAlerts.length === 0 && (
+                <tr>
+                  <td colSpan="9" style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-tertiary)' }}>
+                    <Filter size={24} style={{ marginBottom: '0.5rem', opacity: 0.5, display: 'block', margin: '0 auto 8px auto' }} />
+                    <p style={{ margin: 0, fontWeight: 500 }}>No alerts match the current matrix filters</p>
+                    <button
+                      onClick={() => {
+                        setMatrixSearch('');
+                        setMatrixSeverity('ALL');
+                        setMatrixOutcome('ALL');
+                        setMatrixSnow('ALL');
+                      }}
+                      className="filter-pill"
+                      style={{ marginTop: '0.75rem', fontSize: '0.75rem' }}
+                    >
+                      Clear matrix filters
+                    </button>
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
