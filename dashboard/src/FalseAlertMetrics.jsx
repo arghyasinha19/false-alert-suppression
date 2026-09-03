@@ -27,6 +27,35 @@ const TOOLTIP_STYLE = {
   color: '#0f172a',
 };
 
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8004';
+
+function parseTimestamp(ts) {
+  if (ts === null || ts === undefined || ts === '') return null;
+  if (typeof ts === 'number') {
+    if (isNaN(ts)) return null;
+    const ms = ts > 1e12 ? ts : ts * 1000;
+    const d = new Date(ms);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  if (typeof ts === 'string') {
+    const trimmed = ts.trim();
+    const asNum = Number(trimmed);
+    if (trimmed.length > 0 && !isNaN(asNum) && isFinite(asNum)) {
+      const ms = asNum > 1e12 ? asNum : asNum * 1000;
+      const d = new Date(ms);
+      if (!isNaN(d.getTime())) return d;
+    }
+    const d = new Date(trimmed);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  return null;
+}
+
+function formatTimestamp(ts, fallback = '—') {
+  const d = parseTimestamp(ts);
+  return d ? d.toLocaleString() : fallback;
+}
+
 function generateMockData() {
   const devices = [
     'UK-MAL-DEV-AP02', 'Core-Router-01', 'Access-Switch-05',
@@ -133,11 +162,7 @@ function EventDetailModal({ alert, onClose }) {
   const snowInc = results.agent_4?.data?.incident;
   const liveStatus = alert.live_snow_status;
 
-  const formatTs = (ts) => {
-    if (!ts) return '—';
-    const pTs = !isNaN(ts) ? Number(ts) : ts;
-    return new Date(typeof pTs === 'number' ? (pTs > 1e12 ? pTs : pTs * 1000) : pTs).toLocaleString();
-  };
+  const formatTs = (ts) => formatTimestamp(ts);
 
   return (
     <div className="event-modal-overlay" onClick={onClose}>
@@ -272,15 +297,33 @@ function EventDetailModal({ alert, onClose }) {
   );
 }
 
-export default function FalseAlertMetrics({ alerts: rawAlerts }) {
+export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
   const [deviceFilter, setDeviceFilter] = useState('ALL');
   const [timeRange, setTimeRange] = useState('ALL');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [simulating, setSimulating] = useState(false);
 
   const { tableRef: traceTableRef, onMouseDown: onTraceColResize } = useResizableColumns();
 
-  const alerts = rawAlerts;
+  const alerts = useMemo(() => {
+    if (rawAlerts && rawAlerts.length > 0) return rawAlerts;
+    return generateMockData();
+  }, [rawAlerts]);
+
+  const handleSimulate = async (count = 5) => {
+    setSimulating(true);
+    try {
+      await fetch(`${API_BASE}/api/alerts/simulate?count=${count}`, { method: 'POST' });
+      if (onRefresh) {
+        await onRefresh();
+      }
+    } catch (e) {
+      console.error('Failed to simulate alerts:', e);
+    } finally {
+      setSimulating(false);
+    }
+  };
 
   const deviceNames = useMemo(() => {
     const names = new Set();
@@ -297,10 +340,9 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
       const cutoff = now - (ranges[timeRange] || 0);
       result = result.filter(a => {
         const ts = a.alert_details?.timestamp || a.alert_details?.raw_timestamp;
-        if (!ts) return true;
-        const parsedTs = !isNaN(ts) ? Number(ts) : ts;
-        const t = typeof parsedTs === 'number' ? (parsedTs > 1e12 ? parsedTs : parsedTs * 1000) : new Date(parsedTs).getTime();
-        return t >= cutoff;
+        const d = parseTimestamp(ts);
+        if (!d) return true;
+        return d.getTime() >= cutoff;
       });
     }
     if (categoryFilter !== 'ALL') {
@@ -363,23 +405,30 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
       if (snowAction === 'incident_reopened') deviceStats[device].snowReopened++;
 
       const ts = a.alert_details?.timestamp || a.alert_details?.raw_timestamp;
-      if (ts) {
-        try {
-          const parsedTs = !isNaN(ts) ? Number(ts) : ts;
-          const dt = new Date(typeof parsedTs === 'number' ? (parsedTs > 1e12 ? parsedTs : parsedTs * 1000) : parsedTs);
-          const hourKey = dt.toISOString().slice(0, 13) + ':00';
-          if (!hourlyBuckets[hourKey]) hourlyBuckets[hourKey] = { time: hourKey, Backdated: 0, 'Auto Resolving': 0, 'Non-Auto Resolving': 0, Uncertain: 0 };
-          if (isBackdated) hourlyBuckets[hourKey].Backdated++;
-          else if (predicted === 'auto resolving') hourlyBuckets[hourKey]['Auto Resolving']++;
-          else if (predicted === 'non-auto resolving') hourlyBuckets[hourKey]['Non-Auto Resolving']++;
-          else hourlyBuckets[hourKey].Uncertain++;
-        } catch (e) {}
+      const d = parseTimestamp(ts);
+      if (d) {
+        // Round down to the local hour boundary
+        const bucketDate = new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), 0, 0, 0);
+        const hourKey = bucketDate.getTime();
+        if (!hourlyBuckets[hourKey]) {
+          hourlyBuckets[hourKey] = {
+            time: hourKey,
+            Backdated: 0,
+            'Auto Resolving': 0,
+            'Non-Auto Resolving': 0,
+            Uncertain: 0,
+          };
+        }
+        if (isBackdated) hourlyBuckets[hourKey].Backdated++;
+        else if (predicted === 'auto resolving') hourlyBuckets[hourKey]['Auto Resolving']++;
+        else if (predicted === 'non-auto resolving') hourlyBuckets[hourKey]['Non-Auto Resolving']++;
+        else hourlyBuckets[hourKey].Uncertain++;
       }
     });
 
     const suppressionRate = total > 0 ? ((backdated + autoResolving) / total * 100).toFixed(1) : 0;
     const ticketsAvoided = backdated + autoResolving;
-    const hourlySeries = Object.values(hourlyBuckets).sort((a, b) => a.time.localeCompare(b.time));
+    const hourlySeries = Object.values(hourlyBuckets).sort((a, b) => a.time - b.time);
 
     // Device ranking — sort by genuine alerts (non-auto-resolving) descending
     const ranking = Object.values(deviceStats).sort((a, b) => b.genuine - a.genuine || b.total - a.total);
@@ -445,6 +494,29 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
             {f === 'ALL' ? 'All' : f === 'BACKDATED' ? 'Backdated' : f === 'AUTO' ? 'Auto-Resolving' : f === 'NON_AUTO' ? 'Non-Auto' : 'Uncertain'}
           </button>
         ))}
+
+        <button
+          className="filter-pill simulate-btn"
+          style={{
+            marginLeft: 'auto',
+            background: 'linear-gradient(135deg, #2563eb, #0891b2)',
+            color: '#ffffff',
+            border: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontWeight: 600,
+            cursor: simulating ? 'wait' : 'pointer',
+            boxShadow: '0 2px 8px rgba(37, 99, 235, 0.3)',
+            padding: '0.45rem 0.9rem',
+          }}
+          disabled={simulating}
+          onClick={() => handleSimulate(5)}
+          title="Simulate 5 incoming alerts and run through ML pipeline"
+        >
+          <Zap size={14} className={simulating ? 'spin-once' : ''} />
+          {simulating ? 'Simulating...' : '⚡ Simulate +5 Alerts'}
+        </button>
       </div>
 
       {/* KPI Cards Row 1 */}
@@ -576,9 +648,40 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
-                <XAxis dataKey="time" stroke="#94a3b8" tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={v => { try { return new Date(v).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); } catch { return v; } }} />
+                <XAxis
+                  dataKey="time"
+                  stroke="#94a3b8"
+                  tick={{ fontSize: 10, fill: '#94a3b8' }}
+                  minTickGap={35}
+                  tickFormatter={v => {
+                    try {
+                      const d = new Date(v);
+                      const timeStr = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+                      const dateStr = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+                      return `${dateStr}, ${timeStr}`;
+                    } catch {
+                      return v;
+                    }
+                  }}
+                />
                 <YAxis stroke="#94a3b8" tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                <RechartsTooltip contentStyle={TOOLTIP_STYLE} />
+                <RechartsTooltip
+                  contentStyle={TOOLTIP_STYLE}
+                  labelFormatter={v => {
+                    try {
+                      return new Date(v).toLocaleString([], {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true,
+                      });
+                    } catch {
+                      return v;
+                    }
+                  }}
+                />
                 <Area type="monotone" dataKey="Backdated" stroke="#2563eb" fill="url(#gradBackdated)" strokeWidth={2} />
                 <Area type="monotone" dataKey="Auto Resolving" stroke="#059669" fill="url(#gradAuto)" strokeWidth={2} />
                 <Area type="monotone" dataKey="Non-Auto Resolving" stroke="#dc2626" fill="url(#gradNonAuto)" strokeWidth={2} />
@@ -705,12 +808,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts }) {
                       {details.issue_name || '—'}
                     </td>
                     <td style={{ width: TRACE_COLUMNS[4].width, minWidth: TRACE_COLUMNS[4].minWidth, fontSize: '0.76rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {(() => {
-                        const ts = details.timestamp || details.raw_timestamp;
-                        if (!ts) return '—';
-                        const pTs = !isNaN(ts) ? Number(ts) : ts;
-                        return new Date(typeof pTs === 'number' ? (pTs > 1e12 ? pTs : pTs * 1000) : pTs).toLocaleString();
-                      })()}
+                      {formatTimestamp(details.timestamp || details.raw_timestamp)}
                     </td>
                     <td style={{ width: TRACE_COLUMNS[5].width, minWidth: TRACE_COLUMNS[5].minWidth }}>
                       <span className={`badge ${isBackdated ? 'backdated' : 'auto-resolving'}`}>{isBackdated ? 'Suppressed' : 'Fresh'}</span>
