@@ -307,6 +307,8 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
 
   // Table-specific filters & sorting
   const [matrixSearch, setMatrixSearch] = useState('');
+  const [searchScope, setSearchScope] = useState('all');
+  const [matrixDevice, setMatrixDevice] = useState('ALL');
   const [matrixSeverity, setMatrixSeverity] = useState('ALL');
   const [matrixOutcome, setMatrixOutcome] = useState('ALL');
   const [matrixSnow, setMatrixSnow] = useState('ALL');
@@ -468,17 +470,32 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
   const matrixAlerts = useMemo(() => {
     let list = filteredAlerts;
 
-    // 1. Text Search Filter (Event ID, Device, Issue, Incident)
+    // 0. Dedicated Device Filter (Exact match)
+    if (matrixDevice !== 'ALL') {
+      list = list.filter(a => {
+        const d = a.alert_details?.device_name || a.alert_details?.device || 'Unknown';
+        return d === matrixDevice;
+      });
+    }
+
+    // 1. Text Search Filter with Scoped Matching
     if (matrixSearch.trim()) {
       const q = matrixSearch.trim().toLowerCase();
       list = list.filter(a => {
         const det = a.alert_details || {};
         const res = a.results || {};
         const eventId = String(det.event_id || '').toLowerCase();
-        const device = String(det.device_name || '').toLowerCase();
-        const issue = String(det.issue_name || det.issue_details || '').toLowerCase();
+        const device = String(det.device_name || det.device || '').toLowerCase();
+        // Only search visible issue_name (not verbose issue_details) to prevent cross-device boilerplate matches
+        const issue = String(det.issue_name || '').toLowerCase();
         const incident = String(res.agent_4?.data?.incident || '').toLowerCase();
-        return eventId.includes(q) || device.includes(q) || issue.includes(q) || incident.includes(q);
+
+        if (searchScope === 'device') return device.includes(q);
+        if (searchScope === 'event_id') return eventId.includes(q);
+        if (searchScope === 'issue') return issue.includes(q);
+        if (searchScope === 'snow') return incident.includes(q);
+        // 'all' matches across all visible table columns:
+        return device.includes(q) || eventId.includes(q) || issue.includes(q) || incident.includes(q);
       });
     }
 
@@ -585,7 +602,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
     }
 
     return list;
-  }, [filteredAlerts, matrixSearch, matrixSeverity, matrixOutcome, matrixSnow, sortColumn, sortDirection]);
+  }, [filteredAlerts, matrixDevice, matrixSearch, searchScope, matrixSeverity, matrixOutcome, matrixSnow, sortColumn, sortDirection]);
 
   const pieData = [
     { name: 'Backdated', value: kpi.backdated },
@@ -874,7 +891,18 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
               {deviceRanking.slice(0, 15).map(d => (
                 <tr key={d.device}>
                   <td><span className={`rank-number ${getRankClass(d.rank)}`}>{d.rank}</span></td>
-                  <td style={{ fontWeight: 700, fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={d.device}>{d.device}</td>
+                  <td
+                    onClick={() => {
+                      setMatrixDevice(d.device);
+                      traceTableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}
+                    style={{ fontWeight: 700, fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer' }}
+                    title={`Click to filter Detailed Traceability Matrix for ${d.device}`}
+                  >
+                    <span style={{ borderBottom: '1px dashed var(--accent-blue)', color: matrixDevice === d.device ? 'var(--accent-blue)' : 'inherit' }}>
+                      {d.device}
+                    </span>
+                  </td>
                   <td style={{ fontWeight: 700 }}>{d.total}</td>
                   <td><span className="badge non-auto">{d.genuine}</span></td>
                   <td><span className="badge backdated">{d.false}</span></td>
@@ -896,13 +924,37 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
       {/* Detailed Traceability Table */}
       <div className="glass-card table-card">
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '0.85rem', marginBottom: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.6rem' }}>
             <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Server size={16} /> Detailed Traceability Matrix
             </h3>
             <span className="badge" style={{ background: 'rgba(37, 99, 235, 0.1)', color: 'var(--accent-blue)', fontWeight: 600, fontSize: '0.74rem' }}>
               {matrixAlerts.length} {matrixAlerts.length === 1 ? 'alert' : 'alerts'}
             </span>
+            {matrixDevice !== 'ALL' && (
+              <span
+                className="badge"
+                style={{
+                  background: 'rgba(37, 99, 235, 0.12)',
+                  color: 'var(--accent-blue)',
+                  border: '1px solid rgba(37, 99, 235, 0.3)',
+                  fontWeight: 600,
+                  fontSize: '0.72rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                Device: {matrixDevice}
+                <button
+                  onClick={() => setMatrixDevice('ALL')}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0, display: 'flex' }}
+                  title="Clear device filter"
+                >
+                  <X size={11} />
+                </button>
+              </span>
+            )}
             {matrixAlerts.length !== filteredAlerts.length && (
               <span style={{ fontSize: '0.74rem', color: 'var(--text-tertiary)' }}>
                 (of {filteredAlerts.length} total)
@@ -912,12 +964,27 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
 
           {/* Table-specific Search & Filter Bar */}
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem' }}>
+            {/* Search Scope Selector */}
+            <select
+              className="filter-select"
+              value={searchScope}
+              onChange={(e) => setSearchScope(e.target.value)}
+              style={{ fontSize: '0.76rem', padding: '0.35rem 0.55rem' }}
+              title="Select which column to search"
+            >
+              <option value="all">Search: All</option>
+              <option value="device">Search: Device Only</option>
+              <option value="event_id">Search: Event ID Only</option>
+              <option value="issue">Search: Issue Only</option>
+              <option value="snow">Search: SNOW Only</option>
+            </select>
+
             {/* Search Input */}
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
               <Search size={13} style={{ position: 'absolute', left: '10px', color: 'var(--text-tertiary)', pointerEvents: 'none' }} />
               <input
                 type="text"
-                placeholder="Search matrix..."
+                placeholder={searchScope === 'device' ? 'Filter by device...' : searchScope === 'event_id' ? 'Search event ID...' : searchScope === 'issue' ? 'Search issue...' : searchScope === 'snow' ? 'Search incident...' : 'Search matrix...'}
                 value={matrixSearch}
                 onChange={(e) => setMatrixSearch(e.target.value)}
                 style={{
@@ -950,6 +1017,20 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
                 </button>
               )}
             </div>
+
+            {/* Dedicated Device Dropdown */}
+            <select
+              className="filter-select"
+              value={matrixDevice}
+              onChange={(e) => setMatrixDevice(e.target.value)}
+              style={{ fontSize: '0.76rem', padding: '0.35rem 0.55rem', maxWidth: '160px' }}
+              title="Filter matrix to a specific device"
+            >
+              <option value="ALL">Device: All</option>
+              {deviceNames.filter(d => d !== 'ALL').map(d => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
 
             {/* Severity Filter */}
             <select
@@ -993,10 +1074,12 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
             </select>
 
             {/* Reset Filters / Sorting */}
-            {(matrixSearch || matrixSeverity !== 'ALL' || matrixOutcome !== 'ALL' || matrixSnow !== 'ALL' || sortColumn !== 'timestamp' || sortDirection !== 'desc') && (
+            {(matrixSearch || searchScope !== 'all' || matrixDevice !== 'ALL' || matrixSeverity !== 'ALL' || matrixOutcome !== 'ALL' || matrixSnow !== 'ALL' || sortColumn !== 'timestamp' || sortDirection !== 'desc') && (
               <button
                 onClick={() => {
                   setMatrixSearch('');
+                  setSearchScope('all');
+                  setMatrixDevice('ALL');
                   setMatrixSeverity('ALL');
                   setMatrixOutcome('ALL');
                   setMatrixSnow('ALL');
@@ -1082,8 +1165,30 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
                         {details.event_id || `EVT-${i}`}
                       </button>
                     </td>
-                    <td style={{ width: TRACE_COLUMNS[1].width, minWidth: TRACE_COLUMNS[1].minWidth, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={details.device_name || 'Unknown'}>
-                      {details.device_name || 'Unknown'}
+                    <td style={{ width: TRACE_COLUMNS[1].width, minWidth: TRACE_COLUMNS[1].minWidth, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={`Filter matrix for ${details.device_name || 'Unknown'}`}>
+                      <button
+                        className="device-filter-btn"
+                        onClick={() => setMatrixDevice(details.device_name || 'Unknown')}
+                        style={{
+                          background: matrixDevice === details.device_name ? 'rgba(37, 99, 235, 0.15)' : 'transparent',
+                          border: matrixDevice === details.device_name ? '1px solid rgba(37, 99, 235, 0.4)' : '1px solid transparent',
+                          color: matrixDevice === details.device_name ? 'var(--accent-blue)' : 'var(--text-primary)',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          textAlign: 'left',
+                          maxWidth: '100%',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          fontSize: '0.8rem',
+                          display: 'inline-block',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        {details.device_name || 'Unknown'}
+                      </button>
                     </td>
                     <td style={{ width: TRACE_COLUMNS[2].width, minWidth: TRACE_COLUMNS[2].minWidth }}>
                       <span className={`badge severity-${details.severity || 3}`}>{details.severity || '—'}</span>
