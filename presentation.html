@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>False Alert Suppression System - Presentation</title>
+    <title>False Alert Suppression System & AI ChatOps - Executive Presentation</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,7 +25,7 @@
             --text-main: #f3f4f6;
             --text-muted: #9ca3af;
             --border-color: rgba(255, 255, 255, 0.08);
-            --glass-bg: rgba(17, 24, 39, 0.75);
+            --glass-bg: rgba(17, 24, 39, 0.78);
             --glass-border: rgba(255, 255, 255, 0.12);
         }
 
@@ -58,7 +58,7 @@
 
         .progress-bar {
             height: 100%;
-            width: 33.33%;
+            width: 20%;
             background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan), var(--accent-purple));
             transition: width 0.3s ease;
         }
@@ -136,9 +136,9 @@
         .slide {
             position: absolute;
             width: 92vw;
-            max-width: 1400px;
-            height: 84vh;
-            max-height: 840px;
+            max-width: 1420px;
+            height: 85vh;
+            max-height: 850px;
             background: var(--glass-bg);
             border: 1px solid var(--glass-border);
             border-radius: 24px;
@@ -194,7 +194,7 @@
         }
 
         .slide-subtitle {
-            font-size: 1rem;
+            font-size: 0.98rem;
             color: var(--text-muted);
             margin-top: 4px;
             font-weight: 400;
@@ -204,45 +204,60 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 18px;
         }
 
-        /* Grid Layouts */
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+        /* Highlight Banners & Cards */
+        .stat-banner {
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.4), rgba(17, 24, 39, 0.8));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 16px;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
             gap: 24px;
-            height: 100%;
         }
 
-        .grid-3 {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
+        .stat-number-large {
+            font-size: 3.8rem;
+            font-weight: 800;
+            color: var(--accent-cyan);
+            line-height: 1;
         }
 
-        .grid-4 {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
+        .stat-text-box h3 {
+            font-size: 1.2rem;
+            color: #ffffff;
+            margin-bottom: 4px;
         }
 
-        /* Card Styles */
+        .stat-text-box p {
+            color: var(--text-muted);
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+
+        /* Layout Grids */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+        .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+
         .card {
-            background: rgba(17, 24, 39, 0.6);
+            background: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: 16px;
-            padding: 24px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            transition: all 0.3s ease;
+            gap: 10px;
+            transition: all 0.25 ease;
         }
 
         .card:hover {
-            border-color: rgba(59, 130, 246, 0.4);
+            border-color: rgba(255, 255, 255, 0.2);
+            background: var(--bg-card-hover);
             transform: translateY(-2px);
-            background: rgba(31, 41, 61, 0.5);
         }
 
         .card-header {
@@ -252,98 +267,79 @@
         }
 
         .card-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.25rem;
+            font-size: 1.1rem;
             flex-shrink: 0;
         }
 
-        .icon-blue { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
-        .icon-cyan { background: rgba(6, 182, 212, 0.2); color: var(--accent-cyan); }
-        .icon-purple { background: rgba(139, 92, 246, 0.2); color: var(--accent-purple); }
-        .icon-emerald { background: rgba(16, 185, 129, 0.2); color: var(--accent-emerald); }
-        .icon-amber { background: rgba(245, 158, 11, 0.2); color: var(--accent-amber); }
-        .icon-rose { background: rgba(244, 63, 94, 0.2); color: var(--accent-rose); }
+        .icon-blue { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); }
+        .icon-cyan { background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); }
+        .icon-purple { background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); }
+        .icon-emerald { background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); }
+        .icon-amber { background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); }
+        .icon-rose { background: rgba(244, 63, 94, 0.15); color: var(--accent-rose); }
 
         .card-title {
-            font-size: 1.15rem;
+            font-size: 1.05rem;
             font-weight: 700;
-            color: #fff;
+            color: #ffffff;
         }
 
         .card-desc {
-            font-size: 0.9rem;
+            font-size: 0.86rem;
             color: var(--text-muted);
             line-height: 1.5;
         }
 
-        /* Highlight Stat Banner */
-        .stat-banner {
-            background: linear-gradient(135deg, rgba(244, 63, 94, 0.12), rgba(245, 158, 11, 0.12));
-            border: 1px solid rgba(244, 63, 94, 0.3);
-            border-radius: 20px;
-            padding: 24px 32px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 8px;
+        .code-pill {
+            font-family: 'Fira Code', monospace;
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--accent-cyan);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8rem;
         }
 
-        .stat-number-large {
-            font-size: 4rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, #f43f5e, #fb923c);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            line-height: 1;
-        }
-
-        .stat-text-box h3 {
-            font-size: 1.4rem;
-            color: #ffffff;
-            margin-bottom: 4px;
-        }
-
-        .stat-text-box p {
-            font-size: 0.95rem;
-            color: var(--text-muted);
-            max-width: 650px;
-        }
-
-        /* Diagram Container & Switcher */
+        /* Diagram Wrappers */
         .diagram-wrapper {
-            background: #0b0f19;
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 16px;
+            width: 100%;
             height: 100%;
+            background: rgba(10, 15, 26, 0.7);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 14px;
             display: flex;
-            flex-direction: column;
-            justify-content: center;
             align-items: center;
-            overflow: auto;
-            position: relative;
+            justify-content: center;
         }
 
+        .svg-diagram {
+            width: 100%;
+            height: 100%;
+            max-height: 520px;
+        }
+
+        /* Tab Switcher */
         .tab-switcher {
             display: flex;
-            gap: 8px;
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.3);
             padding: 4px;
-            border-radius: 12px;
-            width: fit-content;
+            border-radius: 30px;
+            border: 1px solid var(--border-color);
+            gap: 4px;
         }
 
         .tab-btn {
-            padding: 6px 18px;
-            border-radius: 8px;
-            border: none;
             background: transparent;
+            border: none;
             color: var(--text-muted);
+            padding: 8px 18px;
+            border-radius: 20px;
             font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
@@ -352,17 +348,11 @@
 
         .tab-btn.active {
             background: var(--accent-blue);
-            color: #fff;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
 
-        /* SVG Diagram Styling */
-        .svg-diagram {
-            width: 100%;
-            height: 100%;
-            max-height: 520px;
-        }
-
-        /* Bottom Control Bar */
+        /* Bottom Controls Bar */
         .bottom-nav {
             position: fixed;
             bottom: 20px;
@@ -370,14 +360,14 @@
             transform: translateX(-50%);
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 16px;
             background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            padding: 10px 24px;
+            padding: 8px 24px;
             border-radius: 40px;
+            border: 1px solid var(--glass-border);
             backdrop-filter: blur(16px);
             z-index: 90;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
         }
 
         .nav-btn {
@@ -396,16 +386,16 @@
         }
 
         .nav-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.1);
             color: var(--accent-cyan);
         }
 
         .slide-counter {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 600;
             color: var(--text-muted);
-            letter-spacing: 0.05em;
             min-width: 90px;
+            text-anchor: middle;
             text-align: center;
         }
 
@@ -415,54 +405,44 @@
         }
 
         .dot {
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.2);
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
 
         .dot.active {
             background: var(--accent-cyan);
-            width: 28px;
+            width: 24px;
             border-radius: 10px;
         }
 
-        .code-pill {
-            font-family: 'Fira Code', monospace;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: var(--accent-cyan);
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-        }
-
-        /* Overview Overlay Grid */
+        /* Slide Overview Grid Modal */
         .overview-modal {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            inset: 0;
             background: rgba(9, 13, 22, 0.95);
             backdrop-filter: blur(20px);
             z-index: 200;
-            display: none;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
             padding: 60px 40px;
             overflow-y: auto;
         }
 
         .overview-modal.active {
-            display: block;
+            opacity: 1;
+            pointer-events: auto;
         }
 
         .overview-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 24px;
-            max-width: 1200px;
+            max-width: 1300px;
             margin: 0 auto;
         }
 
@@ -473,25 +453,24 @@
             padding: 24px;
             cursor: pointer;
             transition: all 0.2s ease;
-            height: 200px;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            gap: 12px;
         }
 
         .overview-card:hover {
-            border-color: var(--accent-blue);
-            transform: scale(1.02);
+            border-color: var(--accent-cyan);
+            transform: translateY(-4px);
         }
 
         .overview-num {
-            font-size: 0.85rem;
-            color: var(--accent-cyan);
+            font-size: 0.8rem;
             font-weight: 700;
+            color: var(--accent-cyan);
         }
 
         .overview-title {
-            font-size: 1.15rem;
+            font-size: 1.2rem;
             font-weight: 700;
             color: #fff;
         }
@@ -508,7 +487,7 @@
     <header class="header-nav">
         <div class="brand-logo">
             <i class="fa-solid fa-shield-halved"></i>
-            <span>False Alert Suppression</span>
+            <span>False Alert Suppression System</span>
         </div>
         <div class="nav-controls">
             <button class="btn-icon" id="gridToggleBtn" title="Slide Overview (M)"><i class="fa-solid fa-border-all"></i></button>
@@ -523,9 +502,9 @@
         <section class="slide active" id="slide-1">
             <div class="slide-header">
                 <div>
-                    <div class="slide-tag"><i class="fa-solid fa-triangle-exclamation"></i> Slide 1 of 3 &bull; Problem Statement</div>
+                    <div class="slide-tag"><i class="fa-solid fa-triangle-exclamation"></i> Slide 1 of 5 &bull; Operational Context</div>
                     <h2 class="slide-title">Network Alert Noise & High False Alert Volume</h2>
-                    <p class="slide-subtitle">Unvalidated Cisco DNAC alerts create severe ticket pollution and drain SOC engineering resources</p>
+                    <p class="slide-subtitle">Unvalidated Cisco DNAC webhooks flood SOC queues with transient link flaps and stale telemetry</p>
                 </div>
             </div>
             <div class="slide-body">
@@ -544,7 +523,7 @@
                             <div class="card-icon icon-rose"><i class="fa-solid fa-bell-slash"></i></div>
                             <div class="card-title">Transient Flapping Events</div>
                         </div>
-                        <p class="card-desc">Temporary link flaps, momentary CPU spikes, and transient BGP peer drops automatically self-heal within 5 to 10 minutes. Naively ticketing these events immediately generates unnecessary work.</p>
+                        <p class="card-desc">Temporary interface flaps, momentary CPU spikes, and transient BGP peer drops automatically self-heal within 5 to 10 minutes. Naively ticketing these immediately creates massive noise.</p>
                     </div>
 
                     <div class="card">
@@ -552,36 +531,122 @@
                             <div class="card-icon icon-amber"><i class="fa-solid fa-copy"></i></div>
                             <div class="card-title">ServiceNow Ticket Pollution</div>
                         </div>
-                        <p class="card-desc">Legacy monitoring systems flood ServiceNow with duplicate incidents for single network issues, cluttering SOC queues and obscuring genuine critical outages.</p>
+                        <p class="card-desc">Legacy monitoring tools flood ServiceNow with duplicate incidents for a single underlying issue, cluttering SOC queues and obscuring true high-priority outages.</p>
                     </div>
 
                     <div class="card">
                         <div class="card-header">
                             <div class="card-icon icon-purple"><i class="fa-solid fa-clock-rotate-left"></i></div>
-                            <div class="card-title">Stale / Backdated Syslogs</div>
+                            <div class="card-title">Stale / Backdated Telemetry</div>
                         </div>
-                        <p class="card-desc">Delayed network telemetry pushes historical alerts (>24 hours old) into the pipeline, wasting SOC engineering hours investigating issues that have already passed.</p>
+                        <p class="card-desc">Delayed network telemetry pushes historical alerts (>24 hours old) into the pipeline, wasting SOC engineering hours investigating issues that resolved long ago.</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- SLIDE 2: Solution Architecture & AI ChatOps Agent -->
+        <!-- SLIDE 2: The 5 Autonomous Agents -->
         <section class="slide" id="slide-2">
             <div class="slide-header">
                 <div>
-                    <div class="slide-tag"><i class="fa-solid fa-sitemap"></i> Slide 2 of 3 &bull; Solution Architecture</div>
-                    <h2 class="slide-title">System Architecture & AI ChatOps Agent</h2>
-                    <p class="slide-subtitle">Multi-Agent LangGraph engine, RabbitMQ delay loop, and Gemini-Powered Tool-Calling AI Agent</p>
+                    <div class="slide-tag"><i class="fa-solid fa-robot"></i> Slide 2 of 5 &bull; Multi-Agent Intelligence</div>
+                    <h2 class="slide-title">5 Autonomous Specialized Agents</h2>
+                    <p class="slide-subtitle">Modular LangGraph pipeline agents paired with a Gemini-Powered ChatOps assistant</p>
+                </div>
+            </div>
+            <div class="slide-body">
+                <div class="grid-5">
+                    <!-- Agent 1 -->
+                    <div class="card" style="border-top: 3px solid var(--accent-purple);">
+                        <div class="card-header">
+                            <div class="card-icon icon-purple"><i class="fa-solid fa-filter"></i></div>
+                            <div class="card-title" style="font-size: 0.95rem;">Agent 1: Backdate Detector</div>
+                        </div>
+                        <p class="card-desc" style="font-size: 0.82rem;"><strong>Role:</strong> Ingress Gate Keeper.<br>Calculates timestamp deltas and suppresses alerts older than 24 hours immediately.</p>
+                        <span class="code-pill">node_agent_1.py</span>
+                    </div>
+
+                    <!-- Agent 2 -->
+                    <div class="card" style="border-top: 3px solid var(--accent-blue);">
+                        <div class="card-header">
+                            <div class="card-icon icon-blue"><i class="fa-solid fa-brain"></i></div>
+                            <div class="card-title" style="font-size: 0.95rem;">Agent 2: ML/DL Classifier</div>
+                        </div>
+                        <p class="card-desc" style="font-size: 0.82rem;"><strong>Role:</strong> Intent Classification.<br>Evaluates alert text via DistilBERT & TF-IDF models to predict <span class="code-pill">Auto resolving</span> status.</p>
+                        <span class="code-pill">node_agent_2.py</span>
+                    </div>
+
+                    <!-- Agent 3 -->
+                    <div class="card" style="border-top: 3px solid var(--accent-amber);">
+                        <div class="card-header">
+                            <div class="card-icon icon-amber"><i class="fa-solid fa-hourglass-half"></i></div>
+                            <div class="card-title" style="font-size: 0.95rem;">Agent 3: DLX Scheduler</div>
+                        </div>
+                        <p class="card-desc" style="font-size: 0.82rem;"><strong>Role:</strong> Deferred Verification.<br>Pushes auto-resolving alerts into a 15-minute RabbitMQ DLX wait queue for status re-checking.</p>
+                        <span class="code-pill">node_agent_3_scheduler.py</span>
+                    </div>
+
+                    <!-- Agent 4 -->
+                    <div class="card" style="border-top: 3px solid var(--accent-emerald);">
+                        <div class="card-header">
+                            <div class="card-icon icon-emerald"><i class="fa-solid fa-ticket"></i></div>
+                            <div class="card-title" style="font-size: 0.95rem;">Agent 4: SNOW Engine</div>
+                        </div>
+                        <p class="card-desc" style="font-size: 0.82rem;"><strong>Role:</strong> ITSM Orchestration.<br>Manages ticket lifecycles: appends comments to open tickets, reopens <= 3-day tickets, or creates new ones.</p>
+                        <span class="code-pill">node_agent_4_servicenow.py</span>
+                    </div>
+
+                    <!-- Agent 5 -->
+                    <div class="card" style="border-top: 3px solid var(--accent-cyan);">
+                        <div class="card-header">
+                            <div class="card-icon icon-cyan"><i class="fa-solid fa-comments"></i></div>
+                            <div class="card-title" style="font-size: 0.95rem;">Agent 5: AI ChatOps</div>
+                        </div>
+                        <p class="card-desc" style="font-size: 0.82rem;"><strong>Role:</strong> Interactive Ops Assistant.<br>Gemini-powered tool-calling agent with 8 tools for MongoDB & live DNAC REST API queries.</p>
+                        <span class="code-pill">chat_agent.py</span>
+                    </div>
+                </div>
+
+                <div class="grid-2" style="margin-top: 6px;">
+                    <div class="card" style="background: rgba(139, 92, 246, 0.06); border-color: rgba(139, 92, 246, 0.25);">
+                        <div class="card-header">
+                            <div class="card-icon icon-purple"><i class="fa-solid fa-diagram-project"></i></div>
+                            <div>
+                                <h4 style="color: #fff; font-size: 1.05rem;">LangGraph State Machine Orchestration</h4>
+                                <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 2px;">Nodes execute sequentially with state preservation, utilizing a Supervisor router node to bypass downstream processing on suppressed alerts.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="background: rgba(6, 182, 212, 0.06); border-color: rgba(6, 182, 212, 0.25);">
+                        <div class="card-header">
+                            <div class="card-icon icon-cyan"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                            <div>
+                                <h4 style="color: #fff; font-size: 1.05rem;">Conversational Agentic Tool Loop</h4>
+                                <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 2px;">Agent 5 classifies user intent, queries local MongoDB first, falls back to DNAC live REST endpoints, and generates native Recharts UI visualizations.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 3: Interactive System & Control Flows -->
+        <section class="slide" id="slide-3">
+            <div class="slide-header">
+                <div>
+                    <div class="slide-tag"><i class="fa-solid fa-sitemap"></i> Slide 3 of 5 &bull; Architecture & Flows</div>
+                    <h2 class="slide-title">System Architecture & Flow Diagrams</h2>
+                    <p class="slide-subtitle">Explore the end-to-end ingestion pipeline, decision tree, and ChatOps tool loop</p>
                 </div>
                 <div class="tab-switcher">
                     <button class="tab-btn active" onclick="switchDiagram('system')">System Pipeline</button>
                     <button class="tab-btn" onclick="switchDiagram('control')">Control Flow Logic</button>
-                    <button class="tab-btn" onclick="switchDiagram('chat')">AI ChatOps Agent</button>
+                    <button class="tab-btn" onclick="switchDiagram('chat')">AI ChatOps Flow</button>
                 </div>
             </div>
             <div class="slide-body" style="height: 68vh;">
-                <!-- SYSTEM DIAGRAM (PURE INLINE SVG) -->
+                <!-- SYSTEM DIAGRAM -->
                 <div class="diagram-wrapper" id="systemDiagramContainer">
                     <svg class="svg-diagram" viewBox="0 0 1200 520" xmlns="http://www.w3.org/2000/svg">
                         <defs>
@@ -723,7 +788,7 @@
                     </svg>
                 </div>
 
-                <!-- CONTROL FLOW DIAGRAM (PURE INLINE SVG) -->
+                <!-- CONTROL FLOW DIAGRAM -->
                 <div class="diagram-wrapper" id="controlDiagramContainer" style="display: none;">
                     <svg class="svg-diagram" viewBox="0 0 1200 520" xmlns="http://www.w3.org/2000/svg">
                         <defs>
@@ -789,10 +854,9 @@
                     </svg>
                 </div>
 
-                <!-- AI CHATOPS AGENT DIAGRAM & TECHNICAL DETAILS (NEW TAB) -->
+                <!-- AI CHATOPS AGENT DIAGRAM -->
                 <div class="diagram-wrapper" id="chatDiagramContainer" style="display: none; padding: 20px;">
                     <div style="width: 100%; height: 100%; display: flex; flex-direction: column; gap: 16px;">
-                        <!-- Agentic Tool-Calling Pipeline Flow SVG -->
                         <div style="background: rgba(17, 24, 39, 0.8); border: 1px solid var(--border-color); border-radius: 14px; padding: 12px; height: 190px;">
                             <svg class="svg-diagram" viewBox="0 0 1100 160" xmlns="http://www.w3.org/2000/svg">
                                 <defs>
@@ -800,15 +864,13 @@
                                         <path d="M 0 0 L 10 5 L 0 10 z" fill="#06b6d4"/>
                                     </marker>
                                 </defs>
-                                <!-- User Input -->
                                 <g transform="translate(20, 45)">
                                     <rect width="150" height="65" rx="10" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
                                     <text x="75" y="30" fill="#fff" font-size="12" font-weight="bold" text-anchor="middle">User Natural Query</text>
-                                    <text x="75" y="48" fill="#93c5fd" font-size="10" text-anchor="middle">React Chat Interface</text>
+                                    <text x="75" y="48" fill="#93c5fd" font-size="10" text-anchor="middle">React Chat Drawer</text>
                                 </g>
                                 <line x1="170" y1="77" x2="215" y2="77" stroke="#06b6d4" stroke-width="2" marker-end="url(#arrowChat)"/>
 
-                                <!-- Intent Analyzer -->
                                 <g transform="translate(220, 45)">
                                     <rect width="160" height="65" rx="10" fill="#581c87" stroke="#c084fc" stroke-width="2"/>
                                     <text x="80" y="30" fill="#fff" font-size="12" font-weight="bold" text-anchor="middle">1. Intent Classification</text>
@@ -816,25 +878,22 @@
                                 </g>
                                 <line x1="380" y1="77" x2="425" y2="77" stroke="#06b6d4" stroke-width="2" marker-end="url(#arrowChat)"/>
 
-                                <!-- Gemini LLM Tool Loop -->
                                 <g transform="translate(430, 25)">
                                     <rect width="210" height="105" rx="12" fill="url(#gradBlue)" stroke="#60a5fa" stroke-width="2"/>
-                                    <text x="105" y="28" fill="#fff" font-size="13" font-weight="bold" text-anchor="middle">2. Gemini 2.0 Flash Core</text>
+                                    <text x="105" y="28" fill="#fff" font-size="13" font-weight="bold" text-anchor="middle">2. Agent 5: Gemini Core</text>
                                     <text x="105" y="48" fill="#bfdbfe" font-size="10" text-anchor="middle">Function Calling Loop</text>
                                     <text x="105" y="70" fill="#93c5fd" font-size="9" text-anchor="middle">&bull; MongoDB First Policy &bull;</text>
                                     <text x="105" y="88" fill="#93c5fd" font-size="9" text-anchor="middle">&bull; Live DNAC API Fallback &bull;</text>
                                 </g>
                                 <line x1="640" y1="77" x2="685" y2="77" stroke="#06b6d4" stroke-width="2" marker-end="url(#arrowChat)"/>
 
-                                <!-- Tool Execution Registry -->
                                 <g transform="translate(690, 45)">
                                     <rect width="180" height="65" rx="10" fill="#78350f" stroke="#f59e0b" stroke-width="2"/>
                                     <text x="90" y="30" fill="#fff" font-size="12" font-weight="bold" text-anchor="middle">3. 8 Tool Registry</text>
-                                    <text x="90" y="48" fill="#fef3c7" font-size="9" text-anchor="middle">Mongo & DNAC Rest Executors</text>
+                                    <text x="90" y="48" fill="#fef3c7" font-size="9" text-anchor="middle">Mongo & DNAC Rest Tools</text>
                                 </g>
                                 <line x1="870" y1="77" x2="915" y2="77" stroke="#06b6d4" stroke-width="2" marker-end="url(#arrowChat)"/>
 
-                                <!-- Response + Chart Spec -->
                                 <g transform="translate(920, 45)">
                                     <rect width="160" height="65" rx="10" fill="#064e3b" stroke="#10b981" stroke-width="2"/>
                                     <text x="80" y="30" fill="#fff" font-size="12" font-weight="bold" text-anchor="middle">4. Dynamic Output</text>
@@ -843,14 +902,13 @@
                             </svg>
                         </div>
 
-                        <!-- 4 Technical Feature Cards of AI ChatOps -->
                         <div class="grid-4" style="height: calc(100% - 200px);">
                             <div class="card" style="padding: 16px;">
                                 <div class="card-header">
                                     <div class="card-icon icon-purple"><i class="fa-solid fa-robot"></i></div>
                                     <div class="card-title" style="font-size: 1rem;">Gemini Agentic Tool Calling</div>
                                 </div>
-                                <p class="card-desc" style="font-size: 0.82rem;">Driven by <span class="code-pill">gemini-2.0-flash</span> function calling. Executes multi-turn tool calling loops with 8 specialized python functions for querying alerts, device status, KPI trends, and DNAC REST endpoints.</p>
+                                <p class="card-desc" style="font-size: 0.82rem;">Driven by <span class="code-pill">gemini-2.0-flash</span> function calling. Executes multi-turn tool loops with 8 Python tools for querying alerts, device status, KPI trends, and DNAC REST endpoints.</p>
                             </div>
 
                             <div class="card" style="padding: 16px;">
@@ -858,7 +916,7 @@
                                     <div class="card-icon icon-cyan"><i class="fa-solid fa-layer-group"></i></div>
                                     <div class="card-title" style="font-size: 1rem;">Dual-Tier Retrieval Architecture</div>
                                 </div>
-                                <p class="card-desc" style="font-size: 0.82rem;">Enforces a <strong>MongoDB First Policy</strong> for instant sub-second local queries. Gracefully falls back to live Cisco DNAC REST APIs (<span class="code-pill">/device-health</span>, <span class="code-pill">/issues</span>) for real-time hardware status verification.</p>
+                                <p class="card-desc" style="font-size: 0.82rem;">Enforces a <strong>MongoDB First Policy</strong> for instant sub-second local queries. Gracefully falls back to live Cisco DNAC REST APIs (<span class="code-pill">/device-health</span>, <span class="code-pill">/issues</span>) for real-time status.</p>
                             </div>
 
                             <div class="card" style="padding: 16px;">
@@ -874,7 +932,7 @@
                                     <div class="card-icon icon-emerald"><i class="fa-solid fa-chart-simple"></i></div>
                                     <div class="card-title" style="font-size: 1rem;">Dynamic Recharts Spec & Citations</div>
                                 </div>
-                                <p class="card-desc" style="font-size: 0.82rem;">The <span class="code-pill">generate_visualization</span> tool emits structured JSON chart specs rendered natively in React (<span class="code-pill">bar</span>, <span class="code-pill">line</span>, <span class="code-pill">pie</span>, <span class="code-pill">area</span>) alongside verifiable data provenance citations.</p>
+                                <p class="card-desc" style="font-size: 0.82rem;">The <span class="code-pill">generate_visualization</span> tool emits structured JSON chart specs rendered natively in React (<span class="code-pill">bar</span>, <span class="code-pill">line</span>, <span class="code-pill">pie</span>, <span class="code-pill">area</span>) alongside verifiable citations.</p>
                             </div>
                         </div>
                     </div>
@@ -882,61 +940,113 @@
             </div>
         </section>
 
-        <!-- SLIDE 3: Benefits & Business Impact -->
-        <section class="slide" id="slide-3">
+        <!-- SLIDE 4: Stats & Impact Metrics -->
+        <section class="slide" id="slide-4">
             <div class="slide-header">
                 <div>
-                    <div class="slide-tag"><i class="fa-solid fa-chart-line"></i> Slide 3 of 3 &bull; Strategic Impact</div>
-                    <h2 class="slide-title">Business Impact & Operational Benefits</h2>
-                    <p class="slide-subtitle">Proven MTTR reduction, AI ChatOps operations, zero ticket pollution, and full auditability</p>
+                    <div class="slide-tag"><i class="fa-solid fa-chart-line"></i> Slide 4 of 5 &bull; Key Statistics</div>
+                    <h2 class="slide-title">System Stats & Key Operational Metrics</h2>
+                    <p class="slide-subtitle">Proven alert suppression, MTTR reduction, ticket deduplication, and zero-trust auditability</p>
                 </div>
             </div>
             <div class="slide-body">
                 <div class="grid-4">
                     <div class="card" style="text-align: center; border-color: rgba(244, 63, 94, 0.4);">
-                        <div style="font-size: 3rem; font-weight: 800; color: var(--accent-rose);">48%</div>
+                        <div style="font-size: 3.2rem; font-weight: 800; color: var(--accent-rose);">48%</div>
                         <div class="card-title" style="margin-top: 4px;">False Alert Suppression</div>
                         <p class="card-desc">Eliminates 48% volume of non-actionable false alerts before any ServiceNow tickets are generated.</p>
                     </div>
 
                     <div class="card" style="text-align: center; border-color: rgba(6, 182, 212, 0.4);">
-                        <div style="font-size: 3rem; font-weight: 800; color: var(--accent-cyan);">85%</div>
+                        <div style="font-size: 3.2rem; font-weight: 800; color: var(--accent-cyan);">85%</div>
                         <div class="card-title" style="margin-top: 4px;">MTTR Reduction</div>
                         <p class="card-desc">Automated 15-minute verification eliminates manual SOC engineering triage on transient link flaps.</p>
                     </div>
 
                     <div class="card" style="text-align: center; border-color: rgba(59, 130, 246, 0.4);">
-                        <div style="font-size: 3rem; font-weight: 800; color: var(--accent-blue);">0%</div>
+                        <div style="font-size: 3.2rem; font-weight: 800; color: var(--accent-blue);">0%</div>
                         <div class="card-title" style="margin-top: 4px;">Duplicate Tickets</div>
                         <p class="card-desc">Agent 4 appends work notes to active incidents or re-opens tickets closed &le; 3 days ago.</p>
                     </div>
 
                     <div class="card" style="text-align: center; border-color: rgba(139, 92, 246, 0.4);">
-                        <div style="font-size: 3rem; font-weight: 800; color: var(--accent-purple);">100%</div>
-                        <div class="card-title" style="margin-top: 4px;">AI ChatOps Provenance</div>
-                        <p class="card-desc">Natural language AI queries with full tool-calling audit trail and verifiable citations.</p>
+                        <div style="font-size: 3.2rem; font-weight: 800; color: var(--accent-purple);">100%</div>
+                        <div class="card-title" style="margin-top: 4px;">AI Citation Auditability</div>
+                        <p class="card-desc">Natural language AI queries with full tool-calling audit trail and verifiable data provenance.</p>
+                    </div>
+                </div>
+
+                <div class="grid-3" style="margin-top: 10px;">
+                    <div class="card" style="background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.3);">
+                        <div class="card-header">
+                            <div class="card-icon icon-amber"><i class="fa-solid fa-clock"></i></div>
+                            <div class="card-title">15-Min TTL Delay Queue</div>
+                        </div>
+                        <p class="card-desc">RabbitMQ Dead-Letter Exchange holds transient alerts in a non-blocking wait state to verify self-healing behavior before escalation.</p>
+                    </div>
+
+                    <div class="card" style="background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.3);">
+                        <div class="card-header">
+                            <div class="card-icon icon-emerald"><i class="fa-solid fa-database"></i></div>
+                            <div class="card-title">15s Live React Sync</div>
+                        </div>
+                        <p class="card-desc">FastAPI bridge connects MongoDB trace logs directly to the React SPA dashboard, refreshing status matrix and KPI charts every 15 seconds.</p>
+                    </div>
+
+                    <div class="card" style="background: rgba(6, 182, 212, 0.08); border-color: rgba(6, 182, 212, 0.3);">
+                        <div class="card-header">
+                            <div class="card-icon icon-cyan"><i class="fa-solid fa-bolt"></i></div>
+                            <div class="card-title">Sub-Second AI Query Speed</div>
+                        </div>
+                        <p class="card-desc">MongoDB-first policy enables Agent 5 to return instant answers and chart visualizations for standard operational queries.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 5: Executive Summary -->
+        <section class="slide" id="slide-5">
+            <div class="slide-header">
+                <div>
+                    <div class="slide-tag"><i class="fa-solid fa-flag-checkered"></i> Slide 5 of 5 &bull; Executive Summary</div>
+                    <h2 class="slide-title">Executive Summary & Technical Value</h2>
+                    <p class="slide-subtitle">Transforming raw network alert noise into an automated, zero-pollution ChatOps intelligence engine</p>
+                </div>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2">
+                    <div class="card" style="background: rgba(59, 130, 246, 0.06); border-color: rgba(59, 130, 246, 0.3);">
+                        <div class="card-header">
+                            <div class="card-icon icon-blue"><i class="fa-solid fa-shield-cat"></i></div>
+                            <div class="card-title" style="font-size: 1.1rem;">Zero Ticket Pollution Architecture</div>
+                        </div>
+                        <p class="card-desc" style="font-size: 0.9rem;">By combining time-delta suppression (Agent 1), transformer classification (Agent 2), delayed verification (Agent 3), and deduplicated ITSM ticketing (Agent 4), the solution completely eliminates noise from SOC engineering workflows.</p>
+                    </div>
+
+                    <div class="card" style="background: rgba(6, 182, 212, 0.06); border-color: rgba(6, 182, 212, 0.3);">
+                        <div class="card-header">
+                            <div class="card-icon icon-cyan"><i class="fa-solid fa-terminal"></i></div>
+                            <div class="card-title" style="font-size: 1.1rem;">AI ChatOps & Natural Language SOC</div>
+                        </div>
+                        <p class="card-desc" style="font-size: 0.9rem;">Agent 5 (Gemini 2.0 Flash) empowers Tier-1 network engineers to investigate complex alert trends, query live hardware health, and render interactive Recharts visualizations through conversational English without writing database queries.</p>
                     </div>
                 </div>
 
                 <div class="grid-2" style="margin-top: 10px;">
-                    <div class="card" style="background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.3);">
+                    <div class="card" style="background: rgba(16, 185, 129, 0.06); border-color: rgba(16, 185, 129, 0.3);">
                         <div class="card-header">
-                            <div class="card-icon icon-emerald"><i class="fa-solid fa-user-shield"></i></div>
-                            <div>
-                                <h4 style="color: #fff; font-size: 1.1rem;">SOC Operational Efficiency & AI Chat Assistant</h4>
-                                <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 2px;">Prevents engineer fatigue, eliminates MongoDB/SQL query barriers with natural language AI troubleshooting, and streams real-time chart visualizations.</p>
-                            </div>
+                            <div class="card-icon icon-emerald"><i class="fa-solid fa-gears"></i></div>
+                            <div class="card-title" style="font-size: 1.1rem;">Event-Driven Industrial Scalability</div>
                         </div>
+                        <p class="card-desc" style="font-size: 0.9rem;">Built on RabbitMQ DLX queues, Dockerized FastAPI microservices, and Jenkins pipeline execution. Capable of ingesting tens of thousands of high-velocity DNAC syslog webhooks without blocking compute threads.</p>
                     </div>
 
-                    <div class="card" style="background: rgba(59, 130, 246, 0.08); border-color: rgba(59, 130, 246, 0.3);">
+                    <div class="card" style="background: rgba(139, 92, 246, 0.06); border-color: rgba(139, 92, 246, 0.3);">
                         <div class="card-header">
-                            <div class="card-icon icon-blue"><i class="fa-solid fa-cubes"></i></div>
-                            <div>
-                                <h4 style="color: #fff; font-size: 1.1rem;">Modular Multi-Vendor Platform</h4>
-                                <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 2px;">LangGraph agent structure and Gemini function calling enable seamless extension to Arista CloudVision, Juniper MIST, and Cisco Meraki.</p>
-                            </div>
+                            <div class="card-icon icon-purple"><i class="fa-solid fa-puzzle-piece"></i></div>
+                            <div class="card-title" style="font-size: 1.1rem;">Multi-Vendor Platform Extensibility</div>
                         </div>
+                        <p class="card-desc" style="font-size: 0.9rem;">The modular LangGraph agent graph and Gemini function calling registry allow effortless integration with Arista CloudVision, Juniper MIST, Cisco Meraki, and custom enterprise SNMP managers.</p>
                     </div>
                 </div>
             </div>
@@ -948,14 +1058,14 @@
     <nav class="bottom-nav">
         <button class="nav-btn" id="prevBtn" title="Previous Slide (Left Arrow / PageUp)"><i class="fa-solid fa-chevron-left"></i></button>
         <div class="dots-container" id="dotsContainer"></div>
-        <span class="slide-counter" id="slideCounter">Slide 1 of 3</span>
+        <span class="slide-counter" id="slideCounter">Slide 1 of 5</span>
         <button class="nav-btn" id="nextBtn" title="Next Slide (Right Arrow / Space / PageDown)"><i class="fa-solid fa-chevron-right"></i></button>
     </nav>
 
     <!-- Slide Overview Modal -->
     <div class="overview-modal" id="overviewModal">
-        <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto 30px auto;">
-            <h2 style="color: #fff; font-size: 1.8rem;"><i class="fa-solid fa-border-all"></i> Presentation Overview</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1300px; margin: 0 auto 30px auto;">
+            <h2 style="color: #fff; font-size: 1.8rem;"><i class="fa-solid fa-border-all"></i> Executive Presentation Overview</h2>
             <button class="btn-icon" id="closeOverviewBtn"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="overview-grid" id="overviewGrid"></div>
@@ -994,7 +1104,7 @@
             card.innerHTML = `
                 <span class="overview-num">SLIDE ${index + 1} OF ${totalSlides}</span>
                 <h3 class="overview-title">${slideTitle}</h3>
-                <span style="font-size: 0.8rem; color: var(--accent-blue);"><i class="fa-solid fa-arrow-right"></i> Click to View</span>
+                <span style="font-size: 0.8rem; color: var(--accent-cyan);"><i class="fa-solid fa-arrow-right"></i> Click to View</span>
             `;
             card.addEventListener('click', () => {
                 goToSlide(index);
@@ -1066,7 +1176,7 @@
             }
         }
 
-        // Switch Diagram View on Slide 2
+        // Switch Diagram View on Slide 3
         function switchDiagram(type) {
             const sysContainer = document.getElementById('systemDiagramContainer');
             const ctrlContainer = document.getElementById('controlDiagramContainer');

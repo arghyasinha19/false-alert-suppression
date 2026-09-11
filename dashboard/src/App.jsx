@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Activity, BarChart3, Monitor, Database, Radio, MessageSquare, Layers,
 } from 'lucide-react';
@@ -21,30 +21,30 @@ function App() {
   const [chatOpen, setChatOpen] = useState(false);
 
   // Poll alerts
+  const fetchData = useCallback(async () => {
+    try {
+      const [alertsRes, devicesRes] = await Promise.all([
+        fetch(`${API_BASE}/api/alerts`).then(r => r.json()).catch(() => ({ alerts: [] })),
+        fetch(`${API_BASE}/api/devices`).then(r => r.json()).catch(() => ({ devices: [] })),
+      ]);
+
+      if (alertsRes.alerts) setAlerts(alertsRes.alerts);
+      if (devicesRes.devices) setDevices(devicesRes.devices);
+      setApiConnected(true);
+    } catch (error) {
+      console.warn('API fetch failed, using mock data:', error);
+      setApiConnected(false);
+    } finally {
+      setLoading(false);
+      setLastRefresh(new Date());
+    }
+  }, []);
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [alertsRes, devicesRes] = await Promise.all([
-          fetch(`${API_BASE}/api/alerts`).then(r => r.json()).catch(() => ({ alerts: [] })),
-          fetch(`${API_BASE}/api/devices`).then(r => r.json()).catch(() => ({ devices: [] })),
-        ]);
-
-        if (alertsRes.alerts) setAlerts(alertsRes.alerts);
-        if (devicesRes.devices) setDevices(devicesRes.devices);
-        setApiConnected(true);
-      } catch (error) {
-        console.warn('API fetch failed, using mock data:', error);
-        setApiConnected(false);
-      } finally {
-        setLoading(false);
-        setLastRefresh(new Date());
-      }
-    };
-
     fetchData();
     const interval = setInterval(fetchData, POLL_INTERVAL);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchData]);
 
   const navItems = [
     {
@@ -132,7 +132,7 @@ function App() {
             </div>
             {!loading && (
               <span style={{ fontSize: '0.78rem', color: 'var(--text-tertiary)' }}>
-                {alerts.length > 0 ? `${alerts.length} alerts` : '0 alerts'}
+                {alerts.length > 0 ? `${alerts.length} alerts` : '48 alerts (demo)'}
               </span>
             )}
           </div>
@@ -140,7 +140,7 @@ function App() {
 
         <div className="content-body">
           {activeView === 'metrics' && (
-            <FalseAlertMetrics alerts={alerts} />
+            <FalseAlertMetrics alerts={alerts} onRefresh={fetchData} />
           )}
           {activeView === 'noc' && (
             <NetworkOperations devices={devices} lastRefresh={lastRefresh} pollInterval={POLL_INTERVAL} />

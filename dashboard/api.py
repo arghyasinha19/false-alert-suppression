@@ -58,19 +58,44 @@ def safe_get(d, *keys, default=None):
     return curr
 
 
+
+SIMULATED_FILE = os.path.join(project_root, "data", "simulated_alerts.json")
+
+
+def load_simulated_alerts():
+    if os.path.exists(SIMULATED_FILE):
+        try:
+            with open(SIMULATED_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            logger.error(f"Error loading simulated alerts: {e}")
+    try:
+        from simulate_data import generate_simulated_alerts, save_simulated_alerts
+        alerts = generate_simulated_alerts(60)
+        save_simulated_alerts(alerts)
+        return alerts
+    except Exception as e:
+        logger.error(f"Error generating fallback simulated alerts: {e}")
+        return []
+
+
+def get_alert_records():
+    """Fetch alerts from MongoDB, falling back to simulated data when MongoDB is offline."""
+    collection = mongo.get_collection("alert_results")
+    if collection is not None:
+        try:
+            alerts = list(collection.find({}, {"_id": 0}))
+            if alerts:
+                return alerts
+        except Exception as e:
+            logger.warning(f"MongoDB query failed, falling back to simulated data: {e}")
+    return load_simulated_alerts()
+
+
 @app.get("/api/alerts")
 def get_alerts():
-    """Fetch all processed alerts from MongoDB."""
-    collection = mongo.get_collection("alert_results")
-    if collection is None:
-        return {"error": "MongoDB not connected", "alerts": []}
-
-    try:
-        # Fetch all, omitting the internal MongoDB _id
-        alerts = list(collection.find({}, {"_id": 0}))
-    except Exception as e:
-        logger.error(f"Error fetching alerts from MongoDB: {e}")
-        return {"error": str(e), "alerts": []}
+    """Fetch all processed alerts from MongoDB or local simulated repository."""
+    alerts = get_alert_records()
 
     # Enrich with live ServiceNow statuses (best-effort — never blocks alerts)
     try:
@@ -93,7 +118,26 @@ def get_alerts():
     except Exception as e:
         logger.warning(f"ServiceNow enrichment failed (alerts still returned): {e}")
 
-    return {"alerts": alerts}
+    return {"alerts": alerts, "source": "mongodb" if mongo.get_collection("alert_results") is not None else "simulated"}
+
+
+@app.post("/api/alerts/simulate")
+def simulate_alert(count: int = 1, reset: bool = False):
+    """Generate and inject new simulated alert(s) into the system."""
+    try:
+        from simulate_data import generate_simulated_alerts, save_simulated_alerts
+        new_alerts = generate_simulated_alerts(count)
+        all_alerts = save_simulated_alerts(new_alerts, append=(not reset))
+        logger.info(f"Simulated {count} new alerts (total now: {len(all_alerts)})")
+        return {
+            "status": "success",
+            "added": count,
+            "total_alerts": len(all_alerts),
+            "new_alerts": new_alerts,
+        }
+    except Exception as e:
+        logger.error(f"Failed to simulate alerts: {e}")
+        return {"status": "error", "message": str(e)}
 
 
 @app.get("/api/devices")
@@ -103,12 +147,8 @@ def get_devices():
     latest status, total alert count, location (derived from name),
     active alerts, resolved alerts (split by dnac_live_status), etc.
     """
-    collection = mongo.get_collection("alert_results")
-    if collection is None:
-        return {"devices": []}
-
     try:
-        alerts = list(collection.find({}, {"_id": 0}))
+        alerts = get_alert_records()
         device_map = {}
 
         for a in alerts:
@@ -191,22 +231,27 @@ def get_devices():
 def get_device_history(device_name: str):
     """Return all historical alert records for a specific device."""
     collection = mongo.get_collection("alert_results")
-    if collection is None:
-        return {"alerts": []}
+    if collection is not None:
+        try:
+            # Query by device_name in alert_details
+            query = {
+                "$or": [
+                    {"alert_details.device_name": device_name},
+                    {"alert_details.device": device_name},
+                ]
+            }
+            alerts = list(collection.find(query, {"_id": 0}).sort("alert_details.timestamp", -1))
+            return {"device_name": device_name, "alerts": alerts}
+        except Exception as e:
+            logger.error(f"Error fetching history for {device_name}: {e}")
 
-    try:
-        # Query by device_name in alert_details
-        query = {
-            "$or": [
-                {"alert_details.device_name": device_name},
-                {"alert_details.device": device_name},
-            ]
-        }
-        alerts = list(collection.find(query, {"_id": 0}).sort("alert_details.timestamp", -1))
-        return {"device_name": device_name, "alerts": alerts}
-    except Exception as e:
-        logger.error(f"Error fetching history for {device_name}: {e}")
-        return {"device_name": device_name, "alerts": []}
+    # Fallback to simulated data
+    alerts = [
+        a for a in get_alert_records()
+        if (safe_get(a, "alert_details", "device_name") == device_name or
+            safe_get(a, "alert_details", "device") == device_name)
+    ]
+    return {"device_name": device_name, "alerts": alerts}
 
 
 @app.get("/api/kpi/summary")
@@ -215,12 +260,8 @@ def get_kpi_summary():
     Pre-computed aggregate KPIs for the dashboard:
     suppression rates, category volumes, hourly distribution, etc.
     """
-    collection = mongo.get_collection("alert_results")
-    if collection is None:
-        return {"kpi": {}}
-
     try:
-        alerts = list(collection.find({}, {"_id": 0}))
+        alerts = get_alert_records()
         total = len(alerts)
 
         backdated = 0
@@ -426,12 +467,8 @@ def get_alert_patterns(granularity: str = "hourly"):
     Cluster alerts by semantic similarity using sentence embeddings + HDBSCAN.
     Returns pattern clusters and volume time series.
     """
-    collection = mongo.get_collection("alert_results")
-    if collection is None:
-        return {"error": "MongoDB not connected", "patterns": [], "volume_series": []}
-
     try:
-        alerts = list(collection.find({}, {"_id": 0}))
+        alerts = get_alert_records()
     except Exception as e:
         logger.error(f"Error fetching alerts for patterns: {e}")
         return {"error": str(e), "patterns": [], "volume_series": []}

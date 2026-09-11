@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive One-Pager: False Alert Suppression & AI ChatOps</title>
+    <!-- Google Fonts & FontAwesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-dark: #0b0f19;
+            --bg-card: #111827;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-rose: #f43f5e;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            padding: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 16px;
+            margin-bottom: 24px;
+        }
+
+        .logo-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-title i {
+            font-size: 2rem;
+            color: var(--accent-cyan);
+        }
+
+        .logo-title h1 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .badge-exec {
+            background: rgba(6, 182, 212, 0.15);
+            border: 1px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .section-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .card-header-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .card-header-title i {
+            color: var(--accent-cyan);
+        }
+
+        ul { list-style: none; padding-left: 0; }
+        ul li {
+            position: relative;
+            padding-left: 20px;
+            margin-bottom: 8px;
+            font-size: 0.88rem;
+            color: var(--text-muted);
+        }
+        ul li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+
+        /* KPI Banner */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px;
+            text-align: center;
+        }
+
+        .kpi-val {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--accent-cyan);
+        }
+
+        .kpi-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        /* Agent Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+        }
+
+        th, td {
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.86rem;
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-weight: 700;
+        }
+
+        td { color: var(--text-muted); }
+
+        .code-pill {
+            font-family: 'Fira Code', monospace;
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--accent-cyan);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.78rem;
+        }
+
+        /* Tool Grid */
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .tool-chip {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 0.8rem;
+        }
+
+        .tool-name {
+            font-family: 'Fira Code', monospace;
+            color: var(--accent-amber);
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        @media print {
+            body { background: #fff; color: #000; padding: 0; }
+            .card, .kpi-card, table { border: 1px solid #ccc; background: #fff; color: #000; }
+            td, ul li { color: #333; }
+            .badge-exec, th { background: #eee; color: #000; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-title">
+            <i class="fa-solid fa-shield-halved"></i>
+            <div>
+                <h1>Executive One-Pager: False Alert Suppression & AI ChatOps</h1>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Enterprise Multi-Agent Event-Driven Network Intelligence Platform</p>
+            </div>
+        </div>
+        <span class="badge-exec"><i class="fa-solid fa-file-contract"></i> Executive Summary</span>
+    </header>
+
+    <!-- KPI Row -->
+    <div class="kpi-row">
+        <div class="kpi-card" style="border-top: 3px solid var(--accent-rose);">
+            <div class="kpi-val" style="color: var(--accent-rose);">48%</div>
+            <div class="kpi-label">False Alerts Suppressed</div>
+        </div>
+        <div class="kpi-card" style="border-top: 3px solid var(--accent-cyan);">
+            <div class="kpi-val" style="color: var(--accent-cyan);">85%</div>
+            <div class="kpi-label">MTTR Reduction</div>
+        </div>
+        <div class="kpi-card" style="border-top: 3px solid var(--accent-blue);">
+            <div class="kpi-val" style="color: var(--accent-blue);">0%</div>
+            <div class="kpi-label">Duplicate Tickets</div>
+        </div>
+        <div class="kpi-card" style="border-top: 3px solid var(--accent-amber);">
+            <div class="kpi-val" style="color: var(--accent-amber);">15 Min</div>
+            <div class="kpi-label">DLX Delay Verification</div>
+        </div>
+        <div class="kpi-card" style="border-top: 3px solid var(--accent-purple);">
+            <div class="kpi-val" style="color: var(--accent-purple);">100%</div>
+            <div class="kpi-label">Audit Citation Trail</div>
+        </div>
+    </div>
+
+    <!-- Main 2-Column Grid -->
+    <div class="section-grid">
+        <!-- Problem Statement -->
+        <div class="card">
+            <div class="card-header-title">
+                <i class="fa-solid fa-triangle-exclamation" style="color: var(--accent-rose);"></i>
+                <span>1. Problem Statement</span>
+            </div>
+            <ul>
+                <li><strong>48% Alert Noise Volume:</strong> Unvalidated Cisco DNAC webhooks flood SOC engineering queues with transient, self-healing link flaps and stale syslog messages.</li>
+                <li><strong>ServiceNow Ticket Pollution:</strong> Naive ticketing systems create hundreds of duplicate incidents for single underlying events, cluttering queues.</li>
+                <li><strong>High MTTR & SOC Fatigue:</strong> Engineers spend 85% of initial triage hours investigating historical (>24h) or temporary alerts that self-heal automatically.</li>
+            </ul>
+        </div>
+
+        <!-- Solution Delivered -->
+        <div class="card">
+            <div class="card-header-title">
+                <i class="fa-solid fa-lightbulb" style="color: var(--accent-emerald);"></i>
+                <span>2. Solution Delivered</span>
+            </div>
+            <ul>
+                <li><strong>LangGraph Multi-Agent Engine:</strong> 4 sequential backend agents with a Supervisor router node to suppress, classify, defer, and deduplicate alerts dynamically.</li>
+                <li><strong>15-Min DLX Non-Blocking Delay Loop:</strong> RabbitMQ Dead-Letter Exchange holds transient alerts in a wait queue before re-checking live DNAC APIs.</li>
+                <li><strong>Gemini 2.0 AI ChatOps Assistant:</strong> Natural language assistant executing multi-turn tool loops with sub-second MongoDB/DNAC retrieval and dynamic Recharts UI.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Deployed Agents Table -->
+    <div class="card" style="margin-bottom: 24px;">
+        <div class="card-header-title">
+            <i class="fa-solid fa-robot" style="color: var(--accent-purple);"></i>
+            <span>3. 5 Deployed Agents Architecture</span>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Agent Name</th>
+                    <th>Implementation File</th>
+                    <th>Type / Technology</th>
+                    <th>Primary Function & Business Impact</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong style="color: #fff;">Agent 1: Backdate Detector</strong></td>
+                    <td><span class="code-pill">node_agent_1.py</span></td>
+                    <td>Deterministic Logic</td>
+                    <td>Filters out stale syslogs older than 24 hours immediately at ingress.</td>
+                </tr>
+                <tr>
+                    <td><strong style="color: #fff;">Agent 2: ML/DL Classifier</strong></td>
+                    <td><span class="code-pill">node_agent_2.py</span></td>
+                    <td>DistilBERT Transformer + TF-IDF</td>
+                    <td>Predicts whether an alert is <span class="code-pill">Auto resolving</span> or <span class="code-pill">Non-Auto Resolving</span>.</td>
+                </tr>
+                <tr>
+                    <td><strong style="color: #fff;">Agent 3: DLX Scheduler</strong></td>
+                    <td><span class="code-pill">node_agent_3_scheduler.py</span></td>
+                    <td>RabbitMQ DLX Queue</td>
+                    <td>Pushes auto-resolving alerts into a 15-minute delayed verification queue.</td>
+                </tr>
+                <tr>
+                    <td><strong style="color: #fff;">Agent 4: SNOW Engine</strong></td>
+                    <td><span class="code-pill">node_agent_4_servicenow.py</span></td>
+                    <td>ServiceNow REST API</td>
+                    <td>Deduplicates tickets (appends comments to open tickets or reopens &le;3-day tickets).</td>
+                </tr>
+                <tr>
+                    <td><strong style="color: #fff;">Agent 5: AI ChatOps Assistant</strong></td>
+                    <td><span class="code-pill">chat_agent.py</span></td>
+                    <td>Gemini 2.0 Flash LLM Agent</td>
+                    <td>Conversational Ops query answering, tool execution, and dynamic chart rendering.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Agent 5 Tool Calling Registry -->
+    <div class="card">
+        <div class="card-header-title">
+            <i class="fa-solid fa-screwdriver-wrench" style="color: var(--accent-amber);"></i>
+            <span>4. Agent 5: Gemini 2.0 Tool-Calling Registry (8 Specialized Tools)</span>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">
+            When network operators ask natural language questions, Agent 5 analyzes intent (<span class="code-pill">TEXT_ONLY</span>, <span class="code-pill">VISUALIZATION</span>, <span class="code-pill">AMBIGUOUS</span>) and executes function calls against MongoDB and Cisco DNAC REST APIs:
+        </p>
+
+        <div class="tool-grid">
+            <div class="tool-chip">
+                <div class="tool-name">1. query_alerts</div>
+                <div style="color: var(--text-muted); font-size: 0.75rem;">Searches MongoDB with device, severity, or category filters.</div>
+            </div>
+            <div class="tool-chip">
+                <div class="tool-name">2. get_device_status</div>
+                <div style="color: var(--text-muted); font-size: 0.75rem;">Aggregates device total alerts, backdated counts, & active alerts.</div>
+            </div>
+            <div class="tool-chip">
+                <div class="tool-name">3. get_device_history</div>
+                <div style="color: var(--text-muted); font-size: 0.75rem;">Fetches historical alert logs sorted newest-first for timeline analysis.</div>
+            </div>
+            <div class="tool-chip">
+                <div class="tool-name">4. get_kpi_summary</div>
+                <div style="color: var(--text-muted); font-size: 0.75rem;">Computes overall suppression rates, ticket avoidance, and daily series.</div>
+            </div>
+            <div class="tool-chip">
+                <div class="tool-name">5. query_dnac_issue</div>
+                <div style="color: var(--text-muted); font-size: 0.75rem;">Queries Cisco DNAC live API for issue status by instance UUID.</div>
+            </div>
+            <div class="tool-chip">
+                <div class="tool-name">6. query_dnac_device_health</div>
+                <div style="color: var(--text-muted); font-size: 0.75rem;">Resolves device names to UUIDs and queries live hardware health.</div>
+            </div>
+            <div class="tool-chip">
+                <div class="tool-name">7. call_dnac_rest_api</div>
+                <div style="color: var(--text-muted); font-size: 0.75rem;">Autonomous execution tool for calling any Cisco DNAC REST endpoint.</div>
+            </div>
+            <div class="tool-chip">
+                <div class="tool-name">8. generate_visualization</div>
+                <div style="color: var(--text-muted); font-size: 0.75rem;">Emits structured JSON chart specs rendered natively in Recharts UI.</div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,3055 @@
+[
+  {
+    "alert_id": "EVT-0001",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-03T01:53:51.729730+00:00",
+        "ended_at": "2026-09-03T01:53:51.729730+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Auto resolving",
+          "confidence": "0.76"
+        },
+        "started_at": "2026-09-03T01:53:51.729730+00:00",
+        "ended_at": "2026-09-03T01:53:51.729730+00:00"
+      },
+      "agent_3": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "queue_status": "delayed",
+          "wait_queue": "dnac.alerts.wait.q",
+          "delay_ms": 900000
+        },
+        "started_at": "2026-09-03T01:53:51.729730+00:00",
+        "ended_at": "2026-09-03T01:53:51.729730+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0001",
+      "instance_id": "inst-7564a7948496",
+      "device_name": "SG-SIN-FW01",
+      "device_id": "dev-008",
+      "severity": 2,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-09-03T01:53:51.729730+00:00",
+      "raw_timestamp": 1788400431729,
+      "issue_name": "OSPF Neighbor Down",
+      "issue_details": "OSPF adjacency lost with neighbor router 10.200.1.5 on SG-SIN-FW01",
+      "source": "DNAC",
+      "location": "SG-SIN"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-03T01:53:51.729730+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
+  },
+  {
+    "alert_id": "EVT-0003",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-02T16:30:02.719157+00:00",
+        "ended_at": "2026-09-02T16:30:02.719157+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Auto resolving",
+          "confidence": "0.94"
+        },
+        "started_at": "2026-09-02T16:30:02.719157+00:00",
+        "ended_at": "2026-09-02T16:30:02.719157+00:00"
+      },
+      "agent_3": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "queue_status": "delayed",
+          "wait_queue": "dnac.alerts.wait.q",
+          "delay_ms": 900000
+        },
+        "started_at": "2026-09-02T16:30:02.719157+00:00",
+        "ended_at": "2026-09-02T16:30:02.719157+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0003",
+      "instance_id": "inst-fe82cf3f5fc4",
+      "device_name": "Access-Switch-05",
+      "device_id": "dev-003",
+      "severity": 1,
+      "category": "ERROR",
+      "status": "resolved",
+      "timestamp": "2026-09-02T16:30:02.719157+00:00",
+      "raw_timestamp": 1788366602719,
+      "issue_name": "Interface State Down",
+      "issue_details": "Physical link down on TenGigabitEthernet1/1/2 on Access-Switch-05",
+      "source": "DNAC",
+      "location": "UK-LON"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-02T16:30:02.719157+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
+  },
+  {
+    "alert_id": "EVT-0002",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-01T18:38:41.315286+00:00",
+        "ended_at": "2026-09-01T18:38:41.315286+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Auto resolving",
+          "confidence": "0.95"
+        },
+        "started_at": "2026-09-01T18:38:41.315286+00:00",
+        "ended_at": "2026-09-01T18:38:41.315286+00:00"
+      },
+      "agent_3": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "queue_status": "delayed",
+          "wait_queue": "dnac.alerts.wait.q",
+          "delay_ms": 900000
+        },
+        "started_at": "2026-09-01T18:38:41.315286+00:00",
+        "ended_at": "2026-09-01T18:38:41.315286+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0002",
+      "instance_id": "inst-eb2503be2f9c",
+      "device_name": "UK-MAL-DEV-AP02",
+      "device_id": "dev-001",
+      "severity": 3,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-09-01T18:38:41.315286+00:00",
+      "raw_timestamp": 1788287921315,
+      "issue_name": "AP has flapped",
+      "issue_details": "Wireless AP experienced multiple rapid state transitions on UK-MAL-DEV-AP02",
+      "source": "DNAC",
+      "location": "UK-MAL"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-01T18:38:41.315286+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
+  },
+  {
+    "alert_id": "EVT-0004",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-08-30T05:43:38.645289+00:00",
+        "ended_at": "2026-08-30T05:43:38.645289+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Auto resolving",
+          "confidence": "0.97"
+        },
+        "started_at": "2026-08-30T05:43:38.645289+00:00",
+        "ended_at": "2026-08-30T05:43:38.645289+00:00"
+      },
+      "agent_3": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "queue_status": "delayed",
+          "wait_queue": "dnac.alerts.wait.q",
+          "delay_ms": 900000
+        },
+        "started_at": "2026-08-30T05:43:38.645289+00:00",
+        "ended_at": "2026-08-30T05:43:38.645289+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0004",
+      "instance_id": "inst-48ea0429a029",
+      "device_name": "DE-FRA-AP01",
+      "device_id": "dev-011",
+      "severity": 3,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-08-30T05:43:38.645289+00:00",
+      "raw_timestamp": 1788068618645,
+      "issue_name": "Fan Tray Warning",
+      "issue_details": "Chassis cooling fan tray operating at degraded RPM on DE-FRA-AP01",
+      "source": "DNAC",
+      "location": "DE-FRA"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-08-30T05:43:38.645289+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
+  },
+  {
+    "alert_id": "EVT-0005",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-08-29T04:50:10.780733+00:00",
+        "ended_at": "2026-08-29T04:50:10.780733+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Non-Auto Resolving",
+          "confidence": "0.97"
+        },
+        "started_at": "2026-08-29T04:50:10.780733+00:00",
+        "ended_at": "2026-08-29T04:50:10.780733+00:00"
+      },
+      "agent_4": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "action": "incident_created",
+          "incident": "INC0074685",
+          "assigned_group": "Network-Ops-L2"
+        },
+        "started_at": "2026-08-29T04:50:10.780733+00:00",
+        "ended_at": "2026-08-29T04:50:10.780733+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0005",
+      "instance_id": "inst-cf28667e043f",
+      "device_name": "Switch-12",
+      "device_id": "dev-004",
+      "severity": 3,
+      "category": "WARN",
+      "status": "active",
+      "timestamp": "2026-08-29T04:50:10.780733+00:00",
+      "raw_timestamp": 1787979010780,
+      "issue_name": "CRC Error Threshold Exceeded",
+      "issue_details": "Input CRC errors exceeded 100 per minute on Gi0/1/4 on Switch-12",
+      "source": "DNAC",
+      "location": "SG-SIN"
+    },
+    "dnac_live_status": "ACTIVE",
+    "dnac_last_checked": "2026-08-29T04:50:10.780733+00:00",
+    "live_snow_status": "In Progress",
+    "overall_status": "escalated",
+    "status_description": "Escalated by Agent 4 -> ServiceNow INC0074685"
+  },
+  {
+    "alert_id": "EVT-0011",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-03T05:48:58.388100+00:00",
+        "ended_at": "2026-09-03T05:48:58.388100+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Uncertain",
+          "confidence": "0.52"
+        },
+        "started_at": "2026-09-03T05:48:58.388100+00:00",
+        "ended_at": "2026-09-03T05:48:58.388100+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0011",
+      "instance_id": "inst-74619a46d235",
+      "device_name": "SG-SIN-FW01",
+      "device_id": "dev-008",
+      "severity": 3,
+      "category": "WARN",
+      "status": "active",
+      "timestamp": "2026-09-03T05:48:58.388100+00:00",
+      "raw_timestamp": 1788414538388,
+      "issue_name": "AP is Offline",
+      "issue_details": "Access Point unreachable via CAPWAP tunnel on SG-SIN-FW01",
+      "source": "DNAC",
+      "location": "SG-SIN"
+    },
+    "dnac_live_status": "ACTIVE",
+    "dnac_last_checked": "2026-09-03T05:48:58.388100+00:00",
+    "live_snow_status": null,
+    "overall_status": "uncertain",
+    "status_description": "Flagged by Agent 2 as Uncertain (<60% confidence)"
+  },
+  {
+    "alert_id": "EVT-0051",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": true
+        },
+        "started_at": "2026-09-03T05:34:12.719131+00:00",
+        "ended_at": "2026-09-03T05:34:12.719131+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0051",
+      "instance_id": "inst-dab8320dc83a",
+      "device_name": "US-CHI-RT03",
+      "device_id": "dev-010",
+      "severity": 1,
+      "category": "ERROR",
+      "status": "resolved",
+      "timestamp": "2026-09-03T05:34:12.719131+00:00",
+      "raw_timestamp": 1788413652719,
+      "issue_name": "Interface State Down",
+      "issue_details": "Physical link down on TenGigabitEthernet1/1/2 on US-CHI-RT03",
+      "source": "DNAC",
+      "location": "US-CHI"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-03T05:34:12.719131+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 1 (Backdated)"
+  },
+  {
+    "alert_id": "EVT-0056",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": true
+        },
+        "started_at": "2026-09-03T05:28:31.630594+00:00",
+        "ended_at": "2026-09-03T05:28:31.630594+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0056",
+      "instance_id": "inst-5e61c79efac9",
+      "device_name": "DE-FRA-AP01",
+      "device_id": "dev-011",
+      "severity": 2,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-09-03T05:28:31.630594+00:00",
+      "raw_timestamp": 1788413311630,
+      "issue_name": "High Memory Utilization",
+      "issue_details": "System memory usage reached 88% capacity on DE-FRA-AP01",
+      "source": "DNAC",
+      "location": "DE-FRA"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-03T05:28:31.630594+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 1 (Backdated)"
+  },
+  {
+    "alert_id": "EVT-0059",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-03T05:26:31.502618+00:00",
+        "ended_at": "2026-09-03T05:26:31.502618+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Auto resolving",
+          "confidence": "0.9"
+        },
+        "started_at": "2026-09-03T05:26:31.502618+00:00",
+        "ended_at": "2026-09-03T05:26:31.502618+00:00"
+      },
+      "agent_3": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "queue_status": "delayed",
+          "wait_queue": "dnac.alerts.wait.q",
+          "delay_ms": 900000
+        },
+        "started_at": "2026-09-03T05:26:31.502618+00:00",
+        "ended_at": "2026-09-03T05:26:31.502618+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0059",
+      "instance_id": "inst-83cc4ce44ecd",
+      "device_name": "UK-MAL-DEV-AP02",
+      "device_id": "dev-001",
+      "severity": 2,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-09-03T05:26:31.502618+00:00",
+      "raw_timestamp": 1788413191502,
+      "issue_name": "High Memory Utilization",
+      "issue_details": "System memory usage reached 88% capacity on UK-MAL-DEV-AP02",
+      "source": "DNAC",
+      "location": "UK-MAL"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-03T05:26:31.502618+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
+  },
+  {
+    "alert_id": "EVT-0026",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-03T05:26:17.978906+00:00",
+        "ended_at": "2026-09-03T05:26:17.978906+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Non-Auto Resolving",
+          "confidence": "0.8"
+        },
+        "started_at": "2026-09-03T05:26:17.978906+00:00",
+        "ended_at": "2026-09-03T05:26:17.978906+00:00"
+      },
+      "agent_4": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "action": "incident_reopened",
+          "incident": "INC0039729",
+          "assigned_group": "Network-Ops-L2"
+        },
+        "started_at": "2026-09-03T05:26:17.978906+00:00",
+        "ended_at": "2026-09-03T05:26:17.978906+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0026",
+      "instance_id": "inst-e21ee733eb61",
+      "device_name": "Switch-12",
+      "device_id": "dev-004",
+      "severity": 3,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-09-03T05:26:17.978906+00:00",
+      "raw_timestamp": 1788413177978,
+      "issue_name": "AP is Offline",
+      "issue_details": "Access Point unreachable via CAPWAP tunnel on Switch-12",
+      "source": "DNAC",
+      "location": "SG-SIN"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-03T05:26:17.978906+00:00",
+    "live_snow_status": "In Progress",
+    "overall_status": "escalated",
+    "status_description": "Escalated by Agent 4 -> ServiceNow INC0039729"
+  },
+  {
+    "alert_id": "EVT-0052",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": true
+        },
+        "started_at": "2026-09-03T04:22:01.769664+00:00",
+        "ended_at": "2026-09-03T04:22:01.769664+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0052",
+      "instance_id": "inst-89348581bddc",
+      "device_name": "UK-LON-SW01",
+      "device_id": "dev-009",
+      "severity": 1,
+      "category": "ERROR",
+      "status": "resolved",
+      "timestamp": "2026-09-03T04:22:01.769664+00:00",
+      "raw_timestamp": 1788409321769,
+      "issue_name": "BGP Peer is Down",
+      "issue_details": "BGP neighbor adjacency lost on interface GigabitEthernet0/0/1 on UK-LON-SW01",
+      "source": "DNAC",
+      "location": "UK-LON"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-03T04:22:01.769664+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 1 (Backdated)"
+  },
+  {
+    "alert_id": "EVT-0044",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": true
+        },
+        "started_at": "2026-09-03T03:55:08.802284+00:00",
+        "ended_at": "2026-09-03T03:55:08.802284+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0044",
+      "instance_id": "inst-6662dd096111",
+      "device_name": "US-NY-HQ-AP05",
+      "device_id": "dev-007",
+      "severity": 3,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-09-03T03:55:08.802284+00:00",
+      "raw_timestamp": 1788407708802,
+      "issue_name": "AP has flapped",
+      "issue_details": "Wireless AP experienced multiple rapid state transitions on US-NY-HQ-AP05",
+      "source": "DNAC",
+      "location": "US-NY"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-03T03:55:08.802284+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 1 (Backdated)"
+  },
+  {
+    "alert_id": "EVT-0033",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-03T03:38:30.128554+00:00",
+        "ended_at": "2026-09-03T03:38:30.128554+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Uncertain",
+          "confidence": "0.54"
+        },
+        "started_at": "2026-09-03T03:38:30.128554+00:00",
+        "ended_at": "2026-09-03T03:38:30.128554+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0033",
+      "instance_id": "inst-7733b2631a64",
+      "device_name": "UK-MAL-DEV-AP02",
+      "device_id": "dev-001",
+      "severity": 3,
+      "category": "WARN",
+      "status": "active",
+      "timestamp": "2026-09-03T03:38:30.128554+00:00",
+      "raw_timestamp": 1788406710128,
+      "issue_name": "Fan Tray Warning",
+      "issue_details": "Chassis cooling fan tray operating at degraded RPM on UK-MAL-DEV-AP02",
+      "source": "DNAC",
+      "location": "UK-MAL"
+    },
+    "dnac_live_status": "ACTIVE",
+    "dnac_last_checked": "2026-09-03T03:38:30.128554+00:00",
+    "live_snow_status": null,
+    "overall_status": "uncertain",
+    "status_description": "Flagged by Agent 2 as Uncertain (<60% confidence)"
+  },
+  {
+    "alert_id": "EVT-0021",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-03T03:20:57.802151+00:00",
+        "ended_at": "2026-09-03T03:20:57.802151+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Non-Auto Resolving",
+          "confidence": "0.78"
+        },
+        "started_at": "2026-09-03T03:20:57.802151+00:00",
+        "ended_at": "2026-09-03T03:20:57.802151+00:00"
+      },
+      "agent_4": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "action": "incident_reopened",
+          "incident": "INC0090455",
+          "assigned_group": "Network-Ops-L2"
+        },
+        "started_at": "2026-09-03T03:20:57.802151+00:00",
+        "ended_at": "2026-09-03T03:20:57.802151+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0021",
+      "instance_id": "inst-73e43d7ed31c",
+      "device_name": "JP-TKY-SW02",
+      "device_id": "dev-012",
+      "severity": 2,
+      "category": "WARN",
+      "status": "active",
+      "timestamp": "2026-09-03T03:20:57.802151+00:00",
+      "raw_timestamp": 1788405657802,
+      "issue_name": "OSPF Neighbor Down",
+      "issue_details": "OSPF adjacency lost with neighbor router 10.200.1.5 on JP-TKY-SW02",
+      "source": "DNAC",
+      "location": "JP-TKY"
+    },
+    "dnac_live_status": "ACTIVE",
+    "dnac_last_checked": "2026-09-03T03:20:57.802151+00:00",
+    "live_snow_status": "Awaiting Info",
+    "overall_status": "escalated",
+    "status_description": "Escalated by Agent 4 -> ServiceNow INC0090455"
+  },
+  {
+    "alert_id": "EVT-0053",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-03T03:20:32.199072+00:00",
+        "ended_at": "2026-09-03T03:20:32.199072+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Non-Auto Resolving",
+          "confidence": "0.81"
+        },
+        "started_at": "2026-09-03T03:20:32.199072+00:00",
+        "ended_at": "2026-09-03T03:20:32.199072+00:00"
+      },
+      "agent_4": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "action": "incident_created",
+          "incident": "INC0042188",
+          "assigned_group": "Network-Ops-L2"
+        },
+        "started_at": "2026-09-03T03:20:32.199072+00:00",
+        "ended_at": "2026-09-03T03:20:32.199072+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0053",
+      "instance_id": "inst-45c4b58fd380",
+      "device_name": "DE-FRA-AP01",
+      "device_id": "dev-011",
+      "severity": 2,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-09-03T03:20:32.199072+00:00",
+      "raw_timestamp": 1788405632199,
+      "issue_name": "High CPU Utilization",
+      "issue_details": "Device CPU utilization exceeded 92% sustained threshold on DE-FRA-AP01",
+      "source": "DNAC",
+      "location": "DE-FRA"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-03T03:20:32.199072+00:00",
+    "live_snow_status": "In Progress",
+    "overall_status": "escalated",
+    "status_description": "Escalated by Agent 4 -> ServiceNow INC0042188"
+  },
+  {
+    "alert_id": "EVT-0054",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-03T02:52:10.744637+00:00",
+        "ended_at": "2026-09-03T02:52:10.744637+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Non-Auto Resolving",
+          "confidence": "0.99"
+        },
+        "started_at": "2026-09-03T02:52:10.744637+00:00",
+        "ended_at": "2026-09-03T02:52:10.744637+00:00"
+      },
+      "agent_4": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "action": "incident_reopened",
+          "incident": "INC0060850",
+          "assigned_group": "Network-Ops-L2"
+        },
+        "started_at": "2026-09-03T02:52:10.744637+00:00",
+        "ended_at": "2026-09-03T02:52:10.744637+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0054",
+      "instance_id": "inst-37dd54406cdf",
+      "device_name": "UK-LON-SW01",
+      "device_id": "dev-009",
+      "severity": 3,
+      "category": "WARN",
+      "status": "active",
+      "timestamp": "2026-09-03T02:52:10.744637+00:00",
+      "raw_timestamp": 1788403930744,
+      "issue_name": "AP is Offline",
+      "issue_details": "Access Point unreachable via CAPWAP tunnel on UK-LON-SW01",
+      "source": "DNAC",
+      "location": "UK-LON"
+    },
+    "dnac_live_status": "ACTIVE",
+    "dnac_last_checked": "2026-09-03T02:52:10.744637+00:00",
+    "live_snow_status": "New",
+    "overall_status": "escalated",
+    "status_description": "Escalated by Agent 4 -> ServiceNow INC0060850"
+  },
+  {
+    "alert_id": "EVT-0030",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-03T02:39:33.428598+00:00",
+        "ended_at": "2026-09-03T02:39:33.428598+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Auto resolving",
+          "confidence": "0.76"
+        },
+        "started_at": "2026-09-03T02:39:33.428598+00:00",
+        "ended_at": "2026-09-03T02:39:33.428598+00:00"
+      },
+      "agent_3": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "queue_status": "delayed",
+          "wait_queue": "dnac.alerts.wait.q",
+          "delay_ms": 900000
+        },
+        "started_at": "2026-09-03T02:39:33.428598+00:00",
+        "ended_at": "2026-09-03T02:39:33.428598+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0030",
+      "instance_id": "inst-823601dead5a",
+      "device_name": "SG-SIN-FW01",
+      "device_id": "dev-008",
+      "severity": 3,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-09-03T02:39:33.428598+00:00",
+      "raw_timestamp": 1788403173428,
+      "issue_name": "AP is Offline",
+      "issue_details": "Access Point unreachable via CAPWAP tunnel on SG-SIN-FW01",
+      "source": "DNAC",
+      "location": "SG-SIN"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-03T02:39:33.428598+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
+  },
+  {
+    "alert_id": "EVT-0047",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-03T02:26:21.635693+00:00",
+        "ended_at": "2026-09-03T02:26:21.635693+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Auto resolving",
+          "confidence": "0.81"
+        },
+        "started_at": "2026-09-03T02:26:21.635693+00:00",
+        "ended_at": "2026-09-03T02:26:21.635693+00:00"
+      },
+      "agent_3": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "queue_status": "delayed",
+          "wait_queue": "dnac.alerts.wait.q",
+          "delay_ms": 900000
+        },
+        "started_at": "2026-09-03T02:26:21.635693+00:00",
+        "ended_at": "2026-09-03T02:26:21.635693+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0047",
+      "instance_id": "inst-8d46609d83e6",
+      "device_name": "US-CHI-RT03",
+      "device_id": "dev-010",
+      "severity": 1,
+      "category": "ERROR",
+      "status": "resolved",
+      "timestamp": "2026-09-03T02:26:21.635693+00:00",
+      "raw_timestamp": 1788402381635,
+      "issue_name": "Power Supply Failure",
+      "issue_details": "Redundant power supply unit 2 reported hardware fault on US-CHI-RT03",
+      "source": "DNAC",
+      "location": "US-CHI"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-03T02:26:21.635693+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
+  },
+  {
+    "alert_id": "EVT-0042",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-03T02:21:51.719415+00:00",
+        "ended_at": "2026-09-03T02:21:51.719415+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Uncertain",
+          "confidence": "0.56"
+        },
+        "started_at": "2026-09-03T02:21:51.719415+00:00",
+        "ended_at": "2026-09-03T02:21:51.719415+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0042",
+      "instance_id": "inst-946de90cbc08",
+      "device_name": "Access-Switch-05",
+      "device_id": "dev-003",
+      "severity": 1,
+      "category": "ERROR",
+      "status": "resolved",
+      "timestamp": "2026-09-03T02:21:51.719415+00:00",
+      "raw_timestamp": 1788402111719,
+      "issue_name": "Interface State Down",
+      "issue_details": "Physical link down on TenGigabitEthernet1/1/2 on Access-Switch-05",
+      "source": "DNAC",
+      "location": "UK-LON"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-03T02:21:51.719415+00:00",
+    "live_snow_status": null,
+    "overall_status": "uncertain",
+    "status_description": "Flagged by Agent 2 as Uncertain (<60% confidence)"
+  },
+  {
+    "alert_id": "EVT-0015",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-03T01:37:15.687484+00:00",
+        "ended_at": "2026-09-03T01:37:15.687484+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Non-Auto Resolving",
+          "confidence": "0.89"
+        },
+        "started_at": "2026-09-03T01:37:15.687484+00:00",
+        "ended_at": "2026-09-03T01:37:15.687484+00:00"
+      },
+      "agent_4": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "action": "incident_reopened",
+          "incident": "INC0023261",
+          "assigned_group": "Network-Ops-L2"
+        },
+        "started_at": "2026-09-03T01:37:15.687484+00:00",
+        "ended_at": "2026-09-03T01:37:15.687484+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0015",
+      "instance_id": "inst-fb19bfa65091",
+      "device_name": "SG-SIN-FW01",
+      "device_id": "dev-008",
+      "severity": 1,
+      "category": "ERROR",
+      "status": "active",
+      "timestamp": "2026-09-03T01:37:15.687484+00:00",
+      "raw_timestamp": 1788399435687,
+      "issue_name": "Interface State Down",
+      "issue_details": "Physical link down on TenGigabitEthernet1/1/2 on SG-SIN-FW01",
+      "source": "DNAC",
+      "location": "SG-SIN"
+    },
+    "dnac_live_status": "ACTIVE",
+    "dnac_last_checked": "2026-09-03T01:37:15.687484+00:00",
+    "live_snow_status": "Resolved",
+    "overall_status": "escalated",
+    "status_description": "Escalated by Agent 4 -> ServiceNow INC0023261"
+  },
+  {
+    "alert_id": "EVT-0019",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-03T00:34:41.582028+00:00",
+        "ended_at": "2026-09-03T00:34:41.582028+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Non-Auto Resolving",
+          "confidence": "0.97"
+        },
+        "started_at": "2026-09-03T00:34:41.582028+00:00",
+        "ended_at": "2026-09-03T00:34:41.582028+00:00"
+      },
+      "agent_4": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "action": "incident_reopened",
+          "incident": "INC0031057",
+          "assigned_group": "Network-Ops-L2"
+        },
+        "started_at": "2026-09-03T00:34:41.582028+00:00",
+        "ended_at": "2026-09-03T00:34:41.582028+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0019",
+      "instance_id": "inst-7de33bd1e6f8",
+      "device_name": "Switch-12",
+      "device_id": "dev-004",
+      "severity": 3,
+      "category": "WARN",
+      "status": "active",
+      "timestamp": "2026-09-03T00:34:41.582028+00:00",
+      "raw_timestamp": 1788395681582,
+      "issue_name": "AP is Offline",
+      "issue_details": "Access Point unreachable via CAPWAP tunnel on Switch-12",
+      "source": "DNAC",
+      "location": "SG-SIN"
+    },
+    "dnac_live_status": "ACTIVE",
+    "dnac_last_checked": "2026-09-03T00:34:41.582028+00:00",
+    "live_snow_status": "In Progress",
+    "overall_status": "escalated",
+    "status_description": "Escalated by Agent 4 -> ServiceNow INC0031057"
+  },
+  {
+    "alert_id": "EVT-0014",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-03T00:27:14.889714+00:00",
+        "ended_at": "2026-09-03T00:27:14.889714+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Non-Auto Resolving",
+          "confidence": "0.8"
+        },
+        "started_at": "2026-09-03T00:27:14.889714+00:00",
+        "ended_at": "2026-09-03T00:27:14.889714+00:00"
+      },
+      "agent_4": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "action": "incident_created",
+          "incident": "INC0050647",
+          "assigned_group": "Network-Ops-L2"
+        },
+        "started_at": "2026-09-03T00:27:14.889714+00:00",
+        "ended_at": "2026-09-03T00:27:14.889714+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0014",
+      "instance_id": "inst-0817c39ce7d8",
+      "device_name": "SG-SIN-FW01",
+      "device_id": "dev-008",
+      "severity": 2,
+      "category": "WARN",
+      "status": "active",
+      "timestamp": "2026-09-03T00:27:14.889714+00:00",
+      "raw_timestamp": 1788395234889,
+      "issue_name": "High Memory Utilization",
+      "issue_details": "System memory usage reached 88% capacity on SG-SIN-FW01",
+      "source": "DNAC",
+      "location": "SG-SIN"
+    },
+    "dnac_live_status": "ACTIVE",
+    "dnac_last_checked": "2026-09-03T00:27:14.889714+00:00",
+    "live_snow_status": "New",
+    "overall_status": "escalated",
+    "status_description": "Escalated by Agent 4 -> ServiceNow INC0050647"
+  },
+  {
+    "alert_id": "EVT-0028",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-02T23:10:44.132726+00:00",
+        "ended_at": "2026-09-02T23:10:44.132726+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Non-Auto Resolving",
+          "confidence": "0.93"
+        },
+        "started_at": "2026-09-02T23:10:44.132726+00:00",
+        "ended_at": "2026-09-02T23:10:44.132726+00:00"
+      },
+      "agent_4": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "action": "comment_appended",
+          "incident": "INC0042846",
+          "assigned_group": "Network-Ops-L2"
+        },
+        "started_at": "2026-09-02T23:10:44.132726+00:00",
+        "ended_at": "2026-09-02T23:10:44.132726+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0028",
+      "instance_id": "inst-c87af9288365",
+      "device_name": "DE-FRA-AP01",
+      "device_id": "dev-011",
+      "severity": 2,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-09-02T23:10:44.132726+00:00",
+      "raw_timestamp": 1788390644132,
+      "issue_name": "High CPU Utilization",
+      "issue_details": "Device CPU utilization exceeded 92% sustained threshold on DE-FRA-AP01",
+      "source": "DNAC",
+      "location": "DE-FRA"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-02T23:10:44.132726+00:00",
+    "live_snow_status": "Resolved",
+    "overall_status": "escalated",
+    "status_description": "Escalated by Agent 4 -> ServiceNow INC0042846"
+  },
+  {
+    "alert_id": "EVT-0006",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-02T22:20:29.300323+00:00",
+        "ended_at": "2026-09-02T22:20:29.300323+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Non-Auto Resolving",
+          "confidence": "0.92"
+        },
+        "started_at": "2026-09-02T22:20:29.300323+00:00",
+        "ended_at": "2026-09-02T22:20:29.300323+00:00"
+      },
+      "agent_4": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "action": "incident_created",
+          "incident": "INC0043001",
+          "assigned_group": "Network-Ops-L2"
+        },
+        "started_at": "2026-09-02T22:20:29.300323+00:00",
+        "ended_at": "2026-09-02T22:20:29.300323+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0006",
+      "instance_id": "inst-cf660a0bdfc8",
+      "device_name": "Core-Router-01",
+      "device_id": "dev-002",
+      "severity": 2,
+      "category": "WARN",
+      "status": "active",
+      "timestamp": "2026-09-02T22:20:29.300323+00:00",
+      "raw_timestamp": 1788387629300,
+      "issue_name": "High CPU Utilization",
+      "issue_details": "Device CPU utilization exceeded 92% sustained threshold on Core-Router-01",
+      "source": "DNAC",
+      "location": "US-NY"
+    },
+    "dnac_live_status": "ACTIVE",
+    "dnac_last_checked": "2026-09-02T22:20:29.300323+00:00",
+    "live_snow_status": "In Progress",
+    "overall_status": "escalated",
+    "status_description": "Escalated by Agent 4 -> ServiceNow INC0043001"
+  },
+  {
+    "alert_id": "EVT-0034",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-02T22:17:41.412743+00:00",
+        "ended_at": "2026-09-02T22:17:41.412743+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Auto resolving",
+          "confidence": "0.85"
+        },
+        "started_at": "2026-09-02T22:17:41.412743+00:00",
+        "ended_at": "2026-09-02T22:17:41.412743+00:00"
+      },
+      "agent_3": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "queue_status": "delayed",
+          "wait_queue": "dnac.alerts.wait.q",
+          "delay_ms": 900000
+        },
+        "started_at": "2026-09-02T22:17:41.412743+00:00",
+        "ended_at": "2026-09-02T22:17:41.412743+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0034",
+      "instance_id": "inst-fb4a5bd1a7f4",
+      "device_name": "Dist-Router-03",
+      "device_id": "dev-005",
+      "severity": 3,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-09-02T22:17:41.412743+00:00",
+      "raw_timestamp": 1788387461412,
+      "issue_name": "AP has flapped",
+      "issue_details": "Wireless AP experienced multiple rapid state transitions on Dist-Router-03",
+      "source": "DNAC",
+      "location": "DE-FRA"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-02T22:17:41.412743+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
+  },
+  {
+    "alert_id": "EVT-0018",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-02T22:11:36.228486+00:00",
+        "ended_at": "2026-09-02T22:11:36.228486+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Auto resolving",
+          "confidence": "0.83"
+        },
+        "started_at": "2026-09-02T22:11:36.228486+00:00",
+        "ended_at": "2026-09-02T22:11:36.228486+00:00"
+      },
+      "agent_3": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "queue_status": "delayed",
+          "wait_queue": "dnac.alerts.wait.q",
+          "delay_ms": 900000
+        },
+        "started_at": "2026-09-02T22:11:36.228486+00:00",
+        "ended_at": "2026-09-02T22:11:36.228486+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0018",
+      "instance_id": "inst-f0f26ae42b5f",
+      "device_name": "US-NY-HQ-AP05",
+      "device_id": "dev-007",
+      "severity": 3,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-09-02T22:11:36.228486+00:00",
+      "raw_timestamp": 1788387096228,
+      "issue_name": "Fan Tray Warning",
+      "issue_details": "Chassis cooling fan tray operating at degraded RPM on US-NY-HQ-AP05",
+      "source": "DNAC",
+      "location": "US-NY"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-02T22:11:36.228486+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
+  },
+  {
+    "alert_id": "EVT-0060",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-02T21:40:48.573589+00:00",
+        "ended_at": "2026-09-02T21:40:48.573589+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Auto resolving",
+          "confidence": "0.73"
+        },
+        "started_at": "2026-09-02T21:40:48.573589+00:00",
+        "ended_at": "2026-09-02T21:40:48.573589+00:00"
+      },
+      "agent_3": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "queue_status": "delayed",
+          "wait_queue": "dnac.alerts.wait.q",
+          "delay_ms": 900000
+        },
+        "started_at": "2026-09-02T21:40:48.573589+00:00",
+        "ended_at": "2026-09-02T21:40:48.573589+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0060",
+      "instance_id": "inst-6ccdf855beb8",
+      "device_name": "DE-FRA-AP01",
+      "device_id": "dev-011",
+      "severity": 3,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-09-02T21:40:48.573589+00:00",
+      "raw_timestamp": 1788385248573,
+      "issue_name": "AP is Offline",
+      "issue_details": "Access Point unreachable via CAPWAP tunnel on DE-FRA-AP01",
+      "source": "DNAC",
+      "location": "DE-FRA"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-02T21:40:48.573589+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
+  },
+  {
+    "alert_id": "EVT-0039",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-02T21:29:06.157725+00:00",
+        "ended_at": "2026-09-02T21:29:06.157725+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Auto resolving",
+          "confidence": "0.99"
+        },
+        "started_at": "2026-09-02T21:29:06.157725+00:00",
+        "ended_at": "2026-09-02T21:29:06.157725+00:00"
+      },
+      "agent_3": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "queue_status": "delayed",
+          "wait_queue": "dnac.alerts.wait.q",
+          "delay_ms": 900000
+        },
+        "started_at": "2026-09-02T21:29:06.157725+00:00",
+        "ended_at": "2026-09-02T21:29:06.157725+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0039",
+      "instance_id": "inst-3c87c5dbbb2e",
+      "device_name": "Switch-12",
+      "device_id": "dev-004",
+      "severity": 1,
+      "category": "ERROR",
+      "status": "resolved",
+      "timestamp": "2026-09-02T21:29:06.157725+00:00",
+      "raw_timestamp": 1788384546157,
+      "issue_name": "BGP Peer is Down",
+      "issue_details": "BGP neighbor adjacency lost on interface GigabitEthernet0/0/1 on Switch-12",
+      "source": "DNAC",
+      "location": "SG-SIN"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-02T21:29:06.157725+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
+  },
+  {
+    "alert_id": "EVT-0036",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-02T21:19:30.365409+00:00",
+        "ended_at": "2026-09-02T21:19:30.365409+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Non-Auto Resolving",
+          "confidence": "0.86"
+        },
+        "started_at": "2026-09-02T21:19:30.365409+00:00",
+        "ended_at": "2026-09-02T21:19:30.365409+00:00"
+      },
+      "agent_4": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "action": "incident_reopened",
+          "incident": "INC0027159",
+          "assigned_group": "Network-Ops-L2"
+        },
+        "started_at": "2026-09-02T21:19:30.365409+00:00",
+        "ended_at": "2026-09-02T21:19:30.365409+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0036",
+      "instance_id": "inst-abb8944c0946",
+      "device_name": "UK-LON-SW01",
+      "device_id": "dev-009",
+      "severity": 3,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-09-02T21:19:30.365409+00:00",
+      "raw_timestamp": 1788383970365,
+      "issue_name": "CRC Error Threshold Exceeded",
+      "issue_details": "Input CRC errors exceeded 100 per minute on Gi0/1/4 on UK-LON-SW01",
+      "source": "DNAC",
+      "location": "UK-LON"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-02T21:19:30.365409+00:00",
+    "live_snow_status": "Awaiting Info",
+    "overall_status": "escalated",
+    "status_description": "Escalated by Agent 4 -> ServiceNow INC0027159"
+  },
+  {
+    "alert_id": "EVT-0025",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": true
+        },
+        "started_at": "2026-09-02T20:59:36.938595+00:00",
+        "ended_at": "2026-09-02T20:59:36.938595+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0025",
+      "instance_id": "inst-86c3aa39c631",
+      "device_name": "US-NY-HQ-AP05",
+      "device_id": "dev-007",
+      "severity": 2,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-09-02T20:59:36.938595+00:00",
+      "raw_timestamp": 1788382776938,
+      "issue_name": "High CPU Utilization",
+      "issue_details": "Device CPU utilization exceeded 92% sustained threshold on US-NY-HQ-AP05",
+      "source": "DNAC",
+      "location": "US-NY"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-02T20:59:36.938595+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 1 (Backdated)"
+  },
+  {
+    "alert_id": "EVT-0009",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-02T20:55:34.025227+00:00",
+        "ended_at": "2026-09-02T20:55:34.025227+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Non-Auto Resolving",
+          "confidence": "0.76"
+        },
+        "started_at": "2026-09-02T20:55:34.025227+00:00",
+        "ended_at": "2026-09-02T20:55:34.025227+00:00"
+      },
+      "agent_4": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "action": "comment_appended",
+          "incident": "INC0048069",
+          "assigned_group": "Network-Ops-L2"
+        },
+        "started_at": "2026-09-02T20:55:34.025227+00:00",
+        "ended_at": "2026-09-02T20:55:34.025227+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0009",
+      "instance_id": "inst-e904c7c39483",
+      "device_name": "JP-TKY-SW02",
+      "device_id": "dev-012",
+      "severity": 3,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-09-02T20:55:34.025227+00:00",
+      "raw_timestamp": 1788382534025,
+      "issue_name": "CRC Error Threshold Exceeded",
+      "issue_details": "Input CRC errors exceeded 100 per minute on Gi0/1/4 on JP-TKY-SW02",
+      "source": "DNAC",
+      "location": "JP-TKY"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-02T20:55:34.025227+00:00",
+    "live_snow_status": "In Progress",
+    "overall_status": "escalated",
+    "status_description": "Escalated by Agent 4 -> ServiceNow INC0048069"
+  },
+  {
+    "alert_id": "EVT-0035",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": true
+        },
+        "started_at": "2026-09-02T20:47:46.164288+00:00",
+        "ended_at": "2026-09-02T20:47:46.164288+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0035",
+      "instance_id": "inst-96f872456d54",
+      "device_name": "DE-FRA-AP01",
+      "device_id": "dev-011",
+      "severity": 1,
+      "category": "ERROR",
+      "status": "resolved",
+      "timestamp": "2026-09-02T20:47:46.164288+00:00",
+      "raw_timestamp": 1788382066164,
+      "issue_name": "Power Supply Failure",
+      "issue_details": "Redundant power supply unit 2 reported hardware fault on DE-FRA-AP01",
+      "source": "DNAC",
+      "location": "DE-FRA"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-02T20:47:46.164288+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 1 (Backdated)"
+  },
+  {
+    "alert_id": "EVT-0029",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-02T20:18:53.284026+00:00",
+        "ended_at": "2026-09-02T20:18:53.284026+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Non-Auto Resolving",
+          "confidence": "0.91"
+        },
+        "started_at": "2026-09-02T20:18:53.284026+00:00",
+        "ended_at": "2026-09-02T20:18:53.284026+00:00"
+      },
+      "agent_4": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "action": "comment_appended",
+          "incident": "INC0059740",
+          "assigned_group": "Network-Ops-L2"
+        },
+        "started_at": "2026-09-02T20:18:53.284026+00:00",
+        "ended_at": "2026-09-02T20:18:53.284026+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0029",
+      "instance_id": "inst-c8d900b5d0b8",
+      "device_name": "DE-FRA-AP01",
+      "device_id": "dev-011",
+      "severity": 3,
+      "category": "WARN",
+      "status": "active",
+      "timestamp": "2026-09-02T20:18:53.284026+00:00",
+      "raw_timestamp": 1788380333284,
+      "issue_name": "AP has flapped",
+      "issue_details": "Wireless AP experienced multiple rapid state transitions on DE-FRA-AP01",
+      "source": "DNAC",
+      "location": "DE-FRA"
+    },
+    "dnac_live_status": "ACTIVE",
+    "dnac_last_checked": "2026-09-02T20:18:53.284026+00:00",
+    "live_snow_status": "Resolved",
+    "overall_status": "escalated",
+    "status_description": "Escalated by Agent 4 -> ServiceNow INC0059740"
+  },
+  {
+    "alert_id": "EVT-0013",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-02T20:14:52.407705+00:00",
+        "ended_at": "2026-09-02T20:14:52.407705+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Non-Auto Resolving",
+          "confidence": "0.87"
+        },
+        "started_at": "2026-09-02T20:14:52.407705+00:00",
+        "ended_at": "2026-09-02T20:14:52.407705+00:00"
+      },
+      "agent_4": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "action": "incident_reopened",
+          "incident": "INC0062305",
+          "assigned_group": "Network-Ops-L2"
+        },
+        "started_at": "2026-09-02T20:14:52.407705+00:00",
+        "ended_at": "2026-09-02T20:14:52.407705+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0013",
+      "instance_id": "inst-ae6de67aa7f0",
+      "device_name": "DE-FRA-AP01",
+      "device_id": "dev-011",
+      "severity": 1,
+      "category": "ERROR",
+      "status": "active",
+      "timestamp": "2026-09-02T20:14:52.407705+00:00",
+      "raw_timestamp": 1788380092407,
+      "issue_name": "Interface State Down",
+      "issue_details": "Physical link down on TenGigabitEthernet1/1/2 on DE-FRA-AP01",
+      "source": "DNAC",
+      "location": "DE-FRA"
+    },
+    "dnac_live_status": "ACTIVE",
+    "dnac_last_checked": "2026-09-02T20:14:52.407705+00:00",
+    "live_snow_status": "In Progress",
+    "overall_status": "escalated",
+    "status_description": "Escalated by Agent 4 -> ServiceNow INC0062305"
+  },
+  {
+    "alert_id": "EVT-0020",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-02T18:50:49.914848+00:00",
+        "ended_at": "2026-09-02T18:50:49.914848+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Auto resolving",
+          "confidence": "0.9"
+        },
+        "started_at": "2026-09-02T18:50:49.914848+00:00",
+        "ended_at": "2026-09-02T18:50:49.914848+00:00"
+      },
+      "agent_3": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "queue_status": "delayed",
+          "wait_queue": "dnac.alerts.wait.q",
+          "delay_ms": 900000
+        },
+        "started_at": "2026-09-02T18:50:49.914848+00:00",
+        "ended_at": "2026-09-02T18:50:49.914848+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0020",
+      "instance_id": "inst-484a1ccefcbb",
+      "device_name": "JP-TKY-SW02",
+      "device_id": "dev-012",
+      "severity": 1,
+      "category": "ERROR",
+      "status": "resolved",
+      "timestamp": "2026-09-02T18:50:49.914848+00:00",
+      "raw_timestamp": 1788375049914,
+      "issue_name": "Power Supply Failure",
+      "issue_details": "Redundant power supply unit 2 reported hardware fault on JP-TKY-SW02",
+      "source": "DNAC",
+      "location": "JP-TKY"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-02T18:50:49.914848+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
+  },
+  {
+    "alert_id": "EVT-0016",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-02T18:37:39.851795+00:00",
+        "ended_at": "2026-09-02T18:37:39.851795+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Auto resolving",
+          "confidence": "0.8"
+        },
+        "started_at": "2026-09-02T18:37:39.851795+00:00",
+        "ended_at": "2026-09-02T18:37:39.851795+00:00"
+      },
+      "agent_3": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "queue_status": "delayed",
+          "wait_queue": "dnac.alerts.wait.q",
+          "delay_ms": 900000
+        },
+        "started_at": "2026-09-02T18:37:39.851795+00:00",
+        "ended_at": "2026-09-02T18:37:39.851795+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0016",
+      "instance_id": "inst-abab0139f018",
+      "device_name": "UK-MAL-DEV-AP02",
+      "device_id": "dev-001",
+      "severity": 2,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-09-02T18:37:39.851795+00:00",
+      "raw_timestamp": 1788374259851,
+      "issue_name": "OSPF Neighbor Down",
+      "issue_details": "OSPF adjacency lost with neighbor router 10.200.1.5 on UK-MAL-DEV-AP02",
+      "source": "DNAC",
+      "location": "UK-MAL"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-02T18:37:39.851795+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
+  },
+  {
+    "alert_id": "EVT-0045",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-02T12:17:38.120736+00:00",
+        "ended_at": "2026-09-02T12:17:38.120736+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Non-Auto Resolving",
+          "confidence": "0.87"
+        },
+        "started_at": "2026-09-02T12:17:38.120736+00:00",
+        "ended_at": "2026-09-02T12:17:38.120736+00:00"
+      },
+      "agent_4": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "action": "incident_created",
+          "incident": "INC0016530",
+          "assigned_group": "Network-Ops-L2"
+        },
+        "started_at": "2026-09-02T12:17:38.120736+00:00",
+        "ended_at": "2026-09-02T12:17:38.120736+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0045",
+      "instance_id": "inst-5f4e1dbd792f",
+      "device_name": "SG-SIN-FW01",
+      "device_id": "dev-008",
+      "severity": 3,
+      "category": "WARN",
+      "status": "active",
+      "timestamp": "2026-09-02T12:17:38.120736+00:00",
+      "raw_timestamp": 1788351458120,
+      "issue_name": "CRC Error Threshold Exceeded",
+      "issue_details": "Input CRC errors exceeded 100 per minute on Gi0/1/4 on SG-SIN-FW01",
+      "source": "DNAC",
+      "location": "SG-SIN"
+    },
+    "dnac_live_status": "ACTIVE",
+    "dnac_last_checked": "2026-09-02T12:17:38.120736+00:00",
+    "live_snow_status": "In Progress",
+    "overall_status": "escalated",
+    "status_description": "Escalated by Agent 4 -> ServiceNow INC0016530"
+  },
+  {
+    "alert_id": "EVT-0055",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-02T11:22:17.028165+00:00",
+        "ended_at": "2026-09-02T11:22:17.028165+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Auto resolving",
+          "confidence": "0.94"
+        },
+        "started_at": "2026-09-02T11:22:17.028165+00:00",
+        "ended_at": "2026-09-02T11:22:17.028165+00:00"
+      },
+      "agent_3": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "queue_status": "delayed",
+          "wait_queue": "dnac.alerts.wait.q",
+          "delay_ms": 900000
+        },
+        "started_at": "2026-09-02T11:22:17.028165+00:00",
+        "ended_at": "2026-09-02T11:22:17.028165+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0055",
+      "instance_id": "inst-794c4743c9e7",
+      "device_name": "US-NY-HQ-AP05",
+      "device_id": "dev-007",
+      "severity": 3,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-09-02T11:22:17.028165+00:00",
+      "raw_timestamp": 1788348137028,
+      "issue_name": "AP is Offline",
+      "issue_details": "Access Point unreachable via CAPWAP tunnel on US-NY-HQ-AP05",
+      "source": "DNAC",
+      "location": "US-NY"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-02T11:22:17.028165+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
+  },
+  {
+    "alert_id": "EVT-0010",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": true
+        },
+        "started_at": "2026-09-02T11:08:29.579759+00:00",
+        "ended_at": "2026-09-02T11:08:29.579759+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0010",
+      "instance_id": "inst-71f8d82e9c22",
+      "device_name": "SG-SIN-FW01",
+      "device_id": "dev-008",
+      "severity": 2,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-09-02T11:08:29.579759+00:00",
+      "raw_timestamp": 1788347309579,
+      "issue_name": "High Memory Utilization",
+      "issue_details": "System memory usage reached 88% capacity on SG-SIN-FW01",
+      "source": "DNAC",
+      "location": "SG-SIN"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-02T11:08:29.579759+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 1 (Backdated)"
+  },
+  {
+    "alert_id": "EVT-0022",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-02T10:55:41.615881+00:00",
+        "ended_at": "2026-09-02T10:55:41.615881+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Non-Auto Resolving",
+          "confidence": "0.83"
+        },
+        "started_at": "2026-09-02T10:55:41.615881+00:00",
+        "ended_at": "2026-09-02T10:55:41.615881+00:00"
+      },
+      "agent_4": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "action": "incident_reopened",
+          "incident": "INC0088270",
+          "assigned_group": "Network-Ops-L2"
+        },
+        "started_at": "2026-09-02T10:55:41.615881+00:00",
+        "ended_at": "2026-09-02T10:55:41.615881+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0022",
+      "instance_id": "inst-8345096ca57b",
+      "device_name": "Dist-Router-03",
+      "device_id": "dev-005",
+      "severity": 3,
+      "category": "WARN",
+      "status": "active",
+      "timestamp": "2026-09-02T10:55:41.615881+00:00",
+      "raw_timestamp": 1788346541615,
+      "issue_name": "AP is Offline",
+      "issue_details": "Access Point unreachable via CAPWAP tunnel on Dist-Router-03",
+      "source": "DNAC",
+      "location": "DE-FRA"
+    },
+    "dnac_live_status": "ACTIVE",
+    "dnac_last_checked": "2026-09-02T10:55:41.615881+00:00",
+    "live_snow_status": "Awaiting Info",
+    "overall_status": "escalated",
+    "status_description": "Escalated by Agent 4 -> ServiceNow INC0088270"
+  },
+  {
+    "alert_id": "EVT-0031",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-02T09:15:49.168880+00:00",
+        "ended_at": "2026-09-02T09:15:49.168880+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Auto resolving",
+          "confidence": "0.78"
+        },
+        "started_at": "2026-09-02T09:15:49.168880+00:00",
+        "ended_at": "2026-09-02T09:15:49.168880+00:00"
+      },
+      "agent_3": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "queue_status": "delayed",
+          "wait_queue": "dnac.alerts.wait.q",
+          "delay_ms": 900000
+        },
+        "started_at": "2026-09-02T09:15:49.168880+00:00",
+        "ended_at": "2026-09-02T09:15:49.168880+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0031",
+      "instance_id": "inst-cf0670a72d06",
+      "device_name": "SG-SIN-FW01",
+      "device_id": "dev-008",
+      "severity": 1,
+      "category": "ERROR",
+      "status": "resolved",
+      "timestamp": "2026-09-02T09:15:49.168880+00:00",
+      "raw_timestamp": 1788340549168,
+      "issue_name": "BGP Peer is Down",
+      "issue_details": "BGP neighbor adjacency lost on interface GigabitEthernet0/0/1 on SG-SIN-FW01",
+      "source": "DNAC",
+      "location": "SG-SIN"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-02T09:15:49.168880+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
+  },
+  {
+    "alert_id": "EVT-0017",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-02T01:45:17.569198+00:00",
+        "ended_at": "2026-09-02T01:45:17.569198+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Auto resolving",
+          "confidence": "0.75"
+        },
+        "started_at": "2026-09-02T01:45:17.569198+00:00",
+        "ended_at": "2026-09-02T01:45:17.569198+00:00"
+      },
+      "agent_3": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "queue_status": "delayed",
+          "wait_queue": "dnac.alerts.wait.q",
+          "delay_ms": 900000
+        },
+        "started_at": "2026-09-02T01:45:17.569198+00:00",
+        "ended_at": "2026-09-02T01:45:17.569198+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0017",
+      "instance_id": "inst-f0d59eda85cc",
+      "device_name": "Access-Switch-05",
+      "device_id": "dev-003",
+      "severity": 1,
+      "category": "ERROR",
+      "status": "resolved",
+      "timestamp": "2026-09-02T01:45:17.569198+00:00",
+      "raw_timestamp": 1788313517569,
+      "issue_name": "Power Supply Failure",
+      "issue_details": "Redundant power supply unit 2 reported hardware fault on Access-Switch-05",
+      "source": "DNAC",
+      "location": "UK-LON"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-02T01:45:17.569198+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
+  },
+  {
+    "alert_id": "EVT-0008",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": true
+        },
+        "started_at": "2026-09-02T00:49:42.606724+00:00",
+        "ended_at": "2026-09-02T00:49:42.606724+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0008",
+      "instance_id": "inst-b53e50785f73",
+      "device_name": "Core-Switch-02",
+      "device_id": "dev-006",
+      "severity": 2,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-09-02T00:49:42.606724+00:00",
+      "raw_timestamp": 1788310182606,
+      "issue_name": "High Memory Utilization",
+      "issue_details": "System memory usage reached 88% capacity on Core-Switch-02",
+      "source": "DNAC",
+      "location": "US-CHI"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-02T00:49:42.606724+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 1 (Backdated)"
+  },
+  {
+    "alert_id": "EVT-0057",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": true
+        },
+        "started_at": "2026-09-01T21:28:10.235128+00:00",
+        "ended_at": "2026-09-01T21:28:10.235128+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0057",
+      "instance_id": "inst-07273d75eeb2",
+      "device_name": "JP-TKY-SW02",
+      "device_id": "dev-012",
+      "severity": 3,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-09-01T21:28:10.235128+00:00",
+      "raw_timestamp": 1788298090235,
+      "issue_name": "AP is Offline",
+      "issue_details": "Access Point unreachable via CAPWAP tunnel on JP-TKY-SW02",
+      "source": "DNAC",
+      "location": "JP-TKY"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-01T21:28:10.235128+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 1 (Backdated)"
+  },
+  {
+    "alert_id": "EVT-0038",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-01T16:31:20.619086+00:00",
+        "ended_at": "2026-09-01T16:31:20.619086+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Auto resolving",
+          "confidence": "0.97"
+        },
+        "started_at": "2026-09-01T16:31:20.619086+00:00",
+        "ended_at": "2026-09-01T16:31:20.619086+00:00"
+      },
+      "agent_3": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "queue_status": "delayed",
+          "wait_queue": "dnac.alerts.wait.q",
+          "delay_ms": 900000
+        },
+        "started_at": "2026-09-01T16:31:20.619086+00:00",
+        "ended_at": "2026-09-01T16:31:20.619086+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0038",
+      "instance_id": "inst-ff6c31d5ca40",
+      "device_name": "Switch-12",
+      "device_id": "dev-004",
+      "severity": 1,
+      "category": "ERROR",
+      "status": "resolved",
+      "timestamp": "2026-09-01T16:31:20.619086+00:00",
+      "raw_timestamp": 1788280280619,
+      "issue_name": "BGP Peer is Down",
+      "issue_details": "BGP neighbor adjacency lost on interface GigabitEthernet0/0/1 on Switch-12",
+      "source": "DNAC",
+      "location": "SG-SIN"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-01T16:31:20.619086+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
+  },
+  {
+    "alert_id": "EVT-0023",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-01T16:16:15.373758+00:00",
+        "ended_at": "2026-09-01T16:16:15.373758+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Non-Auto Resolving",
+          "confidence": "0.88"
+        },
+        "started_at": "2026-09-01T16:16:15.373758+00:00",
+        "ended_at": "2026-09-01T16:16:15.373758+00:00"
+      },
+      "agent_4": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "action": "incident_reopened",
+          "incident": "INC0065859",
+          "assigned_group": "Network-Ops-L2"
+        },
+        "started_at": "2026-09-01T16:16:15.373758+00:00",
+        "ended_at": "2026-09-01T16:16:15.373758+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0023",
+      "instance_id": "inst-75bb77bb9bd3",
+      "device_name": "DE-FRA-AP01",
+      "device_id": "dev-011",
+      "severity": 1,
+      "category": "ERROR",
+      "status": "active",
+      "timestamp": "2026-09-01T16:16:15.373758+00:00",
+      "raw_timestamp": 1788279375373,
+      "issue_name": "BGP Peer is Down",
+      "issue_details": "BGP neighbor adjacency lost on interface GigabitEthernet0/0/1 on DE-FRA-AP01",
+      "source": "DNAC",
+      "location": "DE-FRA"
+    },
+    "dnac_live_status": "ACTIVE",
+    "dnac_last_checked": "2026-09-01T16:16:15.373758+00:00",
+    "live_snow_status": "In Progress",
+    "overall_status": "escalated",
+    "status_description": "Escalated by Agent 4 -> ServiceNow INC0065859"
+  },
+  {
+    "alert_id": "EVT-0058",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-01T16:00:46.722450+00:00",
+        "ended_at": "2026-09-01T16:00:46.722450+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Auto resolving",
+          "confidence": "0.87"
+        },
+        "started_at": "2026-09-01T16:00:46.722450+00:00",
+        "ended_at": "2026-09-01T16:00:46.722450+00:00"
+      },
+      "agent_3": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "queue_status": "delayed",
+          "wait_queue": "dnac.alerts.wait.q",
+          "delay_ms": 900000
+        },
+        "started_at": "2026-09-01T16:00:46.722450+00:00",
+        "ended_at": "2026-09-01T16:00:46.722450+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0058",
+      "instance_id": "inst-52394b81a79c",
+      "device_name": "DE-FRA-AP01",
+      "device_id": "dev-011",
+      "severity": 3,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-09-01T16:00:46.722450+00:00",
+      "raw_timestamp": 1788278446722,
+      "issue_name": "AP has flapped",
+      "issue_details": "Wireless AP experienced multiple rapid state transitions on DE-FRA-AP01",
+      "source": "DNAC",
+      "location": "DE-FRA"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-01T16:00:46.722450+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
+  },
+  {
+    "alert_id": "EVT-0049",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-01T15:08:44.080209+00:00",
+        "ended_at": "2026-09-01T15:08:44.080209+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Auto resolving",
+          "confidence": "0.89"
+        },
+        "started_at": "2026-09-01T15:08:44.080209+00:00",
+        "ended_at": "2026-09-01T15:08:44.080209+00:00"
+      },
+      "agent_3": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "queue_status": "delayed",
+          "wait_queue": "dnac.alerts.wait.q",
+          "delay_ms": 900000
+        },
+        "started_at": "2026-09-01T15:08:44.080209+00:00",
+        "ended_at": "2026-09-01T15:08:44.080209+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0049",
+      "instance_id": "inst-24cac917be3b",
+      "device_name": "SG-SIN-FW01",
+      "device_id": "dev-008",
+      "severity": 2,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-09-01T15:08:44.080209+00:00",
+      "raw_timestamp": 1788275324080,
+      "issue_name": "OSPF Neighbor Down",
+      "issue_details": "OSPF adjacency lost with neighbor router 10.200.1.5 on SG-SIN-FW01",
+      "source": "DNAC",
+      "location": "SG-SIN"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-01T15:08:44.080209+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
+  },
+  {
+    "alert_id": "EVT-0046",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": true
+        },
+        "started_at": "2026-09-01T11:04:17.195657+00:00",
+        "ended_at": "2026-09-01T11:04:17.195657+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0046",
+      "instance_id": "inst-525b92566a05",
+      "device_name": "UK-MAL-DEV-AP02",
+      "device_id": "dev-001",
+      "severity": 3,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-09-01T11:04:17.195657+00:00",
+      "raw_timestamp": 1788260657195,
+      "issue_name": "Fan Tray Warning",
+      "issue_details": "Chassis cooling fan tray operating at degraded RPM on UK-MAL-DEV-AP02",
+      "source": "DNAC",
+      "location": "UK-MAL"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-01T11:04:17.195657+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 1 (Backdated)"
+  },
+  {
+    "alert_id": "EVT-0041",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-01T11:03:05.037181+00:00",
+        "ended_at": "2026-09-01T11:03:05.037181+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Non-Auto Resolving",
+          "confidence": "0.83"
+        },
+        "started_at": "2026-09-01T11:03:05.037181+00:00",
+        "ended_at": "2026-09-01T11:03:05.037181+00:00"
+      },
+      "agent_4": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "action": "comment_appended",
+          "incident": "INC0013153",
+          "assigned_group": "Network-Ops-L2"
+        },
+        "started_at": "2026-09-01T11:03:05.037181+00:00",
+        "ended_at": "2026-09-01T11:03:05.037181+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0041",
+      "instance_id": "inst-16f7d2589804",
+      "device_name": "Dist-Router-03",
+      "device_id": "dev-005",
+      "severity": 2,
+      "category": "WARN",
+      "status": "active",
+      "timestamp": "2026-09-01T11:03:05.037181+00:00",
+      "raw_timestamp": 1788260585037,
+      "issue_name": "High Memory Utilization",
+      "issue_details": "System memory usage reached 88% capacity on Dist-Router-03",
+      "source": "DNAC",
+      "location": "DE-FRA"
+    },
+    "dnac_live_status": "ACTIVE",
+    "dnac_last_checked": "2026-09-01T11:03:05.037181+00:00",
+    "live_snow_status": "In Progress",
+    "overall_status": "escalated",
+    "status_description": "Escalated by Agent 4 -> ServiceNow INC0013153"
+  },
+  {
+    "alert_id": "EVT-0032",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-01T09:30:32.825850+00:00",
+        "ended_at": "2026-09-01T09:30:32.825850+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Non-Auto Resolving",
+          "confidence": "0.94"
+        },
+        "started_at": "2026-09-01T09:30:32.825850+00:00",
+        "ended_at": "2026-09-01T09:30:32.825850+00:00"
+      },
+      "agent_4": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "action": "comment_appended",
+          "incident": "INC0071792",
+          "assigned_group": "Network-Ops-L2"
+        },
+        "started_at": "2026-09-01T09:30:32.825850+00:00",
+        "ended_at": "2026-09-01T09:30:32.825850+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0032",
+      "instance_id": "inst-7032e193215b",
+      "device_name": "UK-MAL-DEV-AP02",
+      "device_id": "dev-001",
+      "severity": 2,
+      "category": "WARN",
+      "status": "active",
+      "timestamp": "2026-09-01T09:30:32.825850+00:00",
+      "raw_timestamp": 1788255032825,
+      "issue_name": "High CPU Utilization",
+      "issue_details": "Device CPU utilization exceeded 92% sustained threshold on UK-MAL-DEV-AP02",
+      "source": "DNAC",
+      "location": "UK-MAL"
+    },
+    "dnac_live_status": "ACTIVE",
+    "dnac_last_checked": "2026-09-01T09:30:32.825850+00:00",
+    "live_snow_status": "Resolved",
+    "overall_status": "escalated",
+    "status_description": "Escalated by Agent 4 -> ServiceNow INC0071792"
+  },
+  {
+    "alert_id": "EVT-0024",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": true
+        },
+        "started_at": "2026-08-31T21:27:17.024442+00:00",
+        "ended_at": "2026-08-31T21:27:17.024442+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0024",
+      "instance_id": "inst-a1b4f9844058",
+      "device_name": "Core-Switch-02",
+      "device_id": "dev-006",
+      "severity": 1,
+      "category": "ERROR",
+      "status": "resolved",
+      "timestamp": "2026-08-31T21:27:17.024442+00:00",
+      "raw_timestamp": 1788211637024,
+      "issue_name": "Interface State Down",
+      "issue_details": "Physical link down on TenGigabitEthernet1/1/2 on Core-Switch-02",
+      "source": "DNAC",
+      "location": "US-CHI"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-08-31T21:27:17.024442+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 1 (Backdated)"
+  },
+  {
+    "alert_id": "EVT-0040",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-08-30T17:46:07.820077+00:00",
+        "ended_at": "2026-08-30T17:46:07.820077+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Uncertain",
+          "confidence": "0.43"
+        },
+        "started_at": "2026-08-30T17:46:07.820077+00:00",
+        "ended_at": "2026-08-30T17:46:07.820077+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0040",
+      "instance_id": "inst-42c5a1b8b566",
+      "device_name": "JP-TKY-SW02",
+      "device_id": "dev-012",
+      "severity": 3,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-08-30T17:46:07.820077+00:00",
+      "raw_timestamp": 1788111967820,
+      "issue_name": "AP is Offline",
+      "issue_details": "Access Point unreachable via CAPWAP tunnel on JP-TKY-SW02",
+      "source": "DNAC",
+      "location": "JP-TKY"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-08-30T17:46:07.820077+00:00",
+    "live_snow_status": null,
+    "overall_status": "uncertain",
+    "status_description": "Flagged by Agent 2 as Uncertain (<60% confidence)"
+  },
+  {
+    "alert_id": "EVT-0037",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-08-30T07:56:07.985165+00:00",
+        "ended_at": "2026-08-30T07:56:07.985165+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Auto resolving",
+          "confidence": "0.97"
+        },
+        "started_at": "2026-08-30T07:56:07.985165+00:00",
+        "ended_at": "2026-08-30T07:56:07.985165+00:00"
+      },
+      "agent_3": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "queue_status": "delayed",
+          "wait_queue": "dnac.alerts.wait.q",
+          "delay_ms": 900000
+        },
+        "started_at": "2026-08-30T07:56:07.985165+00:00",
+        "ended_at": "2026-08-30T07:56:07.985165+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0037",
+      "instance_id": "inst-9535cae41325",
+      "device_name": "US-CHI-RT03",
+      "device_id": "dev-010",
+      "severity": 3,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-08-30T07:56:07.985165+00:00",
+      "raw_timestamp": 1788076567985,
+      "issue_name": "AP has flapped",
+      "issue_details": "Wireless AP experienced multiple rapid state transitions on US-CHI-RT03",
+      "source": "DNAC",
+      "location": "US-CHI"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-08-30T07:56:07.985165+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
+  },
+  {
+    "alert_id": "EVT-0012",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-08-29T13:27:47.885642+00:00",
+        "ended_at": "2026-08-29T13:27:47.885642+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Non-Auto Resolving",
+          "confidence": "0.95"
+        },
+        "started_at": "2026-08-29T13:27:47.885642+00:00",
+        "ended_at": "2026-08-29T13:27:47.885642+00:00"
+      },
+      "agent_4": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "action": "comment_appended",
+          "incident": "INC0071301",
+          "assigned_group": "Network-Ops-L2"
+        },
+        "started_at": "2026-08-29T13:27:47.885642+00:00",
+        "ended_at": "2026-08-29T13:27:47.885642+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0012",
+      "instance_id": "inst-525a34044480",
+      "device_name": "Access-Switch-05",
+      "device_id": "dev-003",
+      "severity": 3,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-08-29T13:27:47.885642+00:00",
+      "raw_timestamp": 1788010067885,
+      "issue_name": "AP has flapped",
+      "issue_details": "Wireless AP experienced multiple rapid state transitions on Access-Switch-05",
+      "source": "DNAC",
+      "location": "UK-LON"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-08-29T13:27:47.885642+00:00",
+    "live_snow_status": "In Progress",
+    "overall_status": "escalated",
+    "status_description": "Escalated by Agent 4 -> ServiceNow INC0071301"
+  },
+  {
+    "alert_id": "EVT-0048",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-08-29T11:46:29.116957+00:00",
+        "ended_at": "2026-08-29T11:46:29.116957+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Auto resolving",
+          "confidence": "0.86"
+        },
+        "started_at": "2026-08-29T11:46:29.116957+00:00",
+        "ended_at": "2026-08-29T11:46:29.116957+00:00"
+      },
+      "agent_3": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "queue_status": "delayed",
+          "wait_queue": "dnac.alerts.wait.q",
+          "delay_ms": 900000
+        },
+        "started_at": "2026-08-29T11:46:29.116957+00:00",
+        "ended_at": "2026-08-29T11:46:29.116957+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0048",
+      "instance_id": "inst-145157f49e67",
+      "device_name": "Core-Router-01",
+      "device_id": "dev-002",
+      "severity": 3,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-08-29T11:46:29.116957+00:00",
+      "raw_timestamp": 1788003989116,
+      "issue_name": "AP has flapped",
+      "issue_details": "Wireless AP experienced multiple rapid state transitions on Core-Router-01",
+      "source": "DNAC",
+      "location": "US-NY"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-08-29T11:46:29.116957+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
+  },
+  {
+    "alert_id": "EVT-0050",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-08-28T10:41:55.773452+00:00",
+        "ended_at": "2026-08-28T10:41:55.773452+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Auto resolving",
+          "confidence": "0.91"
+        },
+        "started_at": "2026-08-28T10:41:55.773452+00:00",
+        "ended_at": "2026-08-28T10:41:55.773452+00:00"
+      },
+      "agent_3": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "queue_status": "delayed",
+          "wait_queue": "dnac.alerts.wait.q",
+          "delay_ms": 900000
+        },
+        "started_at": "2026-08-28T10:41:55.773452+00:00",
+        "ended_at": "2026-08-28T10:41:55.773452+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0050",
+      "instance_id": "inst-5cbc291e12a8",
+      "device_name": "UK-MAL-DEV-AP02",
+      "device_id": "dev-001",
+      "severity": 3,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-08-28T10:41:55.773452+00:00",
+      "raw_timestamp": 1787913715773,
+      "issue_name": "AP is Offline",
+      "issue_details": "Access Point unreachable via CAPWAP tunnel on UK-MAL-DEV-AP02",
+      "source": "DNAC",
+      "location": "UK-MAL"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-08-28T10:41:55.773452+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
+  },
+  {
+    "alert_id": "EVT-0027",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": true
+        },
+        "started_at": "2026-08-28T06:02:08.955128+00:00",
+        "ended_at": "2026-08-28T06:02:08.955128+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0027",
+      "instance_id": "inst-fa436fe39b29",
+      "device_name": "Dist-Router-03",
+      "device_id": "dev-005",
+      "severity": 1,
+      "category": "ERROR",
+      "status": "resolved",
+      "timestamp": "2026-08-28T06:02:08.955128+00:00",
+      "raw_timestamp": 1787896928955,
+      "issue_name": "Power Supply Failure",
+      "issue_details": "Redundant power supply unit 2 reported hardware fault on Dist-Router-03",
+      "source": "DNAC",
+      "location": "DE-FRA"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-08-28T06:02:08.955128+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 1 (Backdated)"
+  },
+  {
+    "alert_id": "EVT-0007",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-08-28T02:10:44.194165+00:00",
+        "ended_at": "2026-08-28T02:10:44.194165+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Uncertain",
+          "confidence": "0.45"
+        },
+        "started_at": "2026-08-28T02:10:44.194165+00:00",
+        "ended_at": "2026-08-28T02:10:44.194165+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0007",
+      "instance_id": "inst-237cd6758923",
+      "device_name": "DE-FRA-AP01",
+      "device_id": "dev-011",
+      "severity": 3,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-08-28T02:10:44.194165+00:00",
+      "raw_timestamp": 1787883044194,
+      "issue_name": "AP has flapped",
+      "issue_details": "Wireless AP experienced multiple rapid state transitions on DE-FRA-AP01",
+      "source": "DNAC",
+      "location": "DE-FRA"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-08-28T02:10:44.194165+00:00",
+    "live_snow_status": null,
+    "overall_status": "uncertain",
+    "status_description": "Flagged by Agent 2 as Uncertain (<60% confidence)"
+  },
+  {
+    "alert_id": "EVT-0043",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-08-27T17:09:32.621368+00:00",
+        "ended_at": "2026-08-27T17:09:32.621368+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Auto resolving",
+          "confidence": "0.9"
+        },
+        "started_at": "2026-08-27T17:09:32.621368+00:00",
+        "ended_at": "2026-08-27T17:09:32.621368+00:00"
+      },
+      "agent_3": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "queue_status": "delayed",
+          "wait_queue": "dnac.alerts.wait.q",
+          "delay_ms": 900000
+        },
+        "started_at": "2026-08-27T17:09:32.621368+00:00",
+        "ended_at": "2026-08-27T17:09:32.621368+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0043",
+      "instance_id": "inst-ff962a583c06",
+      "device_name": "DE-FRA-AP01",
+      "device_id": "dev-011",
+      "severity": 3,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-08-27T17:09:32.621368+00:00",
+      "raw_timestamp": 1787850572621,
+      "issue_name": "AP has flapped",
+      "issue_details": "Wireless AP experienced multiple rapid state transitions on DE-FRA-AP01",
+      "source": "DNAC",
+      "location": "DE-FRA"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-08-27T17:09:32.621368+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
+  }
+]

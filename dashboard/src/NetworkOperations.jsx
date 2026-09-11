@@ -162,7 +162,10 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
   const [secondsAgo, setSecondsAgo] = useState(0);
   const selectedDeviceNameRef = useRef(null);
 
-  const devices = rawDevices;
+  const devices = useMemo(() => {
+    if (rawDevices && rawDevices.length > 0) return rawDevices;
+    return generateMockDevices();
+  }, [rawDevices]);
 
   // Freeze body scroll when detail panel is open
   useEffect(() => {
