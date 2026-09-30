@@ -8,16 +8,16 @@ An intelligent, multi-agent network alert triage and suppression platform for Ci
 
 Accurately identify false or transient network alerts to prevent unnecessary ServiceNow ticket creation and reduce operational noise without missing genuine network degradation.
 
-## Current Milestone: v1.1 Application Bring-Up & Local Orchestration
+## Current Milestone: v1.2 Custom Date & Time Range Filtering
 
-**Goal:** Launch, orchestrate, and verify all core services of the False Alert Suppression pipeline locally, ensuring the backend API (port 8004), React dashboard (Vite dev server), and health checks are fully operational and reachable.
+**Goal:** Enable precise temporal inspection in False Alert Metrics by allowing users to specify custom start and end date/time ranges alongside standard preset windows.
 
 **Target features:**
-- Automated orchestrator / service launcher script for seamless local operation.
-- Bring up FastAPI Dashboard Backend (`dashboard/api.py`) on port 8004.
-- Bring up Vite React Dashboard frontend (`dashboard/`) on local dev port (5173).
-- Verify end-to-end connectivity between frontend and backend (`/api/alerts`, `/api/devices`, `/api/kpi/summary`).
-- Provide live URL links and service status report.
+- Custom Date & Time Range selector (Start DateTime & End DateTime inputs) in the dashboard filter bar.
+- Seamless coexistence with existing preset buttons/dropdown (`ALL`, `24H`, `7D`, `30D`, `CUSTOM`).
+- Real-time scope alert filtering supporting diverse alert timestamp formats (epoch milliseconds, epoch seconds, ISO 8601 strings).
+- Dynamic recalculation of KPI summary cards, breakdown charts, and traceability matrix under custom time scopes.
+- Quick Reset / Clear control to easily return to preset windows.
 
 ## Requirements
 
@@ -33,18 +33,19 @@ Accurately identify false or transient network alerts to prevent unnecessary Ser
 - ✓ Operational email notification dispatch (`workflow/nodes/node_email_notifier.py`) — existing
 - ✓ React operations dashboard with live status and alert trace matrix (`dashboard/`) — existing
 - ✓ Total Processed KPI and category alignment (Milestone v1.0) — v1.0
+- ✓ FastAPI Dashboard Backend & Vite React dev server bring-up and orchestration (Milestone v1.1) — v1.1
 
 ### Active
 
-- [ ] **UP-01**: Start the FastAPI Dashboard API service on port 8004 in the background and confirm health and endpoint responsiveness.
-- [ ] **UP-02**: Start the Vite React development server on port 5173 in the background and verify HTTP accessibility.
-- [ ] **UP-03**: Verify end-to-end API polling from React frontend to FastAPI backend (`/api/alerts`, `/api/devices`, `/api/kpi/summary`).
-- [ ] **UP-04**: Create a unified local startup/orchestration script (`start_dashboard.py` / `start_services.ps1`) for repeatable single-command bring-up.
+- [ ] **TIME-01**: Add custom start and end date-time picker controls to the filter bar in `FalseAlertMetrics.jsx`.
+- [ ] **TIME-02**: Implement custom date-time boundary filtering in `scopeAlerts` evaluating alert timestamps against user-specified start and end limits.
+- [ ] **TIME-03**: Ensure KPI summary totals, category breakdowns, and trace matrix dynamically recalculate under custom range filters.
+- [ ] **TIME-04**: Provide reset / clear controls and visual cues when custom date-time filtering is active.
 
 ### Out of Scope
 
-- External Cisco DNA Center appliance network tunneling.
-- Remote production Kubernetes/Docker Swarm deployment.
+- External database querying for historical data beyond currently ingested/cached pipeline alerts.
+- Changing server-side timezone configuration (all comparisons performed in browser client local / UTC normalized time).
 
 ## Context
 
@@ -78,4 +79,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-30 after Milestone v1.1 initialization*
+*Last updated: 2026-09-30 after Milestone v1.2 initialization*
