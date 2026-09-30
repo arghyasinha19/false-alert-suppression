@@ -261,9 +261,34 @@ export default function AlertPatterns() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '400px', color: 'var(--text-tertiary)' }}>
-        <Activity size={20} className="spin" style={{ marginRight: '0.5rem' }} />
-        Loading pattern analysis…
+      <div style={{ padding: '0' }}>
+        {/* Skeleton KPI row */}
+        <div className="kpi-grid" style={{ marginBottom: '1.5rem' }}>
+          {[1,2,3,4].map(i => (
+            <div key={i} className="glass-card kpi-card" style={{ opacity: 0.6 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ height: 10, width: '60%', borderRadius: 6, background: 'linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite', marginBottom: 8 }} />
+                <div style={{ height: 22, width: '40%', borderRadius: 6, background: 'linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Skeleton chart */}
+        <div className="glass-card chart-card" style={{ marginBottom: '1.5rem', height: 340 }}>
+          <div style={{ height: 14, width: '30%', borderRadius: 6, background: 'linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite', marginBottom: 20 }} />
+          <div style={{ height: 280, borderRadius: 8, background: 'linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
+        </div>
+        {/* Skeleton table rows */}
+        <div className="glass-card" style={{ padding: '1.25rem' }}>
+          {[1,2,3,4].map(i => (
+            <div key={i} style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'center' }}>
+              <div style={{ height: 12, width: '45%', borderRadius: 6, background: 'linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
+              <div style={{ height: 12, width: '15%', borderRadius: 6, background: 'linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
+              <div style={{ height: 12, width: '20%', borderRadius: 6, background: 'linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -336,7 +361,7 @@ export default function AlertPatterns() {
         </div>
         <div style={{ height: '300px' }}>
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={volumeSeries} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
+            <ComposedChart data={volumeSeries} margin={{ top: 10, right: 50, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="gradBackdatedP" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#2563eb" stopOpacity={0.35} />

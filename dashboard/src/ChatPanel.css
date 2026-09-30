@@ -634,3 +634,19 @@
     width: 100vw;
   }
 }
+
+/* -- API Error Banner ---------------------------------------------------- */
+.chat-error-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  background: #fffbeb;
+  border: 1px solid #f59e0b;
+  border-left: 4px solid #f59e0b;
+  border-radius: var(--radius-md, 12px);
+  padding: 0.7rem 0.9rem;
+  color: #92400e;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  animation: fadeIn 0.3s ease;
+}

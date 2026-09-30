@@ -46,6 +46,16 @@ function App() {
     return () => clearInterval(interval);
   }, [fetchData]);
 
+  // Update browser tab title on view change
+  useEffect(() => {
+    const titles = {
+      metrics: 'Alert Metrics — DNAC Ops Center',
+      noc: 'Network Operations — DNAC Ops Center',
+      patterns: 'Alert Patterns — DNAC Ops Center',
+    };
+    document.title = titles[activeView] || 'DNAC Ops Center';
+  }, [activeView]);
+
   const navItems = [
     {
       id: 'metrics',
@@ -140,13 +150,19 @@ function App() {
 
         <div className="content-body">
           {activeView === 'metrics' && (
-            <FalseAlertMetrics alerts={alerts} onRefresh={fetchData} />
+            <div key="metrics" className="animate-fade-in">
+              <FalseAlertMetrics alerts={alerts} onRefresh={fetchData} />
+            </div>
           )}
           {activeView === 'noc' && (
-            <NetworkOperations devices={devices} lastRefresh={lastRefresh} pollInterval={POLL_INTERVAL} />
+            <div key="noc" className="animate-fade-in">
+              <NetworkOperations devices={devices} lastRefresh={lastRefresh} pollInterval={POLL_INTERVAL} />
+            </div>
           )}
           {activeView === 'patterns' && (
-            <AlertPatterns />
+            <div key="patterns" className="animate-fade-in">
+              <AlertPatterns />
+            </div>
           )}
         </div>
       </main>

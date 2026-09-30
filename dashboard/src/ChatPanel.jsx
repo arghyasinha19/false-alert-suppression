@@ -416,7 +416,8 @@ function ChatPanel({ isOpen, onClose }) {
           ...prev,
           {
             role: 'assistant',
-            text: `Error: ${event.text}`,
+            isError: true,
+            text: event.text || 'An error occurred.',
             citations: [],
             charts: [],
           },
@@ -449,6 +450,7 @@ function ChatPanel({ isOpen, onClose }) {
     const ta = e.target;
     ta.style.height = 'auto';
     ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+    ta.style.resize = 'none';
   };
 
   if (!isOpen) return null;
@@ -508,9 +510,19 @@ function ChatPanel({ isOpen, onClose }) {
                   <><Bot size={10} /> Assistant</>
                 )}
               </div>
-              <div className="chat-msg-bubble">
-                {msg.role === 'assistant' ? renderAssistantContent(msg.text) : msg.text}
-              </div>
+              {msg.isError ? (
+                <div className="chat-error-banner">
+                  <span style={{ fontSize: '1rem' }}>⚠️</span>
+                  <div>
+                    <strong style={{ display: 'block', marginBottom: '2px' }}>API not configured</strong>
+                    <span style={{ fontSize: '0.75rem', opacity: 0.85 }}>{msg.text}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="chat-msg-bubble">
+                  {msg.role === 'assistant' ? renderAssistantContent(msg.text) : msg.text}
+                </div>
+              )}
 
               {/* Charts */}
               {msg.charts && msg.charts.length > 0 && (
