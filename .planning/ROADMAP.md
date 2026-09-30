@@ -13,8 +13,8 @@
 | 4 | v1.4 | Network Operations Responsive Redesign | Multi-column responsive device grid, eliminate whitespace waste, location grouping | NETOPS-01, NETOPS-02 | Complete ✓ |
 | 5 | v1.4 | Collapsible Sidebar Rail & Breadcrumbs | 72px icon rail collapse toggle with tooltips & top header route breadcrumbs | NAV-01, NAV-02 | Complete ✓ |
 | 6 | v1.4 | Micro-Interactions & Animated Counters | Animated KPI number count-up (`0 → N`), page crossfades, SNOW divider styling | ANIM-01, ANIM-02, STATE-02 | Complete ✓ |
-| 7 | v1.4 | Sticky Tables, Tooltips & Empty States | Sticky table headers, cell tooltips, rich zero-match empty state views | TABLE-01, TABLE-02, STATE-01 | Not Started |
-| 8 | v1.4 | Comprehensive Dark & Light Theme System | System-wide theme toggle (Sun/Moon), CSS tokens, localStorage persistence | THEME-01, THEME-02 | Not Started |
+| 7 | v1.4 | Sticky Tables, Tooltips & Empty States | Sticky table headers, cell tooltips, rich zero-match empty state views | TABLE-01, TABLE-02, STATE-01 | Complete ✓ |
+| 8 | v1.4 | Comprehensive Dark & Light Theme System | System-wide theme toggle (Sun/Moon), CSS tokens, localStorage persistence | THEME-01, THEME-02 | Complete ✓ |
 
 ---
 
@@ -89,6 +89,6 @@
 - **THEME-02**: System applies cohesive dark mode tokens to header backdrops, cards, tables, and dialogs.
 
 **Success Criteria:**
-1. A theme toggle button allows instant switching between Light and Dark modes.
-2. Dark theme provides high-contrast, polished styling across cards, sidebar, tables, charts, and slide-out panels.
-3. The chosen theme persists across page refreshes and browser sessions.
+1. A theme toggle button allows instant switching between Light and Dark modes. (✓ Verified)
+2. Dark theme provides high-contrast, polished styling across cards, sidebar, tables, charts, and slide-out panels. (✓ Verified)
+3. The chosen theme persists across page refreshes and browser sessions. (✓ Verified)

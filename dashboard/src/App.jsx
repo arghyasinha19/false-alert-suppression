@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Activity, BarChart3, Monitor, Database, MessageSquare, Layers,
-  ChevronRight, PanelLeftClose, PanelLeftOpen,
+  ChevronRight, PanelLeftClose, PanelLeftOpen, Sun, Moon,
 } from 'lucide-react';
 import FalseAlertMetrics from './FalseAlertMetrics';
 import AlertPatterns from './AlertPatterns';
@@ -45,6 +45,15 @@ function App() {
       return false;
     }
   });
+  const [theme, setTheme] = useState(() => {
+    try {
+      const saved = localStorage.getItem('app_theme');
+      if (saved === 'dark' || saved === 'light') return saved;
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    } catch {
+      return 'light';
+    }
+  });
 
   useEffect(() => {
     try {
@@ -53,6 +62,19 @@ function App() {
       console.warn('Failed to save sidebar state to localStorage:', e);
     }
   }, [sidebarCollapsed]);
+
+  useEffect(() => {
+    try {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('app_theme', theme);
+    } catch (e) {
+      console.warn('Failed to save theme to localStorage:', e);
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+  };
 
   // Poll alerts
   const fetchData = useCallback(async () => {
@@ -201,6 +223,17 @@ function App() {
             </h1>
           </div>
           <div className="content-header-actions">
+            <button
+              className="theme-toggle-btn"
+              onClick={toggleTheme}
+              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+              aria-label={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+            >
+              <span className="theme-toggle-icon">
+                {theme === 'dark' ? <Sun size={14} color="#fbbf24" /> : <Moon size={14} />}
+              </span>
+              <span className="theme-toggle-label">{theme === 'dark' ? 'Light' : 'Dark'}</span>
+            </button>
             <div className="live-badge">
               <span className="dot" />
               Live

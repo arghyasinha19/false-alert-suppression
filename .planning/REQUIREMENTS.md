@@ -27,8 +27,8 @@
 - [x] **STATE-02**: User sees an enhanced section divider and styled badges for ServiceNow Ticket Details.
 
 ### Theme System (THEME)
-- [ ] **THEME-01**: User can switch between Light and Dark themes with saved `localStorage` preference.
-- [ ] **THEME-02**: System applies cohesive dark mode tokens to header backdrops, cards, tables, and dialogs.
+- [x] **THEME-01**: User can switch between Light and Dark themes with saved `localStorage` preference.
+- [x] **THEME-02**: System applies cohesive dark mode tokens to header backdrops, cards, tables, and dialogs.
 
 ## Future Requirements
 
@@ -56,13 +56,13 @@
 | TABLE-01 | Phase 7 | Complete ✓ |
 | TABLE-02 | Phase 7 | Complete ✓ |
 | STATE-01 | Phase 7 | Complete ✓ |
-| THEME-01 | Phase 8 | Pending |
-| THEME-02 | Phase 8 | Pending |
+| THEME-01 | Phase 8 | Complete ✓ |
+| THEME-02 | Phase 8 | Complete ✓ |
 
 **Coverage:**
 - v1.4 requirements: 12 total
 - Mapped to phases: 12 (100%)
-- Complete: 8 (66.7%)
+- Complete: 12 (100%)
 - Unmapped: 0 ✓
 
 ---

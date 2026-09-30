@@ -21,12 +21,12 @@ const CATEGORY_COLORS = {
 };
 
 const TOOLTIP_STYLE = {
-  backgroundColor: '#ffffff',
-  border: '1px solid rgba(0,0,0,0.08)',
+  backgroundColor: 'var(--bg-secondary)',
+  border: '1px solid var(--card-border)',
   borderRadius: '10px',
-  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+  boxShadow: 'var(--shadow-md)',
   fontSize: '0.78rem',
-  color: '#0f172a',
+  color: 'var(--text-primary)',
 };
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8004';
@@ -1006,7 +1006,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
                     <stop offset="95%" stopColor="#dc2626" stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
                 <XAxis
                   dataKey="time"
                   stroke="#94a3b8"
@@ -1058,7 +1058,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
                   {pieData.map((entry, index) => (<Cell key={`cell-${index}`} fill={CATEGORY_COLORS[entry.name] || COLORS[index]} />))}
                 </Pie>
                 <RechartsTooltip contentStyle={TOOLTIP_STYLE} />
-                <Legend verticalAlign="bottom" iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '0.72rem', color: '#475569' }} />
+                <Legend verticalAlign="bottom" iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
