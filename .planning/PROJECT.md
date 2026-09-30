@@ -34,13 +34,11 @@ Accurately identify false or transient network alerts to prevent unnecessary Ser
 - ✓ React operations dashboard with live status and alert trace matrix (`dashboard/`) — existing
 - ✓ Total Processed KPI and category alignment (Milestone v1.0) — v1.0
 - ✓ FastAPI Dashboard Backend & Vite React dev server bring-up and orchestration (Milestone v1.1) — v1.1
+- ✓ Custom Date & Time Range Filtering with dynamic KPI recalculations (Milestone v1.2) — v1.2
 
 ### Active
 
-- [ ] **TIME-01**: Add custom start and end date-time picker controls to the filter bar in `FalseAlertMetrics.jsx`.
-- [ ] **TIME-02**: Implement custom date-time boundary filtering in `scopeAlerts` evaluating alert timestamps against user-specified start and end limits.
-- [ ] **TIME-03**: Ensure KPI summary totals, category breakdowns, and trace matrix dynamically recalculate under custom range filters.
-- [ ] **TIME-04**: Provide reset / clear controls and visual cues when custom date-time filtering is active.
+*(None — milestone complete)*
 
 ### Out of Scope
 

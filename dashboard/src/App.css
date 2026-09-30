@@ -270,6 +270,136 @@
   box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
 }
 
+/* Custom Date & Time Range Styling */
+.custom-range-btn {
+  display: inline-flex;
+  align-items: center;
+  border-color: rgba(37, 99, 235, 0.3);
+  color: var(--accent-blue);
+  background: var(--accent-blue-light);
+}
+
+.custom-range-btn:hover {
+  background: var(--accent-blue);
+  color: #ffffff;
+  border-color: var(--accent-blue);
+}
+
+.custom-datetime-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--shadow-xs);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.datetime-input-group {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.datetime-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+}
+
+.filter-input-datetime {
+  appearance: none;
+  background: var(--bg-secondary);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.6rem;
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  font-family: inherit;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  color-scheme: light dark;
+}
+
+.filter-input-datetime:hover {
+  border-color: var(--accent-blue);
+}
+
+.filter-input-datetime:focus {
+  border-color: var(--accent-blue);
+  outline: none;
+  box-shadow: var(--shadow-glow-blue);
+}
+
+.datetime-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.32rem 0.65rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--card-border);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.datetime-action-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--text-tertiary);
+}
+
+.datetime-action-btn.clear:hover {
+  border-color: rgba(220, 38, 38, 0.4);
+  color: var(--accent-red);
+  background: rgba(220, 38, 38, 0.08);
+}
+
+.datetime-action-btn.reset:hover {
+  border-color: rgba(37, 99, 235, 0.4);
+  color: var(--accent-blue);
+  background: var(--accent-blue-light);
+}
+
+.custom-datetime-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.1);
+  padding: 0.25rem 0.55rem;
+  border-radius: var(--radius-sm);
+}
+
+.custom-datetime-chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent-green);
+  background: var(--accent-green-light);
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(5, 150, 105, 0.2);
+}
+
+.custom-datetime-hint {
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+  font-style: italic;
+  padding: 0 0.25rem;
+}
+
 /* ==========================================================================
    KPI CARDS
    ========================================================================== */

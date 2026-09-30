@@ -3,7 +3,7 @@ import {
   BarChart3, AlertTriangle, CheckCircle, CheckCircle2, Clock, ShieldCheck, ShieldAlert,
   Activity, Server, TrendingDown, TrendingUp, Ticket, Ban, Filter,
   Zap, Award, FileText, RotateCcw, MessageSquarePlus, PlusCircle, X,
-  Search, ArrowUpDown, ArrowUp, ArrowDown
+  Search, ArrowUpDown, ArrowUp, ArrowDown, Calendar
 } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar,
@@ -301,6 +301,8 @@ function EventDetailModal({ alert, onClose }) {
 export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
   const [deviceFilter, setDeviceFilter] = useState('ALL');
   const [timeRange, setTimeRange] = useState('ALL');
+  const [customStartTime, setCustomStartTime] = useState('');
+  const [customEndTime, setCustomEndTime] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [simulating, setSimulating] = useState(false);
@@ -356,11 +358,38 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
     return ['ALL', ...Array.from(names).sort()];
   }, [alerts]);
 
+  const customRangeWarning = useMemo(() => {
+    if (timeRange !== 'CUSTOM' || !customStartTime || !customEndTime) return null;
+    const s = new Date(customStartTime).getTime();
+    const e = new Date(customEndTime).getTime();
+    if (!isNaN(s) && !isNaN(e) && s > e) {
+      return 'Start time is after End time';
+    }
+    return null;
+  }, [timeRange, customStartTime, customEndTime]);
+
   // 1. Alerts filtered by global Device & Time Range (scope for system KPI totals)
   const scopeAlerts = useMemo(() => {
     let result = alerts;
     if (deviceFilter !== 'ALL') result = result.filter(a => a.alert_details?.device_name === deviceFilter);
-    if (timeRange !== 'ALL') {
+    if (timeRange === 'CUSTOM') {
+      const startMs = customStartTime ? new Date(customStartTime).getTime() : null;
+      const endMs = customEndTime ? new Date(customEndTime).getTime() : null;
+      const hasStart = startMs !== null && !isNaN(startMs);
+      const hasEnd = endMs !== null && !isNaN(endMs);
+
+      if (hasStart || hasEnd) {
+        result = result.filter(a => {
+          const ts = a.alert_details?.timestamp || a.alert_details?.raw_timestamp;
+          const d = parseTimestamp(ts);
+          if (!d) return true;
+          const time = d.getTime();
+          if (hasStart && time < startMs) return false;
+          if (hasEnd && time > endMs) return false;
+          return true;
+        });
+      }
+    } else if (timeRange !== 'ALL') {
       const now = Date.now();
       const ranges = { '24H': 86400000, '7D': 604800000, '30D': 2592000000 };
       const cutoff = now - (ranges[timeRange] || 0);
@@ -372,7 +401,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
       });
     }
     return result;
-  }, [alerts, deviceFilter, timeRange]);
+  }, [alerts, deviceFilter, timeRange, customStartTime, customEndTime]);
 
   // 2. Alerts filtered by Category (drives table matrix, detail cards, and scoped views)
   const filteredAlerts = useMemo(() => {
@@ -676,7 +705,84 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
           <option value="24H">Last 24 Hours</option>
           <option value="7D">Last 7 Days</option>
           <option value="30D">Last 30 Days</option>
+          <option value="CUSTOM">📅 Custom Range...</option>
         </select>
+        {timeRange !== 'CUSTOM' ? (
+          <button
+            type="button"
+            className="filter-pill custom-range-btn"
+            onClick={() => setTimeRange('CUSTOM')}
+            title="Set custom start and end date/time range"
+          >
+            <Calendar size={13} style={{ marginRight: '4px' }} />
+            Custom Range
+          </button>
+        ) : null}
+        {timeRange === 'CUSTOM' && (
+          <div className="custom-datetime-container">
+            <div className="datetime-input-group">
+              <span className="datetime-label">From</span>
+              <input
+                type="datetime-local"
+                className="filter-input-datetime"
+                value={customStartTime}
+                onChange={e => setCustomStartTime(e.target.value)}
+                title="Start date and time"
+              />
+            </div>
+            <div className="datetime-input-group">
+              <span className="datetime-label">To</span>
+              <input
+                type="datetime-local"
+                className="filter-input-datetime"
+                value={customEndTime}
+                onChange={e => setCustomEndTime(e.target.value)}
+                title="End date and time"
+              />
+            </div>
+            {(customStartTime || customEndTime) && (
+              <button
+                type="button"
+                className="datetime-action-btn clear"
+                onClick={() => {
+                  setCustomStartTime('');
+                  setCustomEndTime('');
+                }}
+                title="Clear date inputs"
+              >
+                <X size={12} />
+                <span>Clear</span>
+              </button>
+            )}
+            <button
+              type="button"
+              className="datetime-action-btn reset"
+              onClick={() => {
+                setCustomStartTime('');
+                setCustomEndTime('');
+                setTimeRange('ALL');
+              }}
+              title="Return to preset ranges"
+            >
+              <RotateCcw size={12} />
+              <span>Presets</span>
+            </button>
+            {customRangeWarning ? (
+              <span className="custom-datetime-warning">
+                <AlertTriangle size={12} />
+                {customRangeWarning}
+              </span>
+            ) : (customStartTime || customEndTime) ? (
+              <span className="custom-datetime-chip">
+                {scopeAlerts.length} in range
+              </span>
+            ) : (
+              <span className="custom-datetime-hint">
+                Select start & end time
+              </span>
+            )}
+          </div>
+        )}
         {['ALL', 'BACKDATED', 'AUTO', 'NON_AUTO', 'UNCERTAIN'].map(f => (
           <button key={f} className={`filter-pill ${categoryFilter === f ? 'active' : ''}`} onClick={() => setCategoryFilter(f)}>
             {f === 'ALL' ? 'All' : f === 'BACKDATED' ? 'Backdated' : f === 'AUTO' ? 'Auto-Resolving' : f === 'NON_AUTO' ? 'Non-Auto' : 'Uncertain'}
