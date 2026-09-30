@@ -18,13 +18,27 @@ const LOCATION_LABELS = {
   'JP-TKY': '🇯🇵 Japan — Tokyo',
   'IN-MUM': '🇮🇳 India — Mumbai',
   'AU-SYD': '🇦🇺 Australia — Sydney',
+  'INFRA-CORE': '🏢 Data Center & Core Infrastructure',
+  'INFRA-ACCESS': '⚡ Campus & Access Infrastructure',
 };
 
 function deriveLocation(name) {
-  if (!name || name === 'Unknown') return 'Unknown';
+  if (!name || name === 'Unknown') return 'INFRA-CORE';
   const parts = name.split('-');
-  if (parts.length >= 2) return `${parts[0]}-${parts[1]}`;
-  return parts[0] || 'Unknown';
+  if (parts.length >= 2) {
+    const code = `${parts[0]}-${parts[1]}`;
+    if (LOCATION_LABELS[code]) return code;
+  }
+  if (LOCATION_LABELS[parts[0]]) return parts[0];
+
+  const lower = name.toLowerCase();
+  if (lower.includes('core') || lower.includes('dist') || lower.includes('router') || lower.includes('gw') || lower.includes('dc')) {
+    return 'INFRA-CORE';
+  }
+  if (lower.includes('switch') || lower.includes('access') || lower.includes('ap') || lower.includes('wlc')) {
+    return 'INFRA-ACCESS';
+  }
+  return 'INFRA-CORE';
 }
 
 function getLocationLabel(loc) {
@@ -196,8 +210,13 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
 
   const filteredDevices = useMemo(() => {
     if (!searchQuery) return devices;
-    const q = searchQuery.toLowerCase();
-    return devices.filter(d => d.device_name.toLowerCase().includes(q) || d.location?.toLowerCase().includes(q));
+    const q = searchQuery.toLowerCase().trim();
+    return devices.filter(d => {
+      const locLabel = (getLocationLabel(d.location || deriveLocation(d.device_name))).toLowerCase();
+      const devName = (d.device_name || '').toLowerCase();
+      const devId = (d.device_id || '').toLowerCase();
+      return devName.includes(q) || locLabel.includes(q) || devId.includes(q);
+    });
   }, [devices, searchQuery]);
 
   const locationGroups = useMemo(() => {
@@ -208,8 +227,10 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
       groups[loc].push(d);
     });
     return Object.entries(groups).sort(([a], [b]) => {
-      if (a === 'Unknown') return 1;
-      if (b === 'Unknown') return -1;
+      const aIsInfra = a.startsWith('INFRA-');
+      const bIsInfra = b.startsWith('INFRA-');
+      if (!aIsInfra && bIsInfra) return -1;
+      if (aIsInfra && !bIsInfra) return 1;
       return a.localeCompare(b);
     });
   }, [filteredDevices]);
@@ -310,10 +331,10 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
       {locationGroups.map(([location, locDevices]) => (
         <div key={location} className="location-group">
           <div className="location-header">
-            {LOCATION_LABELS[location] ? (
-              <MapPin size={15} style={{ color: 'var(--accent-blue)' }} />
+            {LOCATION_LABELS[location] && !location.startsWith('INFRA-') ? (
+              <MapPin size={16} style={{ color: 'var(--accent-blue)' }} />
             ) : (
-              <Server size={15} style={{ color: 'var(--accent-blue)' }} />
+              <Server size={16} style={{ color: 'var(--accent-blue)' }} />
             )}
             <h3>{getLocationLabel(location)}</h3>
             <span className="device-count">{locDevices.length} device{locDevices.length !== 1 ? 's' : ''}</span>
@@ -376,7 +397,20 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
       ))}
 
       {filteredDevices.length === 0 && (
-        <div className="empty-state"><Server size={48} /><p>No devices match your search.</p></div>
+        <div className="empty-state" style={{ padding: '3.5rem 1rem', textAlign: 'center' }}>
+          <Server size={44} style={{ color: 'var(--text-tertiary)', marginBottom: '0.75rem', opacity: 0.6 }} />
+          <h3 style={{ margin: '0 0 0.4rem 0', fontSize: '1rem', color: 'var(--text-primary)' }}>No devices match your search</h3>
+          <p style={{ margin: '0 0 1rem 0', color: 'var(--text-tertiary)', fontSize: '0.82rem' }}>
+            No network devices matched "{searchQuery}". Try searching by host name, city, or category.
+          </p>
+          <button
+            className="filter-pill"
+            onClick={() => setSearchQuery('')}
+            style={{ margin: '0 auto', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', padding: '0.45rem 1rem' }}
+          >
+            <X size={13} /> Clear Search
+          </button>
+        </div>
       )}
 
       {/* Detail Panel Overlay */}
