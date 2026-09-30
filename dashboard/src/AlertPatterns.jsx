@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Layers, TrendingUp, Activity, AlertTriangle, ShieldCheck, Zap,
-  ChevronDown, ChevronRight, Server, Clock, Filter, Fingerprint
+  Layers, TrendingUp, AlertTriangle, ShieldCheck, Zap,
+  ChevronDown, ChevronRight, Server, Fingerprint
 } from 'lucide-react';
 import {
-  ComposedChart, Area, Line, BarChart, Bar,
+  ComposedChart, Area, Line,
   XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
-  ResponsiveContainer, Legend, Cell
+  ResponsiveContainer, Legend
 } from 'recharts';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8004';
@@ -39,10 +39,6 @@ function Sparkline({ data, width = 120, height = 32, color = '#2563eb' }) {
     const y = height - ((v - min) / range) * (height - 4) - 2;
     return `${x},${y}`;
   }).join(' ');
-  const areaPath = `M0,${height} L${points.split(' ').map((p, i) => {
-    if (i === 0) return p;
-    return ` L${p}`;
-  }).join('')} L${width},${height} Z`;
   
   return (
     <svg width={width} height={height} style={{ display: 'block' }}>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Activity, BarChart3, Monitor, Database, Radio, MessageSquare, Layers,
+  Activity, BarChart3, Monitor, Database, MessageSquare, Layers,
 } from 'lucide-react';
 import FalseAlertMetrics from './FalseAlertMetrics';
 import AlertPatterns from './AlertPatterns';

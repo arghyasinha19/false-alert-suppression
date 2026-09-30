@@ -380,7 +380,7 @@ function ChatPanel({ isOpen, onClose }) {
     }
   };
 
-  const handleSSEvent = (event, baseMessages) => {
+  const handleSSEvent = (event, _baseMessages) => {
     switch (event.type) {
       case 'task':
         setActiveTasks((prev) => [...prev, event.label]);

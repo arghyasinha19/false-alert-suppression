@@ -1,12 +1,12 @@
 import React, { useState, useMemo, useCallback, useRef } from 'react';
 import {
-  BarChart3, AlertTriangle, CheckCircle, CheckCircle2, Clock, ShieldCheck, ShieldAlert,
-  Activity, Server, TrendingDown, TrendingUp, Ticket, Ban, Filter,
+  BarChart3, AlertTriangle, CheckCircle, Clock, ShieldCheck,
+  Activity, Server, TrendingDown, Ticket, Ban, Filter,
   Zap, Award, FileText, RotateCcw, MessageSquarePlus, PlusCircle, X,
   Search, ArrowUpDown, ArrowUp, ArrowDown, Calendar
 } from 'lucide-react';
 import {
-  AreaChart, Area, BarChart, Bar,
+  AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Legend
 } from 'recharts';

@@ -1,11 +1,11 @@
 // Added comments for the UI
 
-import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
-  MapPin, Server, AlertTriangle, CheckCircle, HelpCircle,
+  MapPin, Server, AlertTriangle, CheckCircle,
   Search, X, Clock, Wifi, WifiOff, Shield, AlertOctagon,
   Activity, Ticket, PlusCircle, RotateCcw, MessageSquarePlus,
-  ChevronDown, ChevronUp, Radio, RefreshCw
+  ChevronDown, ChevronUp, RefreshCw
 } from 'lucide-react';
 
 const LOCATION_LABELS = {
@@ -92,14 +92,6 @@ function formatTimeOnly(ts, fallback = '—') {
   return d ? d.toLocaleTimeString() : fallback;
 }
 
-function timeAgo(date) {
-  if (!date) return '';
-  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (seconds < 5) return 'just now';
-  if (seconds < 60) return `${seconds}s ago`;
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  return `${Math.floor(seconds / 3600)}h ago`;
-}
 
 function generateMockDevices() {
   const templates = [
