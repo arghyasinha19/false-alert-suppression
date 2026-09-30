@@ -8,15 +8,16 @@ An intelligent, multi-agent network alert triage and suppression platform for Ci
 
 Accurately identify false or transient network alerts to prevent unnecessary ServiceNow ticket creation and reduce operational noise without missing genuine network degradation.
 
-## Current Milestone: v1.0 False Alert Metrics Alignment
+## Current Milestone: v1.1 Application Bring-Up & Local Orchestration
 
-**Goal:** Ensure the "Total Processed" metric in False Alert Metrics accurately reflects the total number of alerts processed by the system (the sum of Suppressed/Backdated, Auto-Resolving, Non-Auto-Resolving, and Uncertain alerts) and maintains system-wide visibility during category filtering.
+**Goal:** Launch, orchestrate, and verify all core services of the False Alert Suppression pipeline locally, ensuring the backend API (port 8004), React dashboard (Vite dev server), and health checks are fully operational and reachable.
 
 **Target features:**
-- Align "Total Processed" calculation to strictly equal `Suppressed + Auto-Resolving + Non-Auto-Resolving + Uncertain`.
-- Treat "Tickets Avoided" as a derived KPI (`Suppressed + Auto-Resolving`) without double-counting.
-- Preserve system-wide total visibility on KPI cards when category filters are applied, showing active filtered counts in sub-values.
-- Enable toggle behavior and active visual states on category KPI cards.
+- Automated orchestrator / service launcher script for seamless local operation.
+- Bring up FastAPI Dashboard Backend (`dashboard/api.py`) on port 8004.
+- Bring up Vite React Dashboard frontend (`dashboard/`) on local dev port (5173).
+- Verify end-to-end connectivity between frontend and backend (`/api/alerts`, `/api/devices`, `/api/kpi/summary`).
+- Provide live URL links and service status report.
 
 ## Requirements
 
@@ -31,24 +32,24 @@ Accurately identify false or transient network alerts to prevent unnecessary Ser
 - ✓ Agent 4: ServiceNow incident management client (`workflow/nodes/node_agent_4_servicenow.py`) — existing
 - ✓ Operational email notification dispatch (`workflow/nodes/node_email_notifier.py`) — existing
 - ✓ React operations dashboard with live status and alert trace matrix (`dashboard/`) — existing
+- ✓ Total Processed KPI and category alignment (Milestone v1.0) — v1.0
 
 ### Active
 
-- [ ] **METRIC-01**: Total Processed field in False Alert Metrics calculates the total alerts processed by the system as `Suppressed + Auto-Resolving + Non-Auto-Resolving + Uncertain`.
-- [ ] **METRIC-02**: Tickets Avoided is verified and maintained as a derived KPI (`Suppressed + Auto-Resolving`) preventing duplicate counting.
-- [ ] **METRIC-03**: Total Processed card retains the total system alert volume when category filters are active, displaying the filtered alert count as a sub-value.
-- [ ] **METRIC-04**: Category KPI cards (Backdated/Suppressed, Auto-Resolving, Non-Auto-Resolving, Uncertain) support toggle filtering with active highlight styling and maintain category totals.
-- [ ] **METRIC-05**: Backend `/api/kpi/summary` in `dashboard/api.py` and `dashboard/chat_agent.py` verified for KPI sum consistency.
+- [ ] **UP-01**: Start the FastAPI Dashboard API service on port 8004 in the background and confirm health and endpoint responsiveness.
+- [ ] **UP-02**: Start the Vite React development server on port 5173 in the background and verify HTTP accessibility.
+- [ ] **UP-03**: Verify end-to-end API polling from React frontend to FastAPI backend (`/api/alerts`, `/api/devices`, `/api/kpi/summary`).
+- [ ] **UP-04**: Create a unified local startup/orchestration script (`start_dashboard.py` / `start_services.ps1`) for repeatable single-command bring-up.
 
 ### Out of Scope
 
-- Redesigning the ML classification model weights or training pipelines in this milestone.
-- Altering the RabbitMQ DLX queue TTL or Jenkins orchestration timings.
+- External Cisco DNA Center appliance network tunneling.
+- Remote production Kubernetes/Docker Swarm deployment.
 
 ## Context
 
-- In `dashboard/src/FalseAlertMetrics.jsx`, previously `filteredAlerts` applied category filtering prior to computing `kpi.total`. This resulted in "Total Processed" collapsing to only the selected category count, and non-selected category cards showing 0.
-- Tickets Avoided is inherently the sum of backdated alerts suppressed by Agent 1 plus transient auto-resolving alerts suppressed by Agent 2 & 3.
+- The React dashboard defaults to connecting to `http://127.0.0.1:8004` (as defined in `VITE_API_BASE`).
+- When MongoDB is offline, the FastAPI backend automatically falls back to `data/simulated_alerts.json`, providing a complete mock operations environment with 60 realistic alerts and live simulation capabilities.
 
 ## Key Decisions
 
@@ -57,6 +58,7 @@ Accurately identify false or transient network alerts to prevent unnecessary Ser
 | Total Processed = Suppressed + Auto Resolved + Non-Auto Resolved + Uncertain | Represents the 4 mutually exclusive classification paths for every ingested alert. | ✓ Good |
 | Tickets Avoided is derived (`Suppressed + Auto-Resolving`) | Avoids double-counting avoided tickets in the total processed metric. | ✓ Good |
 | Scope-based KPI calculation | Distinguishes device/time scope from category filter so KPI cards display overall scope volume while the table and charts filter by category. | ✓ Good |
+| Port 8004 for Dashboard API | Avoids conflict with standard dev ports (8000/8080) and matches `VITE_API_BASE` in the frontend. | ✓ Good |
 
 ## Evolution
 
@@ -76,4 +78,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-30 after Milestone v1.0 initialization*
+*Last updated: 2026-09-30 after Milestone v1.1 initialization*
