@@ -1,37 +1,43 @@
 # Requirements: False Alert Suppression Pipeline
 
 **Defined:** 2026-09-30  
+**Milestone:** v1.2 Custom Date & Time Range Filtering  
 **Core Value:** Accurately identify false or transient network alerts to prevent unnecessary ServiceNow ticket creation and reduce operational noise without missing genuine network degradation.
 
-## Milestone v1.1 Requirements: Application Bring-Up
+## Milestone v1.2 Requirements: Custom Date & Time Range Filtering
 
-- [x] **UP-01**: Start the FastAPI Dashboard API service on port 8004 in the background and confirm `/api/alerts` returns HTTP 200 with loaded alerts.
-- [x] **UP-02**: Start the Vite React development server on port 5173 in the background and verify HTTP accessibility.
-- [x] **UP-03**: Verify end-to-end API polling from React frontend to FastAPI backend, confirming `apiConnected` status is true and KPI metrics load properly.
-- [x] **UP-04**: Provide a single-command orchestration script (`start_dashboard.py`) to launch, monitor, and gracefully shut down both services.
+- [ ] **TIME-01**: User can select "Custom Range" from the time range filter dropdown and enter start and end date & time using datetime-local input pickers.
+- [ ] **TIME-02**: User can filter alerts by start-only (from start time to present), end-only (from beginning to end time), or bounded start-to-end interval, correctly handling epoch ms, epoch seconds, and ISO 8601 timestamps.
+- [ ] **TIME-03**: System dynamically recalculates all KPI metric cards (`Total Processed`, `Tickets Avoided`, `Suppressed`, `Auto-Resolving`, `Non-Auto-Resolving`, `Uncertain`), category charts, and the traceability matrix to strictly reflect alerts inside the custom window.
+- [ ] **TIME-04**: User can reset or clear custom date & time inputs with a single click, smoothly returning to preset ranges (`ALL`, `24H`, `7D`, `30D`).
+
+## Future Requirements
+
+- Saved custom date-time presets in browser local storage.
+- Quick preset buttons for 6H, 12H, 14D, and quarter-to-date.
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Modifying ML training pipelines | Out of scope for application bring-up milestone. |
-| Production cloud deployment | Milestone is focused on local execution and verification. |
+| Server-side time partitioning or query rewriting | Alert stream is buffered in client memory / MongoDB collection; frontend scope filtering delivers instant sub-millisecond filtering. |
+| Multi-timezone selector override | All comparisons normalize cleanly to UTC / browser local epoch time. |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| UP-01 | Phase 2 | Complete |
-| UP-02 | Phase 2 | Complete |
-| UP-03 | Phase 2 | Complete |
-| UP-04 | Phase 2 | Complete |
+| TIME-01 | Phase 3 | Pending |
+| TIME-02 | Phase 3 | Pending |
+| TIME-03 | Phase 3 | Pending |
+| TIME-04 | Phase 3 | Pending |
 
 **Coverage:**
-- v1.1 requirements: 4 total
+- v1.2 requirements: 4 total
 - Mapped to phases: 4
-- Complete: 4 ✓
+- Complete: 0
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-09-30*  
-*Last updated: 2026-09-30 after Phase 2 completion*
+*Last updated: 2026-09-30 after Milestone v1.2 requirements definition*
