@@ -398,6 +398,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
     const deviceStats = {};
     const hourlyBuckets = {};
     const snowNewDevices = [];
+    const snowAppendedDevices = [];
     const snowReopenDevices = [];
 
     scopeAlerts.forEach(a => {
@@ -416,7 +417,10 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
         snowCreated++;
         snowNewDevices.push({ device, incident: snowInc, timestamp: a.alert_details?.timestamp });
       }
-      if (snowAction === 'comment_appended') snowAppended++;
+      if (snowAction === 'comment_appended') {
+        snowAppended++;
+        snowAppendedDevices.push({ device, incident: snowInc, timestamp: a.alert_details?.timestamp });
+      }
       if (snowAction === 'incident_reopened') {
         snowReopened++;
         snowReopenDevices.push({ device, incident: snowInc, timestamp: a.alert_details?.timestamp });
@@ -482,7 +486,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
         totalSnowTickets: snowCreated + snowAppended + snowReopened,
         hourlySeries,
       },
-      snowDetails: { newDevices: snowNewDevices, reopenDevices: snowReopenDevices },
+      snowDetails: { newDevices: snowNewDevices, appendDevices: snowAppendedDevices, reopenDevices: snowReopenDevices },
       deviceRanking: ranking.map((d, i) => ({ ...d, rank: i + 1, pct: Math.round(d.total / maxTotal * 100) })),
     };
   }, [scopeAlerts]);
@@ -814,6 +818,21 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
           )}
         </div>
         <div className="snow-detail-card">
+          <h4><MessageSquarePlus size={16} style={{ color: 'var(--accent-purple)' }} /> Comments Appended ({snowDetails.appendDevices?.length || 0})</h4>
+          {!snowDetails.appendDevices || snowDetails.appendDevices.length === 0 ? (
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>No comments appended in this period.</p>
+          ) : (
+            <ul className="snow-device-list">
+              {snowDetails.appendDevices.map((item, i) => (
+                <li key={i}>
+                  <span className="snow-device-name">{item.device}</span>
+                  <span className="snow-device-inc">{item.incident}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div className="snow-detail-card">
           <h4><RotateCcw size={16} style={{ color: 'var(--accent-orange)' }} /> Incidents Re-opened ({snowDetails.reopenDevices.length})</h4>
           {snowDetails.reopenDevices.length === 0 ? (
             <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>No re-opened incidents in this period.</p>
@@ -924,8 +943,9 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
                 <th style={{ width: '120px' }}>Genuine Alerts</th>
                 <th style={{ width: '130px' }}>False / Suppressed</th>
                 <th style={{ width: '120px' }}>Auto-Resolving</th>
-                <th style={{ width: '120px' }}>SNOW Created</th>
-                <th style={{ width: '120px' }}>SNOW Reopened</th>
+                <th style={{ width: '90px' }}>Uncertain</th>
+                <th style={{ width: '110px' }}>SNOW Created</th>
+                <th style={{ width: '110px' }}>SNOW Reopened</th>
                 <th style={{ width: '120px', minWidth: '100px' }}>Volume</th>
               </tr>
             </thead>
@@ -949,6 +969,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
                   <td><span className="badge non-auto">{d.genuine}</span></td>
                   <td><span className="badge backdated">{d.false}</span></td>
                   <td><span className="badge auto">{d.autoResolving}</span></td>
+                  <td>{d.uncertain > 0 ? <span className="badge uncertain">{d.uncertain}</span> : <span style={{ color: 'var(--text-tertiary)' }}>—</span>}</td>
                   <td>{d.snowCreated > 0 ? <span className="badge snow-new">{d.snowCreated}</span> : <span style={{ color: 'var(--text-tertiary)' }}>—</span>}</td>
                   <td>{d.snowReopened > 0 ? <span className="badge snow-reopen">{d.snowReopened}</span> : <span style={{ color: 'var(--text-tertiary)' }}>—</span>}</td>
                   <td>
