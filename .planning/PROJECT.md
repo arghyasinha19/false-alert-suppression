@@ -8,16 +8,17 @@ An intelligent, multi-agent network alert triage and suppression platform for Ci
 
 Accurately identify false or transient network alerts to prevent unnecessary ServiceNow ticket creation and reduce operational noise without missing genuine network degradation.
 
-## Current Milestone: v1.2 Custom Date & Time Range Filtering
+## Current Milestone: v1.4 Complete UI/UX Expert Audit Implementation
 
-**Goal:** Enable precise temporal inspection in False Alert Metrics by allowing users to specify custom start and end date/time ranges alongside standard preset windows.
+**Goal:** Implement all remaining pointers from the UI/UX Expert Audit Report to deliver an enterprise-grade, premium DNAC Operations Center.
 
 **Target features:**
-- Custom Date & Time Range selector (Start DateTime & End DateTime inputs) in the dashboard filter bar.
-- Seamless coexistence with existing preset buttons/dropdown (`ALL`, `24H`, `7D`, `30D`, `CUSTOM`).
-- Real-time scope alert filtering supporting diverse alert timestamp formats (epoch milliseconds, epoch seconds, ISO 8601 strings).
-- Dynamic recalculation of KPI summary cards, breakdown charts, and traceability matrix under custom time scopes.
-- Quick Reset / Clear control to easily return to preset windows.
+- **Network Operations Redesign:** 2–3 column responsive device grid (`repeat(auto-fill, minmax(320px, 1fr))`), eliminate horizontal whitespace waste, clean location and device grouping.
+- **Premium Collapsible Sidebar:** Expand/collapse rail toggle (260px expanded → 72px icon rail) with tooltips, plus breadcrumb context navigation indicator in the header.
+- **Micro-Interactions & Polished Animations:** Real numerical counting animation (`0 → N`) on KPI values with smooth easing, fluid page crossfade transitions.
+- **Tables & Empty States:** Sticky headers on all tables (Traceability Matrix, Device Ranking), informative empty state views for zero-match searches/filters.
+- **Dark/Light Theme System:** Complete theme tokens, header backdrop adaptivity, theme toggle switch in header or sidebar.
+- **ServiceNow Section Polish:** Enhanced section divider styling, badges, and visual hierarchy for ServiceNow Ticket Details.
 
 ## Requirements
 
@@ -35,10 +36,18 @@ Accurately identify false or transient network alerts to prevent unnecessary Ser
 - ✓ Total Processed KPI and category alignment (Milestone v1.0) — v1.0
 - ✓ FastAPI Dashboard Backend & Vite React dev server bring-up and orchestration (Milestone v1.1) — v1.1
 - ✓ Custom Date & Time Range Filtering with dynamic KPI recalculations (Milestone v1.2) — v1.2
+- ✓ Layout overflow fixes, skeleton loading, and critical audit fixes (Milestone v1.3) — v1.3
 
 ### Active
 
-*(None — milestone complete)*
+- [ ] **UIUX-01**: Multi-column responsive device card grid (2-3 cols) in Network Operations, eliminating whitespace waste.
+- [ ] **UIUX-02**: Collapsible sidebar with icon rail mode (72px) and expand/collapse toggle.
+- [ ] **UIUX-03**: Breadcrumb / route context indicator in top content header.
+- [ ] **UIUX-04**: Animated number counting effect (`0 → N`) for KPI values on load and refresh.
+- [ ] **UIUX-05**: Sticky headers and responsive styling on Device Ranking & Traceability tables.
+- [ ] **UIUX-06**: Rich empty states for zero-match filters/searches across all dashboard pages.
+- [ ] **UIUX-07**: ServiceNow Ticket Details section divider styling and typography polish.
+- [ ] **UIUX-08**: Complete dark mode theme tokens and header backdrop adaptivity with toggle.
 
 ### Out of Scope
 
@@ -77,4 +86,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-30 after Milestone v1.2 initialization*
+*Last updated: 2026-09-30 after Milestone v1.4 initialization*
