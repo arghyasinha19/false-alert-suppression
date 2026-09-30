@@ -17,11 +17,11 @@ progress:
 
 ## Current Position
 
-Phase: Phase 7 — Sticky Tables, Tooltips & Empty States (Complete)
-Plan: 07-PLAN.md (Wave 1: CSS Architecture, Wave 2: Component Integration, Wave 3: Verification)
-Status: Complete ✓
-Next: Phase 8 — Comprehensive Dark & Light Theme System
-Last activity: 2026-09-30 — Phase 7 executed, verified in browser, and committed
+Phase: Phase 8 — Comprehensive Dark & Light Theme System (In Progress)
+Plan: 08-PLAN.md (Wave 1: Token Architecture & CSS Dark Mode, Wave 2: Theme State & Integration, Wave 3: Verification)
+Status: Planned & Ready for Execution
+Next: Execute Phase 8
+Last activity: 2026-09-30 — Phase 8 planned with UI-SPEC and execution plan
 
 ## Key Decisions Made
 
