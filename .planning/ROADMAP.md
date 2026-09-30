@@ -11,7 +11,7 @@
 | 2 | v1.1 | Application Bring-Up | Launch Dashboard backend API and Vite frontend, verify live connectivity, and create start orchestration | UP-01 - UP-04 | Complete ✓ |
 | 3 | v1.2 | Custom Date & Time Range Filtering | Implement start and end date-time range selection, dynamic scope filtering, and KPI recalculations | TIME-01 - TIME-04 | Complete ✓ |
 | 4 | v1.4 | Network Operations Responsive Redesign | Multi-column responsive device grid, eliminate whitespace waste, location grouping | NETOPS-01, NETOPS-02 | Complete ✓ |
-| 5 | v1.4 | Collapsible Sidebar Rail & Breadcrumbs | 72px icon rail collapse toggle with tooltips & top header route breadcrumbs | NAV-01, NAV-02 | Not Started |
+| 5 | v1.4 | Collapsible Sidebar Rail & Breadcrumbs | 72px icon rail collapse toggle with tooltips & top header route breadcrumbs | NAV-01, NAV-02 | Complete ✓ |
 | 6 | v1.4 | Micro-Interactions & Animated Counters | Animated KPI number count-up (`0 → N`), page crossfades, SNOW divider styling | ANIM-01, ANIM-02, STATE-02 | Not Started |
 | 7 | v1.4 | Sticky Tables, Tooltips & Empty States | Sticky table headers, cell tooltips, rich zero-match empty state views | TABLE-01, TABLE-02, STATE-01 | Not Started |
 | 8 | v1.4 | Comprehensive Dark & Light Theme System | System-wide theme toggle (Sun/Moon), CSS tokens, localStorage persistence | THEME-01, THEME-02 | Not Started |
@@ -42,9 +42,9 @@
 - **NAV-02**: User can see a contextual breadcrumb indicator in the top header reflecting the active route.
 
 **Success Criteria:**
-1. Clicking the sidebar toggle collapses the sidebar to 72px width while preserving full navigation capability with icon tooltips.
-2. The main content area expands smoothly to occupy the reclaimed horizontal space.
-3. The content header displays breadcrumbs showing active context (e.g. `DNAC Ops Center > Alert Metrics`).
+1. Clicking the sidebar toggle collapses the sidebar to 72px width while preserving full navigation capability with icon tooltips. (✓ Verified)
+2. The main content area expands smoothly to occupy the reclaimed horizontal space. (✓ Verified)
+3. The content header displays breadcrumbs showing active context (e.g. `DNAC Ops Center > Alert Metrics`). (✓ Verified)
 
 ---
 

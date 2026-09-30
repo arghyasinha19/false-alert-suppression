@@ -11,8 +11,8 @@
 - [x] **NETOPS-02**: User can view devices organized under distinct location and infrastructure group headers with device count badges and clean iconography.
 
 ### Navigation & Chrome (NAV)
-- [ ] **NAV-01**: User can toggle the sidebar between 260px expanded and 72px compact icon-only rail with tooltip labels.
-- [ ] **NAV-02**: User can see a contextual breadcrumb indicator in the top header reflecting the active route.
+- [x] **NAV-01**: User can toggle the sidebar between 260px expanded and 72px compact icon-only rail with tooltip labels.
+- [x] **NAV-02**: User can see a contextual breadcrumb indicator in the top header reflecting the active route.
 
 ### Micro-Interactions & Animation (ANIM)
 - [ ] **ANIM-01**: User sees an animated numerical count-up (`0 → N`) for primary KPI card values on load and refresh.
@@ -48,8 +48,8 @@
 |-------------|-------|--------|
 | NETOPS-01 | Phase 4 | Complete ✓ |
 | NETOPS-02 | Phase 4 | Complete ✓ |
-| NAV-01 | Phase 5 | Pending |
-| NAV-02 | Phase 5 | Pending |
+| NAV-01 | Phase 5 | Complete ✓ |
+| NAV-02 | Phase 5 | Complete ✓ |
 | ANIM-01 | Phase 6 | Pending |
 | ANIM-02 | Phase 6 | Pending |
 | STATE-02 | Phase 6 | Pending |
