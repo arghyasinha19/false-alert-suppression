@@ -3,7 +3,7 @@ import {
   BarChart3, AlertTriangle, CheckCircle, Clock, ShieldCheck,
   Activity, Server, TrendingDown, Ticket, Ban, Filter,
   Zap, Award, FileText, RotateCcw, MessageSquarePlus, PlusCircle, X,
-  Search, ArrowUpDown, ArrowUp, ArrowDown, Calendar
+  Search, ArrowUpDown, ArrowUp, ArrowDown, Calendar, FilterX, ServerOff
 } from 'lucide-react';
 import {
   AreaChart, Area,
@@ -682,15 +682,15 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
   };
 
   const TRACE_COLUMNS = [
-    { key: 'event_id', label: 'Event ID', width: '220px', minWidth: '160px' },
-    { key: 'device', label: 'Device', width: '180px', minWidth: '130px' },
-    { key: 'severity', label: 'Severity', width: '85px', minWidth: '70px' },
-    { key: 'issue', label: 'Issue', width: '200px', minWidth: '140px' },
-    { key: 'timestamp', label: 'Timestamp', width: '160px', minWidth: '130px' },
-    { key: 'agent1', label: 'Agent 1', width: '100px', minWidth: '85px' },
-    { key: 'ml', label: 'ML Classification', width: '180px', minWidth: '140px' },
-    { key: 'agent3', label: 'Agent 3', width: '95px', minWidth: '80px' },
-    { key: 'snow', label: 'ServiceNow', width: '190px', minWidth: '140px' },
+    { key: 'event_id', label: 'Event ID', width: '220px', minWidth: '160px', tooltip: 'Unique DNAC event identifier — click ID to view alert trace' },
+    { key: 'device', label: 'Device', width: '180px', minWidth: '130px', tooltip: 'Network device hostname — click to filter matrix by device' },
+    { key: 'severity', label: 'Severity', width: '85px', minWidth: '70px', tooltip: 'Alert severity level (1=Critical, 2=Major, 3=Minor)' },
+    { key: 'issue', label: 'Issue', width: '200px', minWidth: '140px', tooltip: 'Reported network failure description or issue category' },
+    { key: 'timestamp', label: 'Timestamp', width: '160px', minWidth: '130px', tooltip: 'Alert timestamp in local time' },
+    { key: 'agent1', label: 'Agent 1', width: '100px', minWidth: '85px', tooltip: 'Backdated / freshness check (Suppressed vs Fresh)' },
+    { key: 'ml', label: 'ML Classification', width: '180px', minWidth: '140px', tooltip: 'Machine learning classifier category and confidence score' },
+    { key: 'agent3', label: 'Agent 3', width: '95px', minWidth: '80px', tooltip: 'Correlation and suppression queue status' },
+    { key: 'snow', label: 'ServiceNow', width: '190px', minWidth: '140px', tooltip: 'ITSM ticket action and incident reference' },
   ];
 
   return (
@@ -1068,20 +1068,20 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
       {/* ===== DEVICE RANKING TABLE ===== */}
       <div className="glass-card table-card">
         <h3><Award size={16} /> Device Ranking — by Alert Profile</h3>
-        <div style={{ overflowX: 'auto' }}>
+        <div style={{ overflowX: 'auto', maxHeight: '440px', overflowY: 'auto' }}>
           <table className="rank-table" style={{ minWidth: '950px' }}>
             <thead>
               <tr>
-                <th style={{ width: '50px' }}>Rank</th>
-                <th style={{ width: '180px', minWidth: '130px' }}>Device</th>
-                <th style={{ width: '70px' }}>Total</th>
-                <th style={{ width: '120px' }}>Genuine Alerts</th>
-                <th style={{ width: '130px' }}>False / Suppressed</th>
-                <th style={{ width: '120px' }}>Auto-Resolving</th>
-                <th style={{ width: '90px' }}>Uncertain</th>
-                <th style={{ width: '110px' }}>SNOW Created</th>
-                <th style={{ width: '110px' }}>SNOW Reopened</th>
-                <th style={{ width: '120px', minWidth: '100px' }}>Volume</th>
+                <th style={{ width: '50px' }} title="Device rank based on alert volume">Rank</th>
+                <th style={{ width: '180px', minWidth: '130px' }} title="Device hostname — click to filter Detailed Traceability Matrix">Device</th>
+                <th style={{ width: '70px' }} title="Total alert count recorded for this device">Total</th>
+                <th style={{ width: '120px' }} title="Alerts verified as actionable and genuine">Genuine Alerts</th>
+                <th style={{ width: '130px' }} title="Alerts identified as backdated, redundant, or false positives">False / Suppressed</th>
+                <th style={{ width: '120px' }} title="Alerts expected to clear without human intervention">Auto-Resolving</th>
+                <th style={{ width: '90px' }} title="Alerts with low machine learning confidence requiring investigation">Uncertain</th>
+                <th style={{ width: '110px' }} title="New ServiceNow incident tickets dispatched">SNOW Created</th>
+                <th style={{ width: '110px' }} title="ServiceNow incident tickets reopened due to recurring issues">SNOW Reopened</th>
+                <th style={{ width: '120px', minWidth: '100px' }} title="Relative alert volume distribution across ranked devices">Volume</th>
               </tr>
             </thead>
             <tbody>
@@ -1114,6 +1114,30 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
                   </td>
                 </tr>
               ))}
+              {deviceRanking.length === 0 && (
+                <tr>
+                  <td colSpan="10" style={{ padding: 0 }}>
+                    <div className="table-empty-state">
+                      <div className="empty-state-badge">
+                        <ServerOff size={22} />
+                      </div>
+                      <div className="empty-state-title">No devices found in selected scope</div>
+                      <div className="empty-state-desc">
+                        No alert telemetry was found for the current device filter or time range. Try resetting your filters to view device rankings.
+                      </div>
+                      <button
+                        onClick={() => {
+                          setDeviceFilter('ALL');
+                          setTimeRange('ALL');
+                        }}
+                        className="empty-state-action"
+                      >
+                        <RotateCcw size={13} /> Reset Device & Time Scope
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -1294,7 +1318,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
           </div>
         </div>
 
-        <div style={{ overflowX: 'auto', maxHeight: '460px', overflowY: 'auto' }}>
+        <div style={{ overflowX: 'auto', maxHeight: '480px', overflowY: 'auto' }}>
           <table className="data-table resizable-table" ref={traceTableRef} style={{ minWidth: '1410px' }}>
             <thead>
               <tr>
@@ -1314,7 +1338,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
                         position: 'relative',
                         userSelect: 'none',
                       }}
-                      title={`Click to sort by ${col.label}`}
+                      title={`${col.tooltip} (Click to sort)`}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
                         <span>{col.label}</span>
@@ -1358,7 +1382,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
                       <button
                         className="event-id-link"
                         onClick={() => setSelectedEvent(alert)}
-                        title={details.event_id || `EVT-${i}`}
+                        title={`Click to view full trace for ${details.event_id || `EVT-${i}`}`}
                       >
                         {details.event_id || `EVT-${i}`}
                       </button>
@@ -1388,7 +1412,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
                         {details.device_name || 'Unknown'}
                       </button>
                     </td>
-                    <td style={{ width: TRACE_COLUMNS[2].width, minWidth: TRACE_COLUMNS[2].minWidth }}>
+                    <td style={{ width: TRACE_COLUMNS[2].width, minWidth: TRACE_COLUMNS[2].minWidth }} title={`Severity ${details.severity || 3}`}>
                       <span className={`badge severity-${details.severity || 3}`}>{details.severity || '—'}</span>
                     </td>
                     <td style={{ width: TRACE_COLUMNS[3].width, minWidth: TRACE_COLUMNS[3].minWidth, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={details.issue_name || '—'}>
@@ -1397,14 +1421,14 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
                     <td style={{ width: TRACE_COLUMNS[4].width, minWidth: TRACE_COLUMNS[4].minWidth, fontSize: '0.76rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={formatTimestamp(details.timestamp || details.raw_timestamp)}>
                       {formatTimestamp(details.timestamp || details.raw_timestamp)}
                     </td>
-                    <td style={{ width: TRACE_COLUMNS[5].width, minWidth: TRACE_COLUMNS[5].minWidth }}>
+                    <td style={{ width: TRACE_COLUMNS[5].width, minWidth: TRACE_COLUMNS[5].minWidth }} title={isBackdated ? 'Backdated alert — suppressed from ServiceNow' : 'Fresh incoming alert'}>
                       <span className={`badge ${isBackdated ? 'backdated' : 'auto-resolving'}`}>{isBackdated ? 'Suppressed' : 'Fresh'}</span>
                     </td>
                     <td style={{ width: TRACE_COLUMNS[6].width, minWidth: TRACE_COLUMNS[6].minWidth, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={`Predicted: ${mlCategory}${confidence ? ` (confidence: ${confidence})` : ''}`}>
                       <span className={`badge ${mlCategory.toLowerCase().replace(/[\s/]/g, '-')}`}>{mlCategory}</span>
                       {confidence && <span style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', marginLeft: '3px' }}>({confidence})</span>}
                     </td>
-                    <td style={{ width: TRACE_COLUMNS[7].width, minWidth: TRACE_COLUMNS[7].minWidth }}>
+                    <td style={{ width: TRACE_COLUMNS[7].width, minWidth: TRACE_COLUMNS[7].minWidth }} title={queueStatus ? 'Queued for correlation and suppression' : 'Processed directly'}>
                       {queueStatus ? <span className="badge delayed">Queued</span> : '—'}
                     </td>
                     <td style={{ width: TRACE_COLUMNS[8].width, minWidth: TRACE_COLUMNS[8].minWidth, fontSize: '0.78rem', color: snowInc ? 'var(--accent-blue)' : 'var(--text-tertiary)', fontWeight: snowInc ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={snowDisplay}>
@@ -1415,21 +1439,28 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
               })}
               {matrixAlerts.length === 0 && (
                 <tr>
-                  <td colSpan="9" style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-tertiary)' }}>
-                    <Filter size={24} style={{ marginBottom: '0.5rem', opacity: 0.5, display: 'block', margin: '0 auto 8px auto' }} />
-                    <p style={{ margin: 0, fontWeight: 500 }}>No alerts match the current matrix filters</p>
-                    <button
-                      onClick={() => {
-                        setMatrixSearch('');
-                        setMatrixSeverity('ALL');
-                        setMatrixOutcome('ALL');
-                        setMatrixSnow('ALL');
-                      }}
-                      className="filter-pill"
-                      style={{ marginTop: '0.75rem', fontSize: '0.75rem' }}
-                    >
-                      Clear matrix filters
-                    </button>
+                  <td colSpan="9" style={{ padding: 0 }}>
+                    <div className="table-empty-state">
+                      <div className="empty-state-badge">
+                        <FilterX size={22} />
+                      </div>
+                      <div className="empty-state-title">No alerts match the current matrix filters</div>
+                      <div className="empty-state-desc">
+                        Try broadening your search term or resetting the severity, ML category, or ServiceNow filter pills.
+                      </div>
+                      <button
+                        onClick={() => {
+                          setMatrixSearch('');
+                          setMatrixDevice('ALL');
+                          setMatrixSeverity('ALL');
+                          setMatrixOutcome('ALL');
+                          setMatrixSnow('ALL');
+                        }}
+                        className="empty-state-action"
+                      >
+                        <RotateCcw size={13} /> Clear matrix filters
+                      </button>
+                    </div>
                   </td>
                 </tr>
               )}

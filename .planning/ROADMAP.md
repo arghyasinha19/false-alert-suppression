@@ -74,9 +74,9 @@
 - **STATE-01**: User sees rich empty state placeholders when filters or searches match 0 items.
 
 **Success Criteria:**
-1. Column headers remain pinned to the top of the table scroll viewport while scrolling through all rows.
-2. Truncated cells show the full text content in a native hover tooltip.
-3. Applying filters or searches that match 0 items displays a helpful, styled empty state with a "Clear Filters" action.
+1. Column headers remain pinned to the top of the table scroll viewport while scrolling through all rows. (✓ Verified)
+2. Truncated cells show the full text content in a native hover tooltip. (✓ Verified)
+3. Applying filters or searches that match 0 items displays a helpful, styled empty state with a "Clear Filters" action. (✓ Verified)
 
 ---
 

@@ -19,11 +19,11 @@
 - [x] **ANIM-02**: User experiences smooth crossfade transitions when switching between sidebar views.
 
 ### Tables & Sticky Headers (TABLE)
-- [ ] **TABLE-01**: User can scroll the Traceability Matrix with sticky column headers staying pinned at the top.
-- [ ] **TABLE-02**: User can view Device Ranking and Traceability tables with robust cell truncation and hover tooltips.
+- [x] **TABLE-01**: User can scroll the Traceability Matrix with sticky column headers staying pinned at the top.
+- [x] **TABLE-02**: User can view Device Ranking and Traceability tables with robust cell truncation and hover tooltips.
 
 ### Empty States & Visual Polish (STATE)
-- [ ] **STATE-01**: User sees rich empty state placeholders when filters or searches match 0 items.
+- [x] **STATE-01**: User sees rich empty state placeholders when filters or searches match 0 items.
 - [x] **STATE-02**: User sees an enhanced section divider and styled badges for ServiceNow Ticket Details.
 
 ### Theme System (THEME)
@@ -53,16 +53,16 @@
 | ANIM-01 | Phase 6 | Complete ✓ |
 | ANIM-02 | Phase 6 | Complete ✓ |
 | STATE-02 | Phase 6 | Complete ✓ |
-| TABLE-01 | Phase 7 | Pending |
-| TABLE-02 | Phase 7 | Pending |
-| STATE-01 | Phase 7 | Pending |
+| TABLE-01 | Phase 7 | Complete ✓ |
+| TABLE-02 | Phase 7 | Complete ✓ |
+| STATE-01 | Phase 7 | Complete ✓ |
 | THEME-01 | Phase 8 | Pending |
 | THEME-02 | Phase 8 | Pending |
 
 **Coverage:**
 - v1.4 requirements: 12 total
 - Mapped to phases: 12 (100%)
-- Complete: 5 (41.7%)
+- Complete: 8 (66.7%)
 - Unmapped: 0 ✓
 
 ---

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Layers, TrendingUp, AlertTriangle, ShieldCheck, Zap,
-  ChevronDown, ChevronRight, Server, Fingerprint
+  ChevronDown, ChevronRight, Server, Fingerprint, SearchX
 } from 'lucide-react';
 import {
   ComposedChart, Area, Line,
@@ -511,18 +511,18 @@ export default function AlertPatterns() {
       {/* Pattern Detail Table */}
       <div className="glass-card table-card" style={{ marginTop: '1.5rem' }}>
         <h3><Layers size={16} /> Pattern Detail Table</h3>
-        <div style={{ overflowX: 'auto' }}>
+        <div style={{ overflowX: 'auto', maxHeight: '460px', overflowY: 'auto' }}>
           <table className="data-table" style={{ minWidth: '1100px' }}>
             <thead>
               <tr>
                 <th style={{ width: '40px' }}></th>
-                <th style={{ width: '380px' }}>Template Pattern</th>
-                <th style={{ width: '80px' }}>Count</th>
-                <th style={{ width: '100px' }}>Devices</th>
-                <th style={{ width: '180px' }}>Category Breakdown</th>
-                <th style={{ width: '100px' }}>Suppression</th>
-                <th style={{ width: '140px' }}>Time Span</th>
-                <th style={{ width: '140px' }}>Distribution</th>
+                <th style={{ width: '380px' }} title="Alert template string with abstracted parameters and dynamic variables">Template Pattern</th>
+                <th style={{ width: '80px' }} title="Total alert count clustered under this template">Count</th>
+                <th style={{ width: '100px' }} title="Number of distinct network devices exhibiting this pattern">Devices</th>
+                <th style={{ width: '180px' }} title="Distribution of alerts across ML classification categories">Category Breakdown</th>
+                <th style={{ width: '100px' }} title="Suppression rate percentage for alerts matching this pattern">Suppression</th>
+                <th style={{ width: '140px' }} title="First and last occurrence timestamp boundary">Time Span</th>
+                <th style={{ width: '140px' }} title="24-hour alert frequency trend sparkline">Distribution</th>
               </tr>
             </thead>
             <tbody>
@@ -616,8 +616,16 @@ export default function AlertPatterns() {
               })}
               {patterns.length === 0 && (
                 <tr>
-                  <td colSpan="8" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-tertiary)' }}>
-                    No patterns discovered yet.
+                  <td colSpan="8" style={{ padding: 0 }}>
+                    <div className="table-empty-state">
+                      <div className="empty-state-badge">
+                        <SearchX size={22} />
+                      </div>
+                      <div className="empty-state-title">No alert patterns discovered yet</div>
+                      <div className="empty-state-desc">
+                        Recurring pattern clusters will automatically appear here once sufficient alert telemetry is ingested into the system.
+                      </div>
+                    </div>
                   </td>
                 </tr>
               )}
