@@ -272,7 +272,7 @@ def tool_get_kpi_summary(args: dict) -> dict:
         device_counts[device] = device_counts.get(device, 0) + 1
 
     suppression_rate = round(((backdated + auto_resolving) / total * 100), 1) if total > 0 else 0
-    tickets_avoided = backdated + auto_resolving + delayed_resolved
+    tickets_avoided = backdated + auto_resolving
 
     daily_series = [{"date": k, **v} for k, v in sorted(daily_buckets.items())]
     top_devices = sorted(device_counts.items(), key=lambda x: x[1], reverse=True)[:20]

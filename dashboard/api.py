@@ -335,7 +335,8 @@ def get_kpi_summary():
             device_counts[device] = device_counts.get(device, 0) + 1
 
         suppression_rate = round(((backdated + auto_resolving) / total * 100), 1) if total > 0 else 0
-        tickets_avoided = backdated + auto_resolving + delayed_resolved
+        # Tickets avoided represents alerts where initial ticket creation was suppressed
+        tickets_avoided = backdated + auto_resolving
 
         # Sort and format time series
         hourly_series = [{"time": k, **v} for k, v in sorted(hourly_buckets.items())]

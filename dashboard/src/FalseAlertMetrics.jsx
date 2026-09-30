@@ -356,7 +356,8 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
     return ['ALL', ...Array.from(names).sort()];
   }, [alerts]);
 
-  const filteredAlerts = useMemo(() => {
+  // 1. Alerts filtered by global Device & Time Range (scope for system KPI totals)
+  const scopeAlerts = useMemo(() => {
     let result = alerts;
     if (deviceFilter !== 'ALL') result = result.filter(a => a.alert_details?.device_name === deviceFilter);
     if (timeRange !== 'ALL') {
@@ -370,24 +371,28 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
         return d.getTime() >= cutoff;
       });
     }
-    if (categoryFilter !== 'ALL') {
-      result = result.filter(a => {
-        const isBackdated = a.results?.agent_1?.data?.is_backdated;
-        if (categoryFilter === 'BACKDATED') return isBackdated;
-        if (isBackdated) return false;
-        const predicted = (a.results?.agent_2?.data?.predicted_category || '').toLowerCase();
-        if (categoryFilter === 'AUTO') return predicted === 'auto resolving';
-        if (categoryFilter === 'NON_AUTO') return predicted === 'non-auto resolving';
-        if (categoryFilter === 'UNCERTAIN') return predicted !== 'auto resolving' && predicted !== 'non-auto resolving';
-        return true;
-      });
-    }
     return result;
-  }, [alerts, deviceFilter, timeRange, categoryFilter]);
+  }, [alerts, deviceFilter, timeRange]);
 
-  // KPIs & SNOW details & Device Ranking
+  // 2. Alerts filtered by Category (drives table matrix, detail cards, and scoped views)
+  const filteredAlerts = useMemo(() => {
+    if (categoryFilter === 'ALL') return scopeAlerts;
+    return scopeAlerts.filter(a => {
+      const isBackdated = a.results?.agent_1?.data?.is_backdated;
+      if (categoryFilter === 'BACKDATED') return isBackdated;
+      if (isBackdated) return false;
+      const predicted = (a.results?.agent_2?.data?.predicted_category || '').toLowerCase();
+      if (categoryFilter === 'AUTO') return predicted === 'auto resolving';
+      if (categoryFilter === 'NON_AUTO') return predicted === 'non-auto resolving';
+      if (categoryFilter === 'UNCERTAIN') return predicted !== 'auto resolving' && predicted !== 'non-auto resolving';
+      return true;
+    });
+  }, [scopeAlerts, categoryFilter]);
+
+  // KPIs & SNOW details & Device Ranking computed from scopeAlerts
+  // Total Processed = Suppressed (Backdated) + Auto-Resolving + Non-Auto-Resolving + Uncertain
+  // Tickets Avoided is derived = Suppressed + Auto-Resolving (no double-counting)
   const { kpi, snowDetails, deviceRanking } = useMemo(() => {
-    const total = filteredAlerts.length;
     let backdated = 0, autoResolving = 0, nonAutoResolving = 0, uncertain = 0;
     let snowCreated = 0, snowAppended = 0, snowReopened = 0;
     const deviceStats = {};
@@ -395,7 +400,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
     const snowNewDevices = [];
     const snowReopenDevices = [];
 
-    filteredAlerts.forEach(a => {
+    scopeAlerts.forEach(a => {
       const isBackdated = a.results?.agent_1?.data?.is_backdated;
       const predicted = (a.results?.agent_2?.data?.predicted_category || '').toLowerCase();
       const snowAction = a.results?.agent_4?.data?.action || '';
@@ -451,8 +456,11 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
       }
     });
 
-    const suppressionRate = total > 0 ? ((backdated + autoResolving) / total * 100).toFixed(1) : 0;
+    // Total Processed is strictly the sum of all 4 mutually exclusive classification categories
+    const total = backdated + autoResolving + nonAutoResolving + uncertain;
+    // Tickets avoided is derived from backdated (suppressed by Agent 1) + autoResolving (delayed wait-queue by Agent 3)
     const ticketsAvoided = backdated + autoResolving;
+    const suppressionRate = total > 0 ? ((ticketsAvoided) / total * 100).toFixed(1) : 0;
     const hourlySeries = Object.values(hourlyBuckets).sort((a, b) => a.time - b.time);
 
     // Device ranking — sort by genuine alerts (non-auto-resolving) descending
@@ -460,11 +468,24 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
     const maxTotal = Math.max(...ranking.map(d => d.total), 1);
 
     return {
-      kpi: { total, backdated, autoResolving, nonAutoResolving, uncertain, suppressionRate, ticketsAvoided, snowCreated, snowAppended, snowReopened, totalSnowTickets: snowCreated + snowAppended + snowReopened, hourlySeries },
+      kpi: {
+        total,
+        backdated,
+        autoResolving,
+        nonAutoResolving,
+        uncertain,
+        suppressionRate,
+        ticketsAvoided,
+        snowCreated,
+        snowAppended,
+        snowReopened,
+        totalSnowTickets: snowCreated + snowAppended + snowReopened,
+        hourlySeries,
+      },
       snowDetails: { newDevices: snowNewDevices, reopenDevices: snowReopenDevices },
       deviceRanking: ranking.map((d, i) => ({ ...d, rank: i + 1, pct: Math.round(d.total / maxTotal * 100) })),
     };
-  }, [filteredAlerts]);
+  }, [scopeAlerts]);
 
   // Matrix Filtered & Sorted Alerts
   const matrixAlerts = useMemo(() => {
@@ -689,7 +710,11 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
           <div className="kpi-content">
             <h3>Total Processed</h3>
             <p className="value">{kpi.total}</p>
-            <p className="sub-value">alerts ingested</p>
+            <p className="sub-value">
+              {categoryFilter !== 'ALL'
+                ? `${filteredAlerts.length} ${categoryFilter === 'BACKDATED' ? 'Backdated' : categoryFilter === 'AUTO' ? 'Auto-Resolving' : categoryFilter === 'NON_AUTO' ? 'Non-Auto' : 'Uncertain'} filtered · ${kpi.total} total`
+                : `alerts ingested (${kpi.total} total)`}
+            </p>
           </div>
         </div>
         <div className="glass-card kpi-card highlight-green">
@@ -705,7 +730,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
           <div className="kpi-content">
             <h3>Tickets Avoided</h3>
             <p className="value">{kpi.ticketsAvoided}</p>
-            <p className="sub-value">SNOW tickets prevented</p>
+            <p className="sub-value">{kpi.backdated} suppressed + {kpi.autoResolving} auto-resolved</p>
           </div>
         </div>
         <div className="glass-card kpi-card highlight-red">
@@ -720,35 +745,52 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
 
       {/* KPI Cards Row 2 */}
       <div className="kpi-grid">
-        <div className="glass-card kpi-card" onClick={() => setCategoryFilter('BACKDATED')}>
+        <div
+          className={`glass-card kpi-card ${categoryFilter === 'BACKDATED' ? 'active highlight-blue' : ''}`}
+          onClick={() => setCategoryFilter(f => f === 'BACKDATED' ? 'ALL' : 'BACKDATED')}
+          title="Click to toggle filter for Backdated / Suppressed alerts"
+        >
           <div className="kpi-icon blue"><Clock size={20} /></div>
           <div className="kpi-content">
             <h3>Backdated / Suppressed</h3>
             <p className="value">{kpi.backdated}</p>
+            <p className="sub-value">{categoryFilter === 'BACKDATED' ? '✓ Filter active (click to clear)' : 'suppressed by Agent 1'}</p>
           </div>
         </div>
-        <div className="glass-card kpi-card" onClick={() => setCategoryFilter('AUTO')}>
+        <div
+          className={`glass-card kpi-card ${categoryFilter === 'AUTO' ? 'active highlight-green' : ''}`}
+          onClick={() => setCategoryFilter(f => f === 'AUTO' ? 'ALL' : 'AUTO')}
+          title="Click to toggle filter for Auto-Resolving alerts"
+        >
           <div className="kpi-icon green"><CheckCircle size={20} /></div>
           <div className="kpi-content">
             <h3>Auto-Resolving</h3>
             <p className="value">{kpi.autoResolving}</p>
-            <p className="sub-value">queued for delayed re-check</p>
+            <p className="sub-value">{categoryFilter === 'AUTO' ? '✓ Filter active (click to clear)' : 'queued for delayed re-check'}</p>
           </div>
         </div>
-        <div className="glass-card kpi-card" onClick={() => setCategoryFilter('NON_AUTO')}>
+        <div
+          className={`glass-card kpi-card ${categoryFilter === 'NON_AUTO' ? 'active highlight-red' : ''}`}
+          onClick={() => setCategoryFilter(f => f === 'NON_AUTO' ? 'ALL' : 'NON_AUTO')}
+          title="Click to toggle filter for Non-Auto Resolving alerts"
+        >
           <div className="kpi-icon red"><AlertTriangle size={20} /></div>
           <div className="kpi-content">
             <h3>Non-Auto Resolving</h3>
             <p className="value">{kpi.nonAutoResolving}</p>
-            <p className="sub-value">escalated to ServiceNow</p>
+            <p className="sub-value">{categoryFilter === 'NON_AUTO' ? '✓ Filter active (click to clear)' : 'escalated to ServiceNow'}</p>
           </div>
         </div>
-        <div className="glass-card kpi-card" onClick={() => setCategoryFilter('UNCERTAIN')}>
+        <div
+          className={`glass-card kpi-card ${categoryFilter === 'UNCERTAIN' ? 'active highlight-yellow' : ''}`}
+          onClick={() => setCategoryFilter(f => f === 'UNCERTAIN' ? 'ALL' : 'UNCERTAIN')}
+          title="Click to toggle filter for Uncertain alerts"
+        >
           <div className="kpi-icon yellow"><Zap size={20} /></div>
           <div className="kpi-content">
             <h3>Uncertain</h3>
             <p className="value">{kpi.uncertain}</p>
-            <p className="sub-value">low ML confidence</p>
+            <p className="sub-value">{categoryFilter === 'UNCERTAIN' ? '✓ Filter active (click to clear)' : 'low ML confidence'}</p>
           </div>
         </div>
       </div>
