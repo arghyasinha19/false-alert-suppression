@@ -788,11 +788,13 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
             {f === 'ALL' ? 'All' : f === 'BACKDATED' ? 'Backdated' : f === 'AUTO' ? 'Auto-Resolving' : f === 'NON_AUTO' ? 'Non-Auto' : 'Uncertain'}
           </button>
         ))}
+      </div>
 
+      {/* Simulate Action */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
         <button
           className="filter-pill simulate-btn"
           style={{
-            marginLeft: 'auto',
             background: 'linear-gradient(135deg, #2563eb, #0891b2)',
             color: '#ffffff',
             border: 'none',

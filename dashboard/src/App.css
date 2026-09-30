@@ -148,9 +148,9 @@
   justify-content: space-between;
   position: sticky;
   top: 0;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: var(--bg-secondary);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   z-index: 50;
 }
 
@@ -169,6 +169,8 @@
 
 .content-body {
   padding: 1.5rem 2rem 3rem;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 /* Live Badge */
@@ -205,6 +207,7 @@
   gap: 0.6rem;
   flex-wrap: wrap;
   margin-bottom: 1.5rem;
+  max-width: 100%;
 }
 
 .filter-select {
@@ -406,9 +409,9 @@
 
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
 }
 
 .kpi-card {
@@ -506,6 +509,7 @@
   grid-template-columns: 1.6fr 1fr;
   gap: 1.25rem;
   margin-bottom: 1.5rem;
+  min-width: 0;
 }
 
 .charts-grid-3 {
@@ -513,6 +517,7 @@
   grid-template-columns: 1fr 1fr 1fr;
   gap: 1.25rem;
   margin-bottom: 1.5rem;
+  min-width: 0;
 }
 
 .chart-card {
@@ -554,6 +559,7 @@
   border-collapse: separate;
   border-spacing: 0;
   font-size: 0.82rem;
+  table-layout: fixed;
 }
 
 .data-table th,
@@ -678,9 +684,10 @@
 
 .snow-detail-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
   margin-bottom: 1.5rem;
+  min-width: 0;
 }
 
 .snow-detail-card {
@@ -980,9 +987,12 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin-bottom: 1rem;
+  margin-top: 0.5rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--card-border);
 }
 
 /* Empty State */
@@ -1274,6 +1284,7 @@
   .charts-grid { grid-template-columns: 1fr; }
   .charts-grid-3 { grid-template-columns: 1fr 1fr; }
   .snow-detail-grid { grid-template-columns: 1fr; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 900px) {
@@ -1281,7 +1292,7 @@
   .sidebar-brand h2, .sidebar-brand span, .sidebar-nav-item span { display: none; }
   .sidebar-status-row span { display: none; }
   .content-area { margin-left: 56px; }
-  .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
   .device-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
   .charts-grid-3 { grid-template-columns: 1fr; }
   .event-modal { width: 95vw; }
