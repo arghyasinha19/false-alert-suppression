@@ -303,7 +303,7 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
       {/* Search Bar */}
       <div className="filter-bar">
         <Search size={15} style={{ color: 'var(--text-tertiary)' }} />
-        <input className="filter-search" type="text" placeholder="Search devices by name or location..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+        <input className="filter-search" type="text" placeholder="Search devices or locations..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
         {searchQuery && (
           <button className="filter-pill" onClick={() => setSearchQuery('')} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <X size={12} /> Clear

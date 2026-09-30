@@ -239,7 +239,9 @@
   color: var(--text-primary);
   font-size: 0.82rem;
   font-family: inherit;
-  min-width: 240px;
+  min-width: 260px;
+  max-width: 360px;
+  width: auto;
   transition: all var(--transition-fast);
   box-shadow: var(--shadow-xs);
 }
