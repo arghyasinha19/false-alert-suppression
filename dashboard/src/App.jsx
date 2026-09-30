@@ -215,17 +215,17 @@ function App() {
 
         <div className="content-body">
           {activeView === 'metrics' && (
-            <div key="metrics" className="animate-fade-in">
+            <div key="metrics" className="view-transition-container">
               <FalseAlertMetrics alerts={alerts} onRefresh={fetchData} />
             </div>
           )}
           {activeView === 'noc' && (
-            <div key="noc" className="animate-fade-in">
+            <div key="noc" className="view-transition-container">
               <NetworkOperations devices={devices} lastRefresh={lastRefresh} pollInterval={POLL_INTERVAL} />
             </div>
           )}
           {activeView === 'patterns' && (
-            <div key="patterns" className="animate-fade-in">
+            <div key="patterns" className="view-transition-container">
               <AlertPatterns />
             </div>
           )}

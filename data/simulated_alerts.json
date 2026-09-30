@@ -1,6 +1,6 @@
 [
   {
-    "alert_id": "EVT-0001",
+    "alert_id": "EVT-0004",
     "results": {
       "agent_1": {
         "status": "success",
@@ -8,108 +8,52 @@
         "data": {
           "is_backdated": false
         },
-        "started_at": "2026-09-03T01:53:51.729730+00:00",
-        "ended_at": "2026-09-03T01:53:51.729730+00:00"
+        "started_at": "2026-09-30T13:00:37.105710+00:00",
+        "ended_at": "2026-09-30T13:00:37.105710+00:00"
       },
       "agent_2": {
         "status": "success",
         "ok": true,
         "data": {
-          "predicted_category": "Auto resolving",
-          "confidence": "0.76"
+          "predicted_category": "Non-Auto Resolving",
+          "confidence": "0.98"
         },
-        "started_at": "2026-09-03T01:53:51.729730+00:00",
-        "ended_at": "2026-09-03T01:53:51.729730+00:00"
+        "started_at": "2026-09-30T13:00:37.105710+00:00",
+        "ended_at": "2026-09-30T13:00:37.105710+00:00"
       },
-      "agent_3": {
+      "agent_4": {
         "status": "success",
         "ok": true,
         "data": {
-          "queue_status": "delayed",
-          "wait_queue": "dnac.alerts.wait.q",
-          "delay_ms": 900000
+          "action": "incident_created",
+          "incident": "INC0058812",
+          "assigned_group": "Network-Ops-L2"
         },
-        "started_at": "2026-09-03T01:53:51.729730+00:00",
-        "ended_at": "2026-09-03T01:53:51.729730+00:00"
+        "started_at": "2026-09-30T13:00:37.105710+00:00",
+        "ended_at": "2026-09-30T13:00:37.105710+00:00"
       }
     },
     "runtime_error": null,
     "alert_details": {
-      "event_id": "EVT-0001",
-      "instance_id": "inst-7564a7948496",
-      "device_name": "SG-SIN-FW01",
-      "device_id": "dev-008",
-      "severity": 2,
-      "category": "WARN",
-      "status": "resolved",
-      "timestamp": "2026-09-03T01:53:51.729730+00:00",
-      "raw_timestamp": 1788400431729,
-      "issue_name": "OSPF Neighbor Down",
-      "issue_details": "OSPF adjacency lost with neighbor router 10.200.1.5 on SG-SIN-FW01",
+      "event_id": "EVT-0004",
+      "instance_id": "inst-f2b2074f9cec",
+      "device_name": "Switch-12",
+      "device_id": "dev-004",
+      "severity": 1,
+      "category": "ERROR",
+      "status": "active",
+      "timestamp": "2026-09-30T13:00:37.105710+00:00",
+      "raw_timestamp": 1790773237105,
+      "issue_name": "BGP Peer is Down",
+      "issue_details": "BGP neighbor adjacency lost on interface GigabitEthernet0/0/1 on Switch-12",
       "source": "DNAC",
       "location": "SG-SIN"
     },
-    "dnac_live_status": "RESOLVED",
-    "dnac_last_checked": "2026-09-03T01:53:51.729730+00:00",
-    "live_snow_status": null,
-    "overall_status": "suppressed",
-    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
-  },
-  {
-    "alert_id": "EVT-0003",
-    "results": {
-      "agent_1": {
-        "status": "success",
-        "ok": true,
-        "data": {
-          "is_backdated": false
-        },
-        "started_at": "2026-09-02T16:30:02.719157+00:00",
-        "ended_at": "2026-09-02T16:30:02.719157+00:00"
-      },
-      "agent_2": {
-        "status": "success",
-        "ok": true,
-        "data": {
-          "predicted_category": "Auto resolving",
-          "confidence": "0.94"
-        },
-        "started_at": "2026-09-02T16:30:02.719157+00:00",
-        "ended_at": "2026-09-02T16:30:02.719157+00:00"
-      },
-      "agent_3": {
-        "status": "success",
-        "ok": true,
-        "data": {
-          "queue_status": "delayed",
-          "wait_queue": "dnac.alerts.wait.q",
-          "delay_ms": 900000
-        },
-        "started_at": "2026-09-02T16:30:02.719157+00:00",
-        "ended_at": "2026-09-02T16:30:02.719157+00:00"
-      }
-    },
-    "runtime_error": null,
-    "alert_details": {
-      "event_id": "EVT-0003",
-      "instance_id": "inst-fe82cf3f5fc4",
-      "device_name": "Access-Switch-05",
-      "device_id": "dev-003",
-      "severity": 1,
-      "category": "ERROR",
-      "status": "resolved",
-      "timestamp": "2026-09-02T16:30:02.719157+00:00",
-      "raw_timestamp": 1788366602719,
-      "issue_name": "Interface State Down",
-      "issue_details": "Physical link down on TenGigabitEthernet1/1/2 on Access-Switch-05",
-      "source": "DNAC",
-      "location": "UK-LON"
-    },
-    "dnac_live_status": "RESOLVED",
-    "dnac_last_checked": "2026-09-02T16:30:02.719157+00:00",
-    "live_snow_status": null,
-    "overall_status": "suppressed",
-    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
+    "dnac_live_status": "ACTIVE",
+    "dnac_last_checked": "2026-09-30T13:00:37.105710+00:00",
+    "live_snow_status": "In Progress",
+    "overall_status": "escalated",
+    "status_description": "Escalated by Agent 4 -> ServiceNow INC0058812"
   },
   {
     "alert_id": "EVT-0002",
@@ -120,18 +64,18 @@
         "data": {
           "is_backdated": false
         },
-        "started_at": "2026-09-01T18:38:41.315286+00:00",
-        "ended_at": "2026-09-01T18:38:41.315286+00:00"
+        "started_at": "2026-09-30T12:26:01.886460+00:00",
+        "ended_at": "2026-09-30T12:26:01.886460+00:00"
       },
       "agent_2": {
         "status": "success",
         "ok": true,
         "data": {
           "predicted_category": "Auto resolving",
-          "confidence": "0.95"
+          "confidence": "0.77"
         },
-        "started_at": "2026-09-01T18:38:41.315286+00:00",
-        "ended_at": "2026-09-01T18:38:41.315286+00:00"
+        "started_at": "2026-09-30T12:26:01.886460+00:00",
+        "ended_at": "2026-09-30T12:26:01.886460+00:00"
       },
       "agent_3": {
         "status": "success",
@@ -141,84 +85,28 @@
           "wait_queue": "dnac.alerts.wait.q",
           "delay_ms": 900000
         },
-        "started_at": "2026-09-01T18:38:41.315286+00:00",
-        "ended_at": "2026-09-01T18:38:41.315286+00:00"
+        "started_at": "2026-09-30T12:26:01.886460+00:00",
+        "ended_at": "2026-09-30T12:26:01.886460+00:00"
       }
     },
     "runtime_error": null,
     "alert_details": {
       "event_id": "EVT-0002",
-      "instance_id": "inst-eb2503be2f9c",
-      "device_name": "UK-MAL-DEV-AP02",
-      "device_id": "dev-001",
-      "severity": 3,
+      "instance_id": "inst-c9ae9e74173e",
+      "device_name": "JP-TKY-SW02",
+      "device_id": "dev-012",
+      "severity": 2,
       "category": "WARN",
       "status": "resolved",
-      "timestamp": "2026-09-01T18:38:41.315286+00:00",
-      "raw_timestamp": 1788287921315,
-      "issue_name": "AP has flapped",
-      "issue_details": "Wireless AP experienced multiple rapid state transitions on UK-MAL-DEV-AP02",
+      "timestamp": "2026-09-30T12:26:01.886460+00:00",
+      "raw_timestamp": 1790771161886,
+      "issue_name": "High Memory Utilization",
+      "issue_details": "System memory usage reached 88% capacity on JP-TKY-SW02",
       "source": "DNAC",
-      "location": "UK-MAL"
+      "location": "JP-TKY"
     },
     "dnac_live_status": "RESOLVED",
-    "dnac_last_checked": "2026-09-01T18:38:41.315286+00:00",
-    "live_snow_status": null,
-    "overall_status": "suppressed",
-    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
-  },
-  {
-    "alert_id": "EVT-0004",
-    "results": {
-      "agent_1": {
-        "status": "success",
-        "ok": true,
-        "data": {
-          "is_backdated": false
-        },
-        "started_at": "2026-08-30T05:43:38.645289+00:00",
-        "ended_at": "2026-08-30T05:43:38.645289+00:00"
-      },
-      "agent_2": {
-        "status": "success",
-        "ok": true,
-        "data": {
-          "predicted_category": "Auto resolving",
-          "confidence": "0.97"
-        },
-        "started_at": "2026-08-30T05:43:38.645289+00:00",
-        "ended_at": "2026-08-30T05:43:38.645289+00:00"
-      },
-      "agent_3": {
-        "status": "success",
-        "ok": true,
-        "data": {
-          "queue_status": "delayed",
-          "wait_queue": "dnac.alerts.wait.q",
-          "delay_ms": 900000
-        },
-        "started_at": "2026-08-30T05:43:38.645289+00:00",
-        "ended_at": "2026-08-30T05:43:38.645289+00:00"
-      }
-    },
-    "runtime_error": null,
-    "alert_details": {
-      "event_id": "EVT-0004",
-      "instance_id": "inst-48ea0429a029",
-      "device_name": "DE-FRA-AP01",
-      "device_id": "dev-011",
-      "severity": 3,
-      "category": "WARN",
-      "status": "resolved",
-      "timestamp": "2026-08-30T05:43:38.645289+00:00",
-      "raw_timestamp": 1788068618645,
-      "issue_name": "Fan Tray Warning",
-      "issue_details": "Chassis cooling fan tray operating at degraded RPM on DE-FRA-AP01",
-      "source": "DNAC",
-      "location": "DE-FRA"
-    },
-    "dnac_live_status": "RESOLVED",
-    "dnac_last_checked": "2026-08-30T05:43:38.645289+00:00",
+    "dnac_last_checked": "2026-09-30T12:26:01.886460+00:00",
     "live_snow_status": null,
     "overall_status": "suppressed",
     "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
@@ -232,52 +120,164 @@
         "data": {
           "is_backdated": false
         },
-        "started_at": "2026-08-29T04:50:10.780733+00:00",
-        "ended_at": "2026-08-29T04:50:10.780733+00:00"
+        "started_at": "2026-09-29T21:58:14.326392+00:00",
+        "ended_at": "2026-09-29T21:58:14.326392+00:00"
       },
       "agent_2": {
         "status": "success",
         "ok": true,
         "data": {
           "predicted_category": "Non-Auto Resolving",
-          "confidence": "0.97"
+          "confidence": "0.79"
         },
-        "started_at": "2026-08-29T04:50:10.780733+00:00",
-        "ended_at": "2026-08-29T04:50:10.780733+00:00"
+        "started_at": "2026-09-29T21:58:14.326392+00:00",
+        "ended_at": "2026-09-29T21:58:14.326392+00:00"
       },
       "agent_4": {
         "status": "success",
         "ok": true,
         "data": {
           "action": "incident_created",
-          "incident": "INC0074685",
+          "incident": "INC0079139",
           "assigned_group": "Network-Ops-L2"
         },
-        "started_at": "2026-08-29T04:50:10.780733+00:00",
-        "ended_at": "2026-08-29T04:50:10.780733+00:00"
+        "started_at": "2026-09-29T21:58:14.326392+00:00",
+        "ended_at": "2026-09-29T21:58:14.326392+00:00"
       }
     },
     "runtime_error": null,
     "alert_details": {
       "event_id": "EVT-0005",
-      "instance_id": "inst-cf28667e043f",
-      "device_name": "Switch-12",
-      "device_id": "dev-004",
-      "severity": 3,
+      "instance_id": "inst-471923029ba0",
+      "device_name": "Core-Router-01",
+      "device_id": "dev-002",
+      "severity": 2,
       "category": "WARN",
       "status": "active",
-      "timestamp": "2026-08-29T04:50:10.780733+00:00",
-      "raw_timestamp": 1787979010780,
-      "issue_name": "CRC Error Threshold Exceeded",
-      "issue_details": "Input CRC errors exceeded 100 per minute on Gi0/1/4 on Switch-12",
+      "timestamp": "2026-09-29T21:58:14.326392+00:00",
+      "raw_timestamp": 1790719094326,
+      "issue_name": "OSPF Neighbor Down",
+      "issue_details": "OSPF adjacency lost with neighbor router 10.200.1.5 on Core-Router-01",
       "source": "DNAC",
-      "location": "SG-SIN"
+      "location": "US-NY"
     },
     "dnac_live_status": "ACTIVE",
-    "dnac_last_checked": "2026-08-29T04:50:10.780733+00:00",
+    "dnac_last_checked": "2026-09-29T21:58:14.326392+00:00",
     "live_snow_status": "In Progress",
     "overall_status": "escalated",
-    "status_description": "Escalated by Agent 4 -> ServiceNow INC0074685"
+    "status_description": "Escalated by Agent 4 -> ServiceNow INC0079139"
+  },
+  {
+    "alert_id": "EVT-0001",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-29T19:36:09.048203+00:00",
+        "ended_at": "2026-09-29T19:36:09.048203+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Auto resolving",
+          "confidence": "0.88"
+        },
+        "started_at": "2026-09-29T19:36:09.048203+00:00",
+        "ended_at": "2026-09-29T19:36:09.048203+00:00"
+      },
+      "agent_3": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "queue_status": "delayed",
+          "wait_queue": "dnac.alerts.wait.q",
+          "delay_ms": 900000
+        },
+        "started_at": "2026-09-29T19:36:09.048203+00:00",
+        "ended_at": "2026-09-29T19:36:09.048203+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0001",
+      "instance_id": "inst-221369ff4b9d",
+      "device_name": "Access-Switch-05",
+      "device_id": "dev-003",
+      "severity": 1,
+      "category": "ERROR",
+      "status": "resolved",
+      "timestamp": "2026-09-29T19:36:09.048203+00:00",
+      "raw_timestamp": 1790710569048,
+      "issue_name": "Power Supply Failure",
+      "issue_details": "Redundant power supply unit 2 reported hardware fault on Access-Switch-05",
+      "source": "DNAC",
+      "location": "UK-LON"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-29T19:36:09.048203+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
+  },
+  {
+    "alert_id": "EVT-0003",
+    "results": {
+      "agent_1": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "is_backdated": false
+        },
+        "started_at": "2026-09-28T22:06:53.932246+00:00",
+        "ended_at": "2026-09-28T22:06:53.932246+00:00"
+      },
+      "agent_2": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "predicted_category": "Auto resolving",
+          "confidence": "0.89"
+        },
+        "started_at": "2026-09-28T22:06:53.932246+00:00",
+        "ended_at": "2026-09-28T22:06:53.932246+00:00"
+      },
+      "agent_3": {
+        "status": "success",
+        "ok": true,
+        "data": {
+          "queue_status": "delayed",
+          "wait_queue": "dnac.alerts.wait.q",
+          "delay_ms": 900000
+        },
+        "started_at": "2026-09-28T22:06:53.932246+00:00",
+        "ended_at": "2026-09-28T22:06:53.932246+00:00"
+      }
+    },
+    "runtime_error": null,
+    "alert_details": {
+      "event_id": "EVT-0003",
+      "instance_id": "inst-6bf06ce2c7f2",
+      "device_name": "Dist-Router-03",
+      "device_id": "dev-005",
+      "severity": 2,
+      "category": "WARN",
+      "status": "resolved",
+      "timestamp": "2026-09-28T22:06:53.932246+00:00",
+      "raw_timestamp": 1790633213932,
+      "issue_name": "OSPF Neighbor Down",
+      "issue_details": "OSPF adjacency lost with neighbor router 10.200.1.5 on Dist-Router-03",
+      "source": "DNAC",
+      "location": "DE-FRA"
+    },
+    "dnac_live_status": "RESOLVED",
+    "dnac_last_checked": "2026-09-28T22:06:53.932246+00:00",
+    "live_snow_status": null,
+    "overall_status": "suppressed",
+    "status_description": "Suppressed by Agent 2 & 3 (Auto-Resolving / DLX Queue)"
   },
   {
     "alert_id": "EVT-0011",

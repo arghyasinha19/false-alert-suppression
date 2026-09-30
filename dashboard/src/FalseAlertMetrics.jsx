@@ -10,6 +10,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Legend
 } from 'recharts';
+import AnimatedCounter from './AnimatedCounter';
 
 const COLORS = ['#2563eb', '#059669', '#dc2626', '#d97706', '#7c3aed', '#0891b2'];
 const CATEGORY_COLORS = {
@@ -821,7 +822,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
           <div className="kpi-icon blue"><Activity size={20} /></div>
           <div className="kpi-content">
             <h3>Total Processed</h3>
-            <p className="value">{kpi.total}</p>
+            <p className="value"><AnimatedCounter value={kpi.total} /></p>
             <p className="sub-value">
               {categoryFilter !== 'ALL'
                 ? `${filteredAlerts.length} ${categoryFilter === 'BACKDATED' ? 'Backdated' : categoryFilter === 'AUTO' ? 'Auto-Resolving' : categoryFilter === 'NON_AUTO' ? 'Non-Auto' : 'Uncertain'} filtered · ${kpi.total} total`
@@ -833,7 +834,9 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
           <div className="kpi-icon green"><ShieldCheck size={20} /></div>
           <div className="kpi-content">
             <h3>Suppression Rate</h3>
-            <p className="value" style={{ color: 'var(--accent-green)' }}>{kpi.suppressionRate}%</p>
+            <p className="value" style={{ color: 'var(--accent-green)' }}>
+              <AnimatedCounter value={kpi.suppressionRate} decimals={1} suffix="%" />
+            </p>
             <p className="sub-value">noise eliminated</p>
           </div>
         </div>
@@ -841,7 +844,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
           <div className="kpi-icon cyan"><Ban size={20} /></div>
           <div className="kpi-content">
             <h3>Tickets Avoided</h3>
-            <p className="value">{kpi.ticketsAvoided}</p>
+            <p className="value"><AnimatedCounter value={kpi.ticketsAvoided} /></p>
             <p className="sub-value" title={`${kpi.backdated} backdated alerts suppressed + ${kpi.autoResolving} predicted auto-resolved`}>
               {kpi.backdated} suppressed · {kpi.autoResolving} resolved
             </p>
@@ -851,7 +854,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
           <div className="kpi-icon red"><Ticket size={20} /></div>
           <div className="kpi-content">
             <h3>SNOW Tickets</h3>
-            <p className="value">{kpi.totalSnowTickets}</p>
+            <p className="value"><AnimatedCounter value={kpi.totalSnowTickets} /></p>
             <p className="sub-value" title={`${kpi.snowCreated} new incidents, ${kpi.snowAppended} work notes appended, ${kpi.snowReopened} incidents reopened`}>
               {kpi.snowCreated} new · {kpi.snowReopened} reopen · {kpi.snowAppended} notes
             </p>
@@ -869,7 +872,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
           <div className="kpi-icon blue"><Clock size={20} /></div>
           <div className="kpi-content">
             <h3>Backdated / Suppressed</h3>
-            <p className="value">{kpi.backdated}</p>
+            <p className="value"><AnimatedCounter value={kpi.backdated} /></p>
             <p className="sub-value">{categoryFilter === 'BACKDATED' ? '✓ Filter active (click to clear)' : 'suppressed by Agent 1'}</p>
           </div>
         </div>
@@ -881,7 +884,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
           <div className="kpi-icon green"><CheckCircle size={20} /></div>
           <div className="kpi-content">
             <h3>Auto-Resolving</h3>
-            <p className="value">{kpi.autoResolving}</p>
+            <p className="value"><AnimatedCounter value={kpi.autoResolving} /></p>
             <p className="sub-value">{categoryFilter === 'AUTO' ? '✓ Filter active (click to clear)' : 'queued for delayed re-check'}</p>
           </div>
         </div>
@@ -893,7 +896,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
           <div className="kpi-icon red"><AlertTriangle size={20} /></div>
           <div className="kpi-content">
             <h3>Non-Auto Resolving</h3>
-            <p className="value">{kpi.nonAutoResolving}</p>
+            <p className="value"><AnimatedCounter value={kpi.nonAutoResolving} /></p>
             <p className="sub-value">{categoryFilter === 'NON_AUTO' ? '✓ Filter active (click to clear)' : 'escalated to ServiceNow'}</p>
           </div>
         </div>
@@ -905,17 +908,31 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
           <div className="kpi-icon yellow"><Zap size={20} /></div>
           <div className="kpi-content">
             <h3>Uncertain</h3>
-            <p className="value">{kpi.uncertain}</p>
+            <p className="value"><AnimatedCounter value={kpi.uncertain} /></p>
             <p className="sub-value">{categoryFilter === 'UNCERTAIN' ? '✓ Filter active (click to clear)' : 'low ML confidence'}</p>
           </div>
         </div>
       </div>
 
-      {/* ===== SNOW TICKET DETAIL CARDS ===== */}
-      <p className="section-title"><FileText size={14} /> ServiceNow Ticket Details</p>
+      {/* ===== SERVICENOW INCIDENT ACTIVITY ===== */}
+      <div className="snow-section-header">
+        <div className="snow-section-title-wrap">
+          <div className="snow-section-icon-badge">
+            <FileText size={15} />
+          </div>
+          <h3 className="snow-section-title">ServiceNow Incident Activity</h3>
+        </div>
+        <span className="snow-total-badge">
+          {snowDetails.newDevices.length + (snowDetails.appendDevices?.length || 0) + snowDetails.reopenDevices.length} Total Impact
+        </span>
+      </div>
+
       <div className="snow-detail-grid">
-        <div className="snow-detail-card">
-          <h4><PlusCircle size={16} style={{ color: 'var(--accent-blue)' }} /> New Incidents Created ({snowDetails.newDevices.length})</h4>
+        <div className="snow-detail-card card-blue">
+          <div className="snow-detail-card-header">
+            <h4><PlusCircle size={16} style={{ color: 'var(--accent-blue)' }} /> New Incidents Created</h4>
+            <span className="snow-card-count-badge">{snowDetails.newDevices.length}</span>
+          </div>
           {snowDetails.newDevices.length === 0 ? (
             <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>No new incidents in this period.</p>
           ) : (
@@ -929,8 +946,11 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
             </ul>
           )}
         </div>
-        <div className="snow-detail-card">
-          <h4><MessageSquarePlus size={16} style={{ color: 'var(--accent-purple)' }} /> Comments Appended ({snowDetails.appendDevices?.length || 0})</h4>
+        <div className="snow-detail-card card-purple">
+          <div className="snow-detail-card-header">
+            <h4><MessageSquarePlus size={16} style={{ color: 'var(--accent-purple)' }} /> Comments Appended</h4>
+            <span className="snow-card-count-badge">{snowDetails.appendDevices?.length || 0}</span>
+          </div>
           {!snowDetails.appendDevices || snowDetails.appendDevices.length === 0 ? (
             <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>No comments appended in this period.</p>
           ) : (
@@ -944,8 +964,11 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
             </ul>
           )}
         </div>
-        <div className="snow-detail-card">
-          <h4><RotateCcw size={16} style={{ color: 'var(--accent-orange)' }} /> Incidents Re-opened ({snowDetails.reopenDevices.length})</h4>
+        <div className="snow-detail-card card-orange">
+          <div className="snow-detail-card-header">
+            <h4><RotateCcw size={16} style={{ color: 'var(--accent-orange)' }} /> Incidents Re-opened</h4>
+            <span className="snow-card-count-badge">{snowDetails.reopenDevices.length}</span>
+          </div>
           {snowDetails.reopenDevices.length === 0 ? (
             <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>No re-opened incidents in this period.</p>
           ) : (

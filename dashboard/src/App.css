@@ -292,13 +292,18 @@
 .content-area {
   flex: 1;
   margin-left: var(--sidebar-width);
+  width: calc(100vw - var(--sidebar-width));
+  max-width: calc(100vw - var(--sidebar-width));
   min-height: 100vh;
   background: var(--bg-color);
-  transition: margin-left var(--transition-normal);
+  transition: margin-left var(--transition-normal), width var(--transition-normal), max-width var(--transition-normal);
+  box-sizing: border-box;
 }
 
 .content-area.sidebar-collapsed {
   margin-left: 72px;
+  width: calc(100vw - 72px);
+  max-width: calc(100vw - 72px);
 }
 
 .content-header {
@@ -879,15 +884,67 @@
 }
 
 /* ==========================================================================
-   SNOW DETAIL CARDS
+   SERVICENOW INTEGRATION & DETAIL CARDS
    ========================================================================== */
+
+.snow-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--card-border);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.snow-section-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.snow-section-icon-badge {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--accent-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.snow-section-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.snow-total-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--card-border);
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
 
 .snow-detail-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
   margin-bottom: 1.5rem;
-  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .snow-detail-card {
@@ -896,16 +953,65 @@
   background: var(--bg-secondary);
   border: 1px solid var(--card-border);
   box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+.snow-detail-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.snow-detail-card.card-blue {
+  border-top: 3px solid var(--accent-blue);
+}
+
+.snow-detail-card.card-purple {
+  border-top: 3px solid var(--accent-purple);
+}
+
+.snow-detail-card.card-orange {
+  border-top: 3px solid var(--accent-orange);
+}
+
+.snow-detail-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
 }
 
 .snow-detail-card h4 {
   font-size: 0.82rem;
   font-weight: 700;
-  margin: 0 0 0.75rem 0;
+  margin: 0;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   color: var(--text-primary);
+}
+
+.snow-card-count-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  line-height: 1;
+}
+
+.card-blue .snow-card-count-badge {
+  background: var(--accent-blue-light);
+  color: var(--accent-blue);
+}
+
+.card-purple .snow-card-count-badge {
+  background: var(--accent-purple-light);
+  color: var(--accent-purple);
+}
+
+.card-orange .snow-card-count-badge {
+  background: var(--accent-orange-light);
+  color: var(--accent-orange);
 }
 
 .snow-device-list {
@@ -920,22 +1026,68 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.45rem 0;
+  padding: 0.45rem 0.5rem;
+  border-radius: var(--radius-sm);
   border-bottom: 1px solid rgba(0, 0, 0, 0.04);
   font-size: 0.8rem;
+  transition: background var(--transition-fast);
 }
 
-.snow-device-list li:last-child { border-bottom: none; }
+.snow-device-list li:hover {
+  background: var(--bg-tertiary);
+}
+
+.snow-device-list li:last-child {
+  border-bottom: none;
+}
 
 .snow-device-name {
   font-weight: 600;
   color: var(--text-primary);
+  font-size: 0.78rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .snow-device-inc {
   font-size: 0.72rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   color: var(--accent-blue);
   font-weight: 600;
+  background: rgba(37, 99, 235, 0.07);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  border: 1px solid rgba(37, 99, 235, 0.15);
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.snow-device-list li:hover .snow-device-inc {
+  background: var(--accent-blue);
+  color: #ffffff;
+  border-color: var(--accent-blue);
+}
+
+/* ==========================================================================
+   VIEW TRANSITIONS
+   ========================================================================== */
+
+.view-transition-container {
+  animation: viewCrossfade 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity, transform;
+}
+
+@keyframes viewCrossfade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ==========================================================================
