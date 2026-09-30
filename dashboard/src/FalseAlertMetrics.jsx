@@ -842,7 +842,9 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
           <div className="kpi-content">
             <h3>Tickets Avoided</h3>
             <p className="value">{kpi.ticketsAvoided}</p>
-            <p className="sub-value">{kpi.backdated} suppressed + {kpi.autoResolving} auto-resolved</p>
+            <p className="sub-value" title={`${kpi.backdated} backdated alerts suppressed + ${kpi.autoResolving} predicted auto-resolved`}>
+              {kpi.backdated} suppressed · {kpi.autoResolving} resolved
+            </p>
           </div>
         </div>
         <div className="glass-card kpi-card highlight-red">
@@ -850,7 +852,9 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
           <div className="kpi-content">
             <h3>SNOW Tickets</h3>
             <p className="value">{kpi.totalSnowTickets}</p>
-            <p className="sub-value">{kpi.snowCreated} new · {kpi.snowAppended} comments · {kpi.snowReopened} reopened</p>
+            <p className="sub-value" title={`${kpi.snowCreated} new incidents, ${kpi.snowAppended} work notes appended, ${kpi.snowReopened} incidents reopened`}>
+              {kpi.snowCreated} new · {kpi.snowReopened} reopen · {kpi.snowAppended} notes
+            </p>
           </div>
         </div>
       </div>
@@ -1367,13 +1371,13 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
                     <td style={{ width: TRACE_COLUMNS[3].width, minWidth: TRACE_COLUMNS[3].minWidth, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={details.issue_name || '—'}>
                       {details.issue_name || '—'}
                     </td>
-                    <td style={{ width: TRACE_COLUMNS[4].width, minWidth: TRACE_COLUMNS[4].minWidth, fontSize: '0.76rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <td style={{ width: TRACE_COLUMNS[4].width, minWidth: TRACE_COLUMNS[4].minWidth, fontSize: '0.76rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={formatTimestamp(details.timestamp || details.raw_timestamp)}>
                       {formatTimestamp(details.timestamp || details.raw_timestamp)}
                     </td>
                     <td style={{ width: TRACE_COLUMNS[5].width, minWidth: TRACE_COLUMNS[5].minWidth }}>
                       <span className={`badge ${isBackdated ? 'backdated' : 'auto-resolving'}`}>{isBackdated ? 'Suppressed' : 'Fresh'}</span>
                     </td>
-                    <td style={{ width: TRACE_COLUMNS[6].width, minWidth: TRACE_COLUMNS[6].minWidth, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <td style={{ width: TRACE_COLUMNS[6].width, minWidth: TRACE_COLUMNS[6].minWidth, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={`Predicted: ${mlCategory}${confidence ? ` (confidence: ${confidence})` : ''}`}>
                       <span className={`badge ${mlCategory.toLowerCase().replace(/[\s/]/g, '-')}`}>{mlCategory}</span>
                       {confidence && <span style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', marginLeft: '3px' }}>({confidence})</span>}
                     </td>
