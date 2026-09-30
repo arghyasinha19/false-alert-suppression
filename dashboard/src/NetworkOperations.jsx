@@ -27,7 +27,10 @@ function deriveLocation(name) {
   return parts[0] || 'Unknown';
 }
 
-function getLocationLabel(loc) { return LOCATION_LABELS[loc] || `📍 ${loc}`; }
+function getLocationLabel(loc) {
+  if (!loc || loc === 'Unknown') return 'Unassigned / Other';
+  return LOCATION_LABELS[loc] || loc;
+}
 
 function getDeviceHealth(device) {
   const activeAlerts = (device.active_alerts || []).filter(
@@ -315,7 +318,11 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
       {locationGroups.map(([location, locDevices]) => (
         <div key={location} className="location-group">
           <div className="location-header">
-            <MapPin size={15} style={{ color: 'var(--accent-blue)' }} />
+            {LOCATION_LABELS[location] ? (
+              <MapPin size={15} style={{ color: 'var(--accent-blue)' }} />
+            ) : (
+              <Server size={15} style={{ color: 'var(--accent-blue)' }} />
+            )}
             <h3>{getLocationLabel(location)}</h3>
             <span className="device-count">{locDevices.length} device{locDevices.length !== 1 ? 's' : ''}</span>
           </div>
