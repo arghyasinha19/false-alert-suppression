@@ -1,43 +1,70 @@
 # Requirements: False Alert Suppression Pipeline
 
 **Defined:** 2026-09-30  
-**Milestone:** v1.2 Custom Date & Time Range Filtering  
+**Milestone:** v1.4 Complete UI/UX Expert Audit Implementation  
 **Core Value:** Accurately identify false or transient network alerts to prevent unnecessary ServiceNow ticket creation and reduce operational noise without missing genuine network degradation.
 
-## Milestone v1.2 Requirements: Custom Date & Time Range Filtering
+## Milestone v1.4 Requirements: Complete UI/UX Expert Audit Implementation
 
-- [x] **TIME-01**: User can select "Custom Range" from the time range filter dropdown and enter start and end date & time using datetime-local input pickers.
-- [x] **TIME-02**: User can filter alerts by start-only (from start time to present), end-only (from beginning to end time), or bounded start-to-end interval, correctly handling epoch ms, epoch seconds, and ISO 8601 timestamps.
-- [x] **TIME-03**: System dynamically recalculates all KPI metric cards (`Total Processed`, `Tickets Avoided`, `Suppressed`, `Auto-Resolving`, `Non-Auto-Resolving`, `Uncertain`), category charts, and the traceability matrix to strictly reflect alerts inside the custom window.
-- [x] **TIME-04**: User can reset or clear custom date & time inputs with a single click, smoothly returning to preset ranges (`ALL`, `24H`, `7D`, `30D`).
+### Network Operations (NETOPS)
+- [ ] **NETOPS-01**: User can view network device inventory in a multi-column responsive grid (2–3 cols, minmax 320px) utilizing full screen width.
+- [ ] **NETOPS-02**: User can view devices organized under distinct location and infrastructure group headers with device count badges and clean iconography.
+
+### Navigation & Chrome (NAV)
+- [ ] **NAV-01**: User can toggle the sidebar between 260px expanded and 72px compact icon-only rail with tooltip labels.
+- [ ] **NAV-02**: User can see a contextual breadcrumb indicator in the top header reflecting the active route.
+
+### Micro-Interactions & Animation (ANIM)
+- [ ] **ANIM-01**: User sees an animated numerical count-up (`0 → N`) for primary KPI card values on load and refresh.
+- [ ] **ANIM-02**: User experiences smooth crossfade transitions when switching between sidebar views.
+
+### Tables & Sticky Headers (TABLE)
+- [ ] **TABLE-01**: User can scroll the Traceability Matrix with sticky column headers staying pinned at the top.
+- [ ] **TABLE-02**: User can view Device Ranking and Traceability tables with robust cell truncation and hover tooltips.
+
+### Empty States & Visual Polish (STATE)
+- [ ] **STATE-01**: User sees rich empty state placeholders when filters or searches match 0 items.
+- [ ] **STATE-02**: User sees an enhanced section divider and styled badges for ServiceNow Ticket Details.
+
+### Theme System (THEME)
+- [ ] **THEME-01**: User can switch between Light and Dark themes with saved `localStorage` preference.
+- [ ] **THEME-02**: System applies cohesive dark mode tokens to header backdrops, cards, tables, and dialogs.
 
 ## Future Requirements
 
-- Saved custom date-time presets in browser local storage.
-- Quick preset buttons for 6H, 12H, 14D, and quarter-to-date.
+- Full internationalization (i18n) for German and Japanese locales.
+- Customizable dashboard widget drag-and-drop rearrangement.
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Server-side time partitioning or query rewriting | Alert stream is buffered in client memory / MongoDB collection; frontend scope filtering delivers instant sub-millisecond filtering. |
-| Multi-timezone selector override | All comparisons normalize cleanly to UTC / browser local epoch time. |
+| Modifying alert triage logic or ML models | This milestone focuses exclusively on UI/UX, visual ergonomics, responsive design, and interaction polish. |
+| Third-party component library migration (e.g. AntD, MUI) | The design system is built on custom Vanilla CSS design tokens + glassmorphism. |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TIME-01 | Phase 3 | Complete ✓ |
-| TIME-02 | Phase 3 | Complete ✓ |
-| TIME-03 | Phase 3 | Complete ✓ |
-| TIME-04 | Phase 3 | Complete ✓ |
+| NETOPS-01 | TBD | Pending |
+| NETOPS-02 | TBD | Pending |
+| NAV-01 | TBD | Pending |
+| NAV-02 | TBD | Pending |
+| ANIM-01 | TBD | Pending |
+| ANIM-02 | TBD | Pending |
+| TABLE-01 | TBD | Pending |
+| TABLE-02 | TBD | Pending |
+| STATE-01 | TBD | Pending |
+| STATE-02 | TBD | Pending |
+| THEME-01 | TBD | Pending |
+| THEME-02 | TBD | Pending |
 
 **Coverage:**
-- v1.2 requirements: 4 total
-- Mapped to phases: 4
-- Complete: 4 ✓
-- Unmapped: 0 ✓
+- v1.4 requirements: 12 total
+- Mapped to phases: 0
+- Complete: 0
+- Unmapped: 12
 
 ---
 *Requirements defined: 2026-09-30*  
-*Last updated: 2026-09-30 after Milestone v1.2 Phase 3 completion*
+*Last updated: 2026-09-30 after Milestone v1.4 requirements definition*
