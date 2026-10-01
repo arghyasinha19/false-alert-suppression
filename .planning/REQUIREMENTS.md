@@ -1,70 +1,74 @@
 # Requirements: False Alert Suppression Pipeline
 
-**Defined:** 2026-09-30  
-**Milestone:** v1.4 Complete UI/UX Expert Audit Implementation  
+**Defined:** 2026-10-01  
+**Milestone:** v1.5 Executive & Observability Network Operations Center (NOC) Overhaul  
 **Core Value:** Accurately identify false or transient network alerts to prevent unnecessary ServiceNow ticket creation and reduce operational noise without missing genuine network degradation.
 
-## Milestone v1.4 Requirements: Complete UI/UX Expert Audit Implementation
+## Milestone v1.5 Requirements: Executive & Observability NOC Overhaul
 
-### Network Operations (NETOPS)
-- [x] **NETOPS-01**: User can view network device inventory in a multi-column responsive grid (2–3 cols, minmax 320px) utilizing full screen width.
-- [x] **NETOPS-02**: User can view devices organized under distinct location and infrastructure group headers with device count badges and clean iconography.
+### Executive Telemetry & Health KPIs (NOC-KPI)
+- [ ] **NOC-KPI-01**: User can view Fleet Health Score (% index based on weighted device operational availability) with animated counter.
+- [ ] **NOC-KPI-02**: User can view False Alert Noise Reduction / Suppression Rate (%) at fleet level.
+- [ ] **NOC-KPI-03**: User can view Active Incident Blast Radius (# affected sites & degraded devices).
+- [ ] **NOC-KPI-04**: User can view Mean Resolution Velocity / MTTA metric for auto-resolved vs escalated incidents.
+- [ ] **NOC-KPI-05**: User can view Site Resilience Ratio (e.g. 8/9 Nominal sites) in the top executive summary strip.
 
-### Navigation & Chrome (NAV)
-- [x] **NAV-01**: User can toggle the sidebar between 260px expanded and 72px compact icon-only rail with tooltip labels.
-- [x] **NAV-02**: User can see a contextual breadcrumb indicator in the top header reflecting the active route.
+### Multi-Mode Representation Engine (NOC-VIEW)
+- [ ] **NOC-VIEW-01**: User can toggle between 3 presentation modes: "Executive Topology", "SRE High-Density Table", and "Regional Site Matrix" with seamless animated state switching.
+- [ ] **NOC-VIEW-02**: In Executive Topology view, devices are organized by network infrastructure tier (Core & WAN, Distribution & Security, Campus & Access) with roll-up health indicators.
+- [ ] **NOC-VIEW-03**: In SRE High-Density Table view, user can sort by device name, active alerts, severity, last seen, and health with inline status chips and sticky headers.
+- [ ] **NOC-VIEW-04**: In Regional Site Matrix view, user can view site-level health status cards with quick-click filtering by site.
 
-### Micro-Interactions & Animation (ANIM)
-- [x] **ANIM-01**: User sees an animated numerical count-up (`0 → N`) for primary KPI card values on load and refresh.
-- [x] **ANIM-02**: User experiences smooth crossfade transitions when switching between sidebar views.
+### Filter Bar & Micro-Visualizations (NOC-VIZ)
+- [ ] **NOC-VIZ-01**: User can filter device inventory by Role chips (All, Core, Distribution, Access, Wireless, Security).
+- [ ] **NOC-VIZ-02**: User can filter by Health status chips (All, Healthy, Warning, Critical) and ServiceNow ticket state.
+- [ ] **NOC-VIZ-03**: User can see a 24-hour alert distribution micro-bar/sparkline on each device card showing activity volume over time.
+- [ ] **NOC-VIZ-04**: User can see live severity distribution mini-bars and pulsing status indicators for active alerts.
 
-### Tables & Sticky Headers (TABLE)
-- [x] **TABLE-01**: User can scroll the Traceability Matrix with sticky column headers staying pinned at the top.
-- [x] **TABLE-02**: User can view Device Ranking and Traceability tables with robust cell truncation and hover tooltips.
-
-### Empty States & Visual Polish (STATE)
-- [x] **STATE-01**: User sees rich empty state placeholders when filters or searches match 0 items.
-- [x] **STATE-02**: User sees an enhanced section divider and styled badges for ServiceNow Ticket Details.
-
-### Theme System (THEME)
-- [x] **THEME-01**: User can switch between Light and Dark themes with saved `localStorage` preference.
-- [x] **THEME-02**: System applies cohesive dark mode tokens to header backdrops, cards, tables, and dialogs.
+### Interactive SRE Investigation Drawer (NOC-DRAWER)
+- [ ] **NOC-DRAWER-01**: User can view an interactive, multi-agent chronological decision timeline for each alert (Ingestion → Agent 1 Backdate → Agent 2 ML Transience → Agent 3 DLX Queue → Agent 4 ServiceNow).
+- [ ] **NOC-DRAWER-02**: User can inspect live Cisco DNA Center Assurance telemetry attributes, device health vitals, and raw payload details in dedicated tabs.
+- [ ] **NOC-DRAWER-03**: User can perform quick triage actions (e.g., Copy Incident, Simulate Alert on Device, Trigger Re-check) directly from the drawer.
 
 ## Future Requirements
 
-- Full internationalization (i18n) for German and Japanese locales.
-- Customizable dashboard widget drag-and-drop rearrangement.
+- Real-time WebSockets streaming updates instead of polling interval.
+- Geographic interactive vector map (Leaflet or Mapbox).
+- Multi-tenancy support for partitioned customer network views.
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Modifying alert triage logic or ML models | This milestone focuses exclusively on UI/UX, visual ergonomics, responsive design, and interaction polish. |
-| Third-party component library migration (e.g. AntD, MUI) | The design system is built on custom Vanilla CSS design tokens + glassmorphism. |
+| Modifying ML training checkpoints or models | Handled in dedicated ML training pipeline workflows; this milestone focuses on observability, representations, and NOC UX. |
+| Third-party heavy charting libraries (e.g. D3, Highcharts) | Dashboard uses lightweight SVG sparklines and Recharts aligned with design tokens. |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| NETOPS-01 | Phase 4 | Complete ✓ |
-| NETOPS-02 | Phase 4 | Complete ✓ |
-| NAV-01 | Phase 5 | Complete ✓ |
-| NAV-02 | Phase 5 | Complete ✓ |
-| ANIM-01 | Phase 6 | Complete ✓ |
-| ANIM-02 | Phase 6 | Complete ✓ |
-| STATE-02 | Phase 6 | Complete ✓ |
-| TABLE-01 | Phase 7 | Complete ✓ |
-| TABLE-02 | Phase 7 | Complete ✓ |
-| STATE-01 | Phase 7 | Complete ✓ |
-| THEME-01 | Phase 8 | Complete ✓ |
-| THEME-02 | Phase 8 | Complete ✓ |
+| NOC-KPI-01 | Phase 9 | Pending |
+| NOC-KPI-02 | Phase 9 | Pending |
+| NOC-KPI-03 | Phase 9 | Pending |
+| NOC-KPI-04 | Phase 9 | Pending |
+| NOC-KPI-05 | Phase 9 | Pending |
+| NOC-VIEW-01 | Phase 10 | Pending |
+| NOC-VIEW-02 | Phase 10 | Pending |
+| NOC-VIEW-03 | Phase 10 | Pending |
+| NOC-VIEW-04 | Phase 10 | Pending |
+| NOC-VIZ-01 | Phase 11 | Pending |
+| NOC-VIZ-02 | Phase 11 | Pending |
+| NOC-VIZ-03 | Phase 11 | Pending |
+| NOC-VIZ-04 | Phase 11 | Pending |
+| NOC-DRAWER-01 | Phase 12 | Pending |
+| NOC-DRAWER-02 | Phase 12 | Pending |
+| NOC-DRAWER-03 | Phase 12 | Pending |
 
 **Coverage:**
-- v1.4 requirements: 12 total
-- Mapped to phases: 12 (100%)
-- Complete: 12 (100%)
+- v1.5 requirements: 16 total
+- Mapped to phases: 16 (100%)
 - Unmapped: 0 ✓
 
 ---
-*Requirements defined: 2026-09-30*  
-*Last updated: 2026-09-30 after Milestone v1.4 requirements definition*
+*Requirements defined: 2026-10-01*  
+*Last updated: 2026-10-01 after Milestone v1.5 requirements definition*

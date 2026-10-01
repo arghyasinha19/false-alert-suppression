@@ -1,6 +1,6 @@
 # Roadmap: False Alert Suppression Pipeline
 
-**Milestone:** v1.4 Complete UI/UX Expert Audit Implementation  
+**Milestone:** v1.5 Executive & Observability Network Operations Center (NOC) Overhaul  
 **Status:** In Progress  
 
 ## Overview
@@ -15,80 +15,77 @@
 | 6 | v1.4 | Micro-Interactions & Animated Counters | Animated KPI number count-up (`0 → N`), page crossfades, SNOW divider styling | ANIM-01, ANIM-02, STATE-02 | Complete ✓ |
 | 7 | v1.4 | Sticky Tables, Tooltips & Empty States | Sticky table headers, cell tooltips, rich zero-match empty state views | TABLE-01, TABLE-02, STATE-01 | Complete ✓ |
 | 8 | v1.4 | Comprehensive Dark & Light Theme System | System-wide theme toggle (Sun/Moon), CSS tokens, localStorage persistence | THEME-01, THEME-02 | Complete ✓ |
+| 9 | v1.5 | Executive Telemetry & Health KPI Strip | Fleet Health Score %, Noise Suppression Ratio, Blast Radius, MTTR, and Site Resilience | NOC-KPI-01 - NOC-KPI-05 | In Progress |
+| 10 | v1.5 | Multi-Mode Representation Engine | Executive Topology, SRE High-Density Sortable Table, and Regional Site Matrix | NOC-VIEW-01 - NOC-VIEW-04 | Pending |
+| 11 | v1.5 | Multi-Dimensional Filters & Micro-Visualizations | Role & Health filter chips, 24h activity sparklines, severity mini-bars, and status pulses | NOC-VIZ-01 - NOC-VIZ-04 | Pending |
+| 12 | v1.5 | Interactive SRE Drawer & Incident Timeline | Multi-agent decision timeline, Assurance telemetry tabs, and one-click quick triage actions | NOC-DRAWER-01 - NOC-DRAWER-03 | Pending |
 
 ---
 
-## Phase 4: Network Operations Responsive Redesign
+## Phase 9: Executive Telemetry & Health KPI Strip
 
-**Goal:** Transform the single-column device view into a 2–3 column responsive grid (`repeat(auto-fill, minmax(320px, 1fr))`) that eliminates empty horizontal space, with clean location and infrastructure headers.
+**Goal:** Transform the top summary grid into an enterprise-grade Executive & Observability telemetry strip featuring Fleet Health Score (% index), Noise Suppression Rate (%), Active Blast Radius, Mean Time to Auto-Resolution, and Site Resilience Ratio with animated counters.
 
 **Requirements:**
-- **NETOPS-01**: User can view network device inventory in a multi-column responsive grid (2–3 cols, minmax 320px) utilizing full screen width.
-- **NETOPS-02**: User can view devices organized under distinct location and infrastructure group headers with device count badges and clean iconography.
+- **NOC-KPI-01**: User can view Fleet Health Score (% index based on weighted device operational availability) with animated counter.
+- **NOC-KPI-02**: User can view False Alert Noise Reduction / Suppression Rate (%) at fleet level.
+- **NOC-KPI-03**: User can view Active Incident Blast Radius (# affected sites & degraded devices).
+- **NOC-KPI-04**: User can view Mean Resolution Velocity / MTTA metric for auto-resolved vs escalated incidents.
+- **NOC-KPI-05**: User can view Site Resilience Ratio (e.g. 8/9 Nominal sites) in the top executive summary strip.
 
 **Success Criteria:**
-1. Device inventory cards render in a multi-column responsive grid filling available horizontal space rather than a single narrow column. (✓ Verified)
-2. Group headers cleanly distinguish geographic sites from infrastructure devices with accurate count badges. (✓ Verified)
-3. Device tiles display telemetry, live health status, and SNOW badges cleanly across standard monitor (1707px) and laptop (1366px) viewports. (✓ Verified)
+1. Top summary grid displays 5 executive observability KPI cards with icons, subtitles, and animated counters (`0 → N`).
+2. Fleet Health Score calculates weighted availability reflecting critical vs warning device impacts.
+3. Noise Suppression Rate clearly illustrates the percentage of alerts suppressed or auto-resolved at the network edge.
+4. Blast Radius and Site Resilience indicate regional operational health at a glance.
 
 ---
 
-## Phase 5: Collapsible Sidebar Rail & Breadcrumbs
+## Phase 10: Multi-Mode Representation Engine
 
-**Goal:** Add a sidebar collapse toggle that collapses the 260px sidebar into a 72px compact icon-only rail with floating tooltip labels, and add contextual route breadcrumbs to the top content header.
+**Goal:** Provide 3 distinct representation modes for Network Operations: "Executive Topology" (infrastructure tier grouping), "SRE High-Density Table" (sortable telemetry table), and "Regional Site Matrix" (site status cards) with fluid view switching.
 
 **Requirements:**
-- **NAV-01**: User can toggle the sidebar between 260px expanded and 72px compact icon-only rail with tooltip labels.
-- **NAV-02**: User can see a contextual breadcrumb indicator in the top header reflecting the active route.
+- **NOC-VIEW-01**: User can toggle between 3 presentation modes: "Executive Topology", "SRE High-Density Table", and "Regional Site Matrix" with seamless animated state switching.
+- **NOC-VIEW-02**: In Executive Topology view, devices are organized by network infrastructure tier (Core & WAN, Distribution & Security, Campus & Access) with roll-up health indicators.
+- **NOC-VIEW-03**: In SRE High-Density Table view, user can sort by device name, active alerts, severity, last seen, and health with inline status chips and sticky headers.
+- **NOC-VIEW-04**: In Regional Site Matrix view, user can view site-level health status cards with quick-click filtering by site.
 
 **Success Criteria:**
-1. Clicking the sidebar toggle collapses the sidebar to 72px width while preserving full navigation capability with icon tooltips. (✓ Verified)
-2. The main content area expands smoothly to occupy the reclaimed horizontal space. (✓ Verified)
-3. The content header displays breadcrumbs showing active context (e.g. `DNAC Ops Center > Alert Metrics`). (✓ Verified)
+1. A segmented view switcher allows instant toggling between Executive Topology, SRE High-Density Table, and Regional Site Matrix.
+2. Executive Topology cleanly groups devices by tier with roll-up health metrics.
+3. SRE Table presents high-density rows with sorting on key metrics, sticky headers, and quick pagination or clean scrolling.
+4. Regional Site Matrix provides an executive geo-site health view.
 
 ---
 
-## Phase 6: Micro-Interactions & Animated Counters
+## Phase 11: Multi-Dimensional Filters & Micro-Visualizations
 
-**Goal:** Implement an animated numerical count-up effect (`0 → N`) for primary KPI card values, smooth page crossfade transitions, and refined visual styling for ServiceNow Ticket Details.
+**Goal:** Provide rapid triage filtering across Device Roles, Health states, and ServiceNow tickets, augmented with device card micro-visualizations including 24-hour activity sparklines and severity breakdown mini-bars.
 
 **Requirements:**
-- **ANIM-01**: User sees an animated numerical count-up (`0 → N`) for primary KPI card values on load and refresh.
-- **ANIM-02**: User experiences smooth crossfade transitions when switching between sidebar views.
-- **STATE-02**: User sees an enhanced section divider and styled badges for ServiceNow Ticket Details.
+- **NOC-VIZ-01**: User can filter device inventory by Role chips (All, Core, Distribution, Access, Wireless, Security).
+- **NOC-VIZ-02**: User can filter by Health status chips (All, Healthy, Warning, Critical) and ServiceNow ticket state.
+- **NOC-VIZ-03**: User can see a 24-hour alert distribution micro-bar/sparkline on each device card showing activity volume over time.
+- **NOC-VIZ-04**: User can see live severity distribution mini-bars and pulsing status indicators for active alerts.
 
 **Success Criteria:**
-1. Numbers in KPI cards animate from 0 to their actual counts with an ease-out curve on initial load and simulated alert ingestion. (✓ Verified)
-2. Navigating between pages provides a fluid crossfade transition without flicker. (✓ Verified)
-3. The ServiceNow Ticket Details section is demarcated with a polished section divider, icon badge, and clear typographic hierarchy. (✓ Verified)
+1. Filter bar features clickable pill chips for Role and Health with instant reactive filtering.
+2. Device cards display SVG/canvas micro-visualizations representing recent alert distributions.
+3. Critical and warning devices display visual pulse animations denoting active incident state.
 
 ---
 
-## Phase 7: Sticky Tables, Tooltips & Empty States
+## Phase 12: Interactive SRE Investigation Drawer & Incident Timeline
 
-**Goal:** Ensure table headers in the Traceability Matrix and Device Rankings remain sticky during scrolling, enforce strict cell truncation with hover tooltips, and provide illustrated empty states for zero-match filters.
-
-**Requirements:**
-- **TABLE-01**: User can scroll the Traceability Matrix with sticky column headers staying pinned at the top.
-- **TABLE-02**: User can view Device Ranking and Traceability tables with robust cell truncation and hover tooltips.
-- **STATE-01**: User sees rich empty state placeholders when filters or searches match 0 items.
-
-**Success Criteria:**
-1. Column headers remain pinned to the top of the table scroll viewport while scrolling through all rows. (✓ Verified)
-2. Truncated cells show the full text content in a native hover tooltip. (✓ Verified)
-3. Applying filters or searches that match 0 items displays a helpful, styled empty state with a "Clear Filters" action. (✓ Verified)
-
----
-
-## Phase 8: Comprehensive Dark & Light Theme System
-
-**Goal:** Implement a complete Dark / Light theme system with CSS tokens, a header theme toggle switch, and persistence in `localStorage`.
+**Goal:** Elevate the device slide-out panel into an enterprise SRE triage workstation with an interactive chronological multi-agent decision timeline (Ingest → Agent 1 → Agent 2 → Agent 3 → Agent 4), Assurance telemetry vitals tabs, and one-click triage actions.
 
 **Requirements:**
-- **THEME-01**: User can switch between Light and Dark themes with saved `localStorage` preference.
-- **THEME-02**: System applies cohesive dark mode tokens to header backdrops, cards, tables, and dialogs.
+- **NOC-DRAWER-01**: User can view an interactive, multi-agent chronological decision timeline for each alert (Ingestion → Agent 1 Backdate → Agent 2 ML Transience → Agent 3 DLX Queue → Agent 4 ServiceNow).
+- **NOC-DRAWER-02**: User can inspect live Cisco DNA Center Assurance telemetry attributes, device health vitals, and raw payload details in dedicated tabs.
+- **NOC-DRAWER-03**: User can perform quick triage actions (e.g., Copy Incident, Simulate Alert on Device, Trigger Re-check) directly from the drawer.
 
 **Success Criteria:**
-1. A theme toggle button allows instant switching between Light and Dark modes. (✓ Verified)
-2. Dark theme provides high-contrast, polished styling across cards, sidebar, tables, charts, and slide-out panels. (✓ Verified)
-3. The chosen theme persists across page refreshes and browser sessions. (✓ Verified)
+1. Clicking any device opens a drawer containing a visual multi-agent decision timeline for active alerts.
+2. Tabbed navigation inside drawer exposes Overview, Active Alerts, Chronological Timeline, and Assurance Telemetry.
+3. Action buttons allow quick triage (e.g. copying incident ticket details, simulating new alert for device).

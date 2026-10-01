@@ -9,12 +9,23 @@ import subprocess
 import time
 import signal
 
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+if hasattr(sys.stderr, "reconfigure"):
+    try:
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 project_root = os.path.dirname(os.path.abspath(__file__))
 dashboard_dir = os.path.join(project_root, "dashboard")
 
 def main():
     print("=" * 65)
-    print("  False Alert Suppression Pipeline — Dashboard Launcher")
+    print("  False Alert Suppression Pipeline - Dashboard Launcher")
     print("=" * 65)
 
     backend_cmd = [
@@ -46,29 +57,37 @@ def main():
     )
 
     print("\n" + "=" * 65)
-    print("  ✓ Services running:")
+    print("  [+] Services running:")
     print("    - Backend API: http://127.0.0.1:8004/api/alerts")
     print("    - Frontend UI: http://localhost:5173")
     print("  Press Ctrl+C to terminate both servers.")
     print("=" * 65 + "\n")
 
-    def handle_exit(signum, frame):
+    def handle_exit(signum=None, frame=None):
         print("\nShutting down services...")
-        try:
-            backend_proc.terminate()
-            frontend_proc.terminate()
-        except Exception:
-            pass
+        for proc in (backend_proc, frontend_proc):
+            try:
+                proc.terminate()
+            except Exception:
+                pass
         sys.exit(0)
 
     signal.signal(signal.SIGINT, handle_exit)
     signal.signal(signal.SIGTERM, handle_exit)
 
     try:
-        backend_proc.wait()
-        frontend_proc.wait()
+        while True:
+            if backend_proc.poll() is not None:
+                print("Backend process exited unexpectedly.")
+                break
+            if frontend_proc.poll() is not None:
+                print("Frontend process exited unexpectedly.")
+                break
+            time.sleep(1)
     except KeyboardInterrupt:
-        handle_exit(None, None)
+        pass
+    finally:
+        handle_exit()
 
 if __name__ == "__main__":
     main()

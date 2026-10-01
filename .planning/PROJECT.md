@@ -8,17 +8,16 @@ An intelligent, multi-agent network alert triage and suppression platform for Ci
 
 Accurately identify false or transient network alerts to prevent unnecessary ServiceNow ticket creation and reduce operational noise without missing genuine network degradation.
 
-## Current Milestone: v1.4 Complete UI/UX Expert Audit Implementation
+## Current Milestone: v1.5 Executive & Observability Network Operations Center (NOC) Overhaul
 
-**Goal:** Implement all remaining pointers from the UI/UX Expert Audit Report to deliver an enterprise-grade, premium DNAC Operations Center.
+**Goal:** Transform the Network Operations Center into a world-class executive & observability command center featuring enterprise telemetry KPIs, multi-view representation hierarchy (Executive Topology, SRE Density Matrix, Regional Site Matrix), micro-visualizations (activity sparklines, health rings), and an interactive incident timeline drawer.
 
 **Target features:**
-- **Network Operations Redesign:** 2–3 column responsive device grid (`repeat(auto-fill, minmax(320px, 1fr))`), eliminate horizontal whitespace waste, clean location and device grouping.
-- **Premium Collapsible Sidebar:** Expand/collapse rail toggle (260px expanded → 72px icon rail) with tooltips, plus breadcrumb context navigation indicator in the header.
-- **Micro-Interactions & Polished Animations:** Real numerical counting animation (`0 → N`) on KPI values with smooth easing, fluid page crossfade transitions.
-- **Tables & Empty States:** Sticky headers on all tables (Traceability Matrix, Device Ranking), informative empty state views for zero-match searches/filters.
-- **Dark/Light Theme System:** Complete theme tokens, header backdrop adaptivity, theme toggle switch in header or sidebar.
-- **ServiceNow Section Polish:** Enhanced section divider styling, badges, and visual hierarchy for ServiceNow Ticket Details.
+- **Executive Observability KPI Strip:** Fleet Health Score (0-100%), Noise Suppression Rate, Incident Blast Radius, Mean Time to Auto-Resolution, and Site Resilience Ratio.
+- **Multi-Mode Representation Engine:** Executive Grid (Topology/Role grouped), High-Density SRE Table/Matrix, and Regional Site Health Overview.
+- **Rich Telemetry & Micro-Visualizations:** 24h alert activity sparkline/micro-bars per device, health gauge rings, severity breakdown mini-bars, and quick-filter pills (by Role, Health, SNOW status).
+- **Interactive SRE Drawer & Incident Timeline:** Chronological decision trail (Ingest → Agent 1 Backdate → Agent 2 ML → Agent 3 Wait → Agent 4 SNOW), live Assurance telemetry metrics, and one-click actions.
+- **Design System & Visual Luxury:** Subtle glassmorphic depth, status pulses, micro-interactions, responsive auto-fill grids, and full dark/light theme polish.
 
 ## Requirements
 
@@ -37,17 +36,23 @@ Accurately identify false or transient network alerts to prevent unnecessary Ser
 - ✓ FastAPI Dashboard Backend & Vite React dev server bring-up and orchestration (Milestone v1.1) — v1.1
 - ✓ Custom Date & Time Range Filtering with dynamic KPI recalculations (Milestone v1.2) — v1.2
 - ✓ Layout overflow fixes, skeleton loading, and critical audit fixes (Milestone v1.3) — v1.3
+- ✓ Multi-column responsive device card grid in Network Operations (Milestone v1.4) — v1.4
+- ✓ Collapsible sidebar with 72px icon rail and tooltips (Milestone v1.4) — v1.4
+- ✓ Breadcrumb / route context navigation indicator in header (Milestone v1.4) — v1.4
+- ✓ Animated number counting effect (`0 → N`) for KPI values (Milestone v1.4) — v1.4
+- ✓ Sticky headers and responsive styling on tables (Milestone v1.4) — v1.4
+- ✓ Rich empty states for zero-match filters/searches (Milestone v1.4) — v1.4
+- ✓ ServiceNow Ticket Details section divider and badge styling (Milestone v1.4) — v1.4
+- ✓ Complete dark/light mode theme system with header toggle (Milestone v1.4) — v1.4
 
 ### Active
 
-- [ ] **UIUX-01**: Multi-column responsive device card grid (2-3 cols) in Network Operations, eliminating whitespace waste.
-- [ ] **UIUX-02**: Collapsible sidebar with icon rail mode (72px) and expand/collapse toggle.
-- [ ] **UIUX-03**: Breadcrumb / route context indicator in top content header.
-- [ ] **UIUX-04**: Animated number counting effect (`0 → N`) for KPI values on load and refresh.
-- [ ] **UIUX-05**: Sticky headers and responsive styling on Device Ranking & Traceability tables.
-- [ ] **UIUX-06**: Rich empty states for zero-match filters/searches across all dashboard pages.
-- [ ] **UIUX-07**: ServiceNow Ticket Details section divider styling and typography polish.
-- [ ] **UIUX-08**: Complete dark mode theme tokens and header backdrop adaptivity with toggle.
+- [ ] **NOC-01**: Executive Telemetry & Health KPI Strip (Fleet Health Score %, Noise Suppression Ratio, Blast Radius / Degraded Sites, MTTR / Resolution Velocity) with animated counters.
+- [ ] **NOC-02**: Multi-View Representation Engine (Executive Grid with Topology grouping, High-Density SRE Table/Matrix, Regional Site Health Matrix) with seamless view switcher.
+- [ ] **NOC-03**: Multi-Dimensional Filter Bar (Quick-filter pills for Device Role: Core/Distribution/Access/Wireless/Security, Health: Healthy/Warning/Critical, SNOW status, and live search).
+- [ ] **NOC-04**: Device Micro-Visualizations (24-Hour alert distribution sparkline/activity strip, inline severity bar, live pulse indicator, health score pill).
+- [ ] **NOC-05**: SRE Incident Investigation Drawer (Multi-tab/chronological decision timeline: Ingest → Agent 1 → Agent 2 → Agent 3 → Agent 4, DNAC telemetry details, and one-click quick actions).
+- [ ] **NOC-06**: Visual Polish & Luxury Aesthetics (Premium glassmorphism, responsive CSS grid, refined dark/light theme tokens, and fluid view transitions).
 
 ### Out of Scope
 
