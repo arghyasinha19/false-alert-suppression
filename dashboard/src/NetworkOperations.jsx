@@ -2,12 +2,52 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
-  MapPin, Server, AlertTriangle, CheckCircle,
+  Server, AlertTriangle, CheckCircle,
   Search, X, Clock, Wifi, WifiOff, Shield,
   Activity, Ticket, PlusCircle, RotateCcw, MessageSquarePlus,
-  ChevronDown, ChevronUp, RefreshCw, ShieldCheck, Zap, Flame, Timer, Radio
+  ChevronDown, ChevronUp, RefreshCw, ShieldCheck, Zap, Flame, Timer, Radio,
+  Layers, Table, Globe, ArrowUpDown, ChevronRight
 } from 'lucide-react';
 import AnimatedCounter from './AnimatedCounter';
+
+const TIER_METADATA = {
+  core: {
+    id: 'core',
+    name: 'Core & WAN Backbone',
+    subtitle: 'High-capacity backbone routing, DC gateways, and external WAN transit',
+    icon: Server,
+    accent: 'var(--accent-blue)',
+    tag: 'CORE',
+  },
+  dist_sec: {
+    id: 'dist_sec',
+    name: 'Distribution & Security Perimeter',
+    subtitle: 'Traffic aggregation, policy enforcement, next-gen firewalls, and distribution switches',
+    icon: Shield,
+    accent: 'var(--accent-purple)',
+    tag: 'DIST / SEC',
+  },
+  access: {
+    id: 'access',
+    name: 'Campus & Access Edge',
+    subtitle: 'End-user wireless access points, access switches, and edge client connectivity',
+    icon: Wifi,
+    accent: 'var(--accent-teal)',
+    tag: 'ACCESS',
+  }
+};
+
+function deriveDeviceTier(name) {
+  if (!name || name === 'Unknown') return 'core';
+  const lower = name.toLowerCase();
+  if (lower.includes('core') || lower.includes('router') || lower.includes('rt') || lower.includes('gw') || lower.includes('backbone') || lower.includes('dc')) {
+    return 'core';
+  }
+  if (lower.includes('fw') || lower.includes('firewall') || lower.includes('dist') || lower.includes('security') || lower.includes('sw01')) {
+    return 'dist_sec';
+  }
+  return 'access';
+}
 
 const LOCATION_LABELS = {
   'UK-MAL': '🇬🇧 United Kingdom — Maldon',
@@ -170,7 +210,34 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
   const [panelOpen, setPanelOpen] = useState(false);
   const [resolvedExpanded, setResolvedExpanded] = useState(false);
   const [secondsAgo, setSecondsAgo] = useState(0);
+  const [viewMode, setViewMode] = useState(() => {
+    try {
+      return localStorage.getItem('dnac_noc_view_mode') || 'topology';
+    } catch {
+      return 'topology';
+    }
+  });
+  const [tableSortCol, setTableSortCol] = useState('health');
+  const [tableSortDir, setTableSortDir] = useState('desc');
   const selectedDeviceNameRef = useRef(null);
+
+  const handleViewModeChange = (mode) => {
+    setViewMode(mode);
+    try {
+      localStorage.setItem('dnac_noc_view_mode', mode);
+    } catch {
+      // ignore localStorage errors
+    }
+  };
+
+  const handleTableSort = (col) => {
+    if (tableSortCol === col) {
+      setTableSortDir(prev => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setTableSortCol(col);
+      setTableSortDir(col === 'name' || col === 'location' ? 'asc' : 'desc');
+    }
+  };
 
   const devices = useMemo(() => {
     if (rawDevices && rawDevices.length > 0) return rawDevices;
@@ -216,25 +283,140 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
       const locLabel = (getLocationLabel(d.location || deriveLocation(d.device_name))).toLowerCase();
       const devName = (d.device_name || '').toLowerCase();
       const devId = (d.device_id || '').toLowerCase();
-      return devName.includes(q) || locLabel.includes(q) || devId.includes(q);
+      const tierId = deriveDeviceTier(d.device_name);
+      const tierMeta = TIER_METADATA[tierId];
+      const tierMatch = tierMeta && (tierMeta.name.toLowerCase().includes(q) || tierMeta.tag.toLowerCase().includes(q));
+      return devName.includes(q) || locLabel.includes(q) || devId.includes(q) || tierMatch;
     });
   }, [devices, searchQuery]);
 
-  const locationGroups = useMemo(() => {
-    const groups = {};
+  // Tier Groups for Executive Topology View
+  const tierGroups = useMemo(() => {
+    const buckets = {
+      core: [],
+      dist_sec: [],
+      access: []
+    };
     filteredDevices.forEach(d => {
-      const loc = d.location || deriveLocation(d.device_name);
-      if (!groups[loc]) groups[loc] = [];
-      groups[loc].push(d);
+      const tierId = deriveDeviceTier(d.device_name);
+      if (buckets[tierId]) {
+        buckets[tierId].push(d);
+      } else {
+        buckets.core.push(d);
+      }
     });
-    return Object.entries(groups).sort(([a], [b]) => {
-      const aIsInfra = a.startsWith('INFRA-');
-      const bIsInfra = b.startsWith('INFRA-');
-      if (!aIsInfra && bIsInfra) return -1;
-      if (aIsInfra && !bIsInfra) return 1;
-      return a.localeCompare(b);
+
+    return ['core', 'dist_sec', 'access'].map(id => {
+      const list = buckets[id];
+      let critical = 0;
+      let warning = 0;
+      let healthy = 0;
+      list.forEach(d => {
+        const h = getDeviceHealth(d);
+        if (h === 'critical') critical++;
+        else if (h === 'warning') warning++;
+        else healthy++;
+      });
+      return {
+        id,
+        devices: list,
+        critical,
+        warning,
+        healthy
+      };
     });
   }, [filteredDevices]);
+
+  // Site Matrix for Regional Site Matrix View
+  const siteMatrix = useMemo(() => {
+    const siteMap = {};
+    filteredDevices.forEach(d => {
+      const loc = d.location || deriveLocation(d.device_name);
+      if (!siteMap[loc]) {
+        siteMap[loc] = {
+          code: loc,
+          label: getLocationLabel(loc),
+          devices: [],
+          critical: 0,
+          warning: 0,
+          healthy: 0,
+          totalAlerts: 0,
+          avoidedTickets: 0
+        };
+      }
+      siteMap[loc].devices.push(d);
+      const h = getDeviceHealth(d);
+      if (h === 'critical') siteMap[loc].critical++;
+      else if (h === 'warning') siteMap[loc].warning++;
+      else siteMap[loc].healthy++;
+
+      siteMap[loc].totalAlerts += (d.active_alerts || []).length;
+      siteMap[loc].avoidedTickets += (d.auto_resolving || 0) + (d.backdated || 0);
+    });
+
+    return Object.values(siteMap).map(site => {
+      let status = 'nominal';
+      if (site.critical > 0) status = 'critical';
+      else if (site.warning > 0) status = 'degraded';
+
+      return {
+        ...site,
+        status
+      };
+    }).sort((a, b) => {
+      const rank = { critical: 3, degraded: 2, nominal: 1 };
+      if (rank[a.status] !== rank[b.status]) {
+        return rank[b.status] - rank[a.status];
+      }
+      return a.label.localeCompare(b.label);
+    });
+  }, [filteredDevices]);
+
+  // Sorted Devices for SRE High-Density Table View
+  const sortedTableDevices = useMemo(() => {
+    const list = [...filteredDevices];
+    const dir = tableSortDir === 'asc' ? 1 : -1;
+    const tierWeight = { core: 3, dist_sec: 2, access: 1 };
+    const healthWeight = { critical: 3, warning: 2, healthy: 1, unknown: 0 };
+
+    return list.sort((a, b) => {
+      if (tableSortCol === 'name') {
+        return dir * (a.device_name || '').localeCompare(b.device_name || '');
+      }
+      if (tableSortCol === 'location') {
+        const locA = getLocationLabel(a.location || deriveLocation(a.device_name));
+        const locB = getLocationLabel(b.location || deriveLocation(b.device_name));
+        return dir * locA.localeCompare(locB);
+      }
+      if (tableSortCol === 'tier') {
+        const tA = tierWeight[deriveDeviceTier(a.device_name)] || 0;
+        const tB = tierWeight[deriveDeviceTier(b.device_name)] || 0;
+        return dir * (tA - tB);
+      }
+      if (tableSortCol === 'health') {
+        const hA = healthWeight[getDeviceHealth(a)] || 0;
+        const hB = healthWeight[getDeviceHealth(b)] || 0;
+        return dir * (hA - hB);
+      }
+      if (tableSortCol === 'alerts') {
+        const altA = (a.active_alerts || []).length;
+        const altB = (b.active_alerts || []).length;
+        return dir * (altA - altB);
+      }
+      if (tableSortCol === 'snow') {
+        const sA = (a.active_alerts || []).filter(al => al.snow_incident).length;
+        const sB = (b.active_alerts || []).filter(al => al.snow_incident).length;
+        return dir * (sA - sB);
+      }
+      if (tableSortCol === 'last_seen') {
+        const tsA = parseTimestamp(a.last_alert_time)?.getTime() || 0;
+        const tsB = parseTimestamp(b.last_alert_time)?.getTime() || 0;
+        return dir * (tsA - tsB);
+      }
+      return 0;
+    });
+  }, [filteredDevices, tableSortCol, tableSortDir]);
+
 
   const executiveKPI = useMemo(() => {
     let healthy = 0, warning = 0, critical = 0, unknown = 0;
@@ -333,6 +515,70 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
       setSelectedDevice(null);
       selectedDeviceNameRef.current = null;
     }, 300);
+  };
+
+  const renderDeviceTile = (device) => {
+    const health = getDeviceHealth(device);
+    const isAlerting = health === 'critical' || health === 'warning';
+    const activeCount = (device.active_alerts || []).length;
+    const snow = getSnowSummary(device);
+    const tierId = deriveDeviceTier(device.device_name);
+    const tierMeta = TIER_METADATA[tierId];
+
+    return (
+      <div
+        key={device.device_name}
+        className={`device-tile ${isAlerting ? 'alerting' : 'healthy'}`}
+        onClick={() => openDevicePanel(device)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDevicePanel(device); } }}
+      >
+        <div className="device-tile-header">
+          <div className="device-tile-title-row">
+            <span className="device-tile-name">{device.device_name}</span>
+            <span className={`noc-tier-mini-badge tier-${tierId}`}>{tierMeta.tag}</span>
+          </div>
+          <span className={`device-tile-status-dot ${health}`} />
+        </div>
+        <div className="device-tile-meta">
+          <span>
+            {health === 'critical' ? <WifiOff size={12} /> : <Wifi size={12} />}
+            {health === 'critical' ? 'Critical' : health === 'warning' ? 'Warning' : 'Healthy'}
+          </span>
+          {device.last_alert_time && (
+            <span><Clock size={12} /> Last: {formatTimeOnly(device.last_alert_time)}</span>
+          )}
+          <span><Activity size={12} /> {device.total_alerts} total alerts</span>
+        </div>
+        {activeCount > 0 && (
+          <div className="device-tile-alert-count">
+            <AlertTriangle size={11} /> {activeCount} active alert{activeCount !== 1 ? 's' : ''}
+          </div>
+        )}
+
+        {/* SNOW Ticket Badges */}
+        {(snow.created.length > 0 || snow.reopened.length > 0 || snow.commented.length > 0) && (
+          <div className="device-tile-snow">
+            {snow.created.length > 0 && (
+              <span className="badge snow-new" title={snow.created.map(s => s.snow_incident).join(', ')}>
+                <PlusCircle size={10} /> {snow.created.length} new
+              </span>
+            )}
+            {snow.reopened.length > 0 && (
+              <span className="badge snow-reopen" title={snow.reopened.map(s => s.snow_incident).join(', ')}>
+                <RotateCcw size={10} /> {snow.reopened.length} reopen
+              </span>
+            )}
+            {snow.commented.length > 0 && (
+              <span className="badge snow-comment" title={snow.commented.map(s => s.snow_incident).join(', ')}>
+                <MessageSquarePlus size={10} /> {snow.commented.length}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -449,88 +695,335 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
         </div>
       </div>
 
-      {/* Search Bar */}
+      {/* Search Bar & View Mode Switcher */}
       <div className="filter-bar">
         <Search size={15} style={{ color: 'var(--text-tertiary)' }} />
-        <input className="filter-search" type="text" placeholder="Search devices or locations..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+        <input
+          className="filter-search"
+          type="text"
+          placeholder="Search devices, locations, or tiers..."
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+        />
         {searchQuery && (
-          <button className="filter-pill" onClick={() => setSearchQuery('')} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <button
+            className="filter-pill"
+            onClick={() => setSearchQuery('')}
+            style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+          >
             <X size={12} /> Clear
           </button>
         )}
-        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginLeft: 'auto' }}>
+
+        {/* Multi-Mode Representation Switcher */}
+        <div className="noc-view-switcher" role="radiogroup" aria-label="View representation mode">
+          <button
+            type="button"
+            className={`noc-view-btn ${viewMode === 'topology' ? 'active' : ''}`}
+            onClick={() => handleViewModeChange('topology')}
+            aria-pressed={viewMode === 'topology'}
+            title="Executive Topology View: Grouped by network tier"
+          >
+            <Layers size={13} />
+            <span>Topology</span>
+          </button>
+          <button
+            type="button"
+            className={`noc-view-btn ${viewMode === 'table' ? 'active' : ''}`}
+            onClick={() => handleViewModeChange('table')}
+            aria-pressed={viewMode === 'table'}
+            title="SRE High-Density Table View: Compact sortable telemetry"
+          >
+            <Table size={13} />
+            <span>SRE Table</span>
+          </button>
+          <button
+            type="button"
+            className={`noc-view-btn ${viewMode === 'matrix' ? 'active' : ''}`}
+            onClick={() => handleViewModeChange('matrix')}
+            aria-pressed={viewMode === 'matrix'}
+            title="Regional Site Matrix View: Geographic multi-region rollup"
+          >
+            <Globe size={13} />
+            <span>Site Matrix</span>
+          </button>
+        </div>
+
+        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginLeft: '0.5rem', whiteSpace: 'nowrap' }}>
           {filteredDevices.length} device{filteredDevices.length !== 1 ? 's' : ''} shown
         </span>
       </div>
 
-      {/* Location Groups */}
-      {locationGroups.map(([location, locDevices]) => (
-        <div key={location} className="location-group">
-          <div className="location-header">
-            {LOCATION_LABELS[location] && !location.startsWith('INFRA-') ? (
-              <MapPin size={16} style={{ color: 'var(--accent-blue)' }} />
-            ) : (
-              <Server size={16} style={{ color: 'var(--accent-blue)' }} />
-            )}
-            <h3>{getLocationLabel(location)}</h3>
-            <span className="device-count">{locDevices.length} device{locDevices.length !== 1 ? 's' : ''}</span>
-          </div>
-
-          <div className="device-grid">
-            {locDevices.map(device => {
-              const health = getDeviceHealth(device);
-              const isAlerting = health === 'critical' || health === 'warning';
-              const activeCount = (device.active_alerts || []).length;
-              const snow = getSnowSummary(device);
-
-              return (
-                <div key={device.device_name} className={`device-tile ${isAlerting ? 'alerting' : 'healthy'}`} onClick={() => openDevicePanel(device)}>
-                  <div className="device-tile-header">
-                    <span className="device-tile-name">{device.device_name}</span>
-                    <span className={`device-tile-status-dot ${health}`} />
+      {/* ── View 1: Executive Topology View ── */}
+      {viewMode === 'topology' && (
+        <div className="noc-topology-view">
+          {tierGroups.map(tier => {
+            const Meta = TIER_METADATA[tier.id];
+            const TierIcon = Meta.icon;
+            return (
+              <div key={tier.id} className={`noc-tier-section tier-${tier.id}`}>
+                <div className="noc-tier-header">
+                  <div className="noc-tier-title-wrap">
+                    <div className="noc-tier-icon-wrap" style={{ color: Meta.accent }}>
+                      <TierIcon size={18} />
+                    </div>
+                    <div>
+                      <div className="noc-tier-name-row">
+                        <span className="noc-tier-name">{Meta.name}</span>
+                        <span className="noc-tier-tag">{Meta.tag}</span>
+                      </div>
+                      <p className="noc-tier-subtitle">{Meta.subtitle}</p>
+                    </div>
                   </div>
-                  <div className="device-tile-meta">
-                    <span>
-                      {health === 'critical' ? <WifiOff size={12} /> : <Wifi size={12} />}
-                      {health === 'critical' ? 'Critical' : health === 'warning' ? 'Warning' : 'Healthy'}
+                  <div className="noc-tier-summary">
+                    <span className="noc-tier-stat-badge">
+                      <strong>{tier.devices.length}</strong> devices
                     </span>
-                    {device.last_alert_time && (
-                      <span><Clock size={12} /> Last: {formatTimeOnly(device.last_alert_time)}</span>
+                    {tier.critical > 0 && (
+                      <span className="noc-tier-stat-pill critical">
+                        <AlertTriangle size={11} /> {tier.critical} Critical
+                      </span>
                     )}
-                    <span><Activity size={12} /> {device.total_alerts} total alerts</span>
+                    {tier.warning > 0 && (
+                      <span className="noc-tier-stat-pill warning">
+                        <AlertTriangle size={11} /> {tier.warning} Warning
+                      </span>
+                    )}
+                    {tier.critical === 0 && tier.warning === 0 && tier.devices.length > 0 && (
+                      <span className="noc-tier-stat-pill healthy">
+                        <CheckCircle size={11} /> Nominal
+                      </span>
+                    )}
                   </div>
-                  {activeCount > 0 && (
-                    <div className="device-tile-alert-count">
-                      <AlertTriangle size={11} /> {activeCount} active alert{activeCount !== 1 ? 's' : ''}
-                    </div>
-                  )}
-
-                  {/* SNOW Ticket Badges */}
-                  {(snow.created.length > 0 || snow.reopened.length > 0 || snow.commented.length > 0) && (
-                    <div className="device-tile-snow">
-                      {snow.created.length > 0 && (
-                        <span className="badge snow-new" title={snow.created.map(s => s.snow_incident).join(', ')}>
-                          <PlusCircle size={10} /> {snow.created.length} new
-                        </span>
-                      )}
-                      {snow.reopened.length > 0 && (
-                        <span className="badge snow-reopen" title={snow.reopened.map(s => s.snow_incident).join(', ')}>
-                          <RotateCcw size={10} /> {snow.reopened.length} reopen
-                        </span>
-                      )}
-                      {snow.commented.length > 0 && (
-                        <span className="badge snow-comment" title={snow.commented.map(s => s.snow_incident).join(', ')}>
-                          <MessageSquarePlus size={10} /> {snow.commented.length}
-                        </span>
-                      )}
-                    </div>
-                  )}
                 </div>
-              );
-            })}
-          </div>
+
+                {tier.devices.length > 0 ? (
+                  <div className="device-grid">
+                    {tier.devices.map(device => renderDeviceTile(device))}
+                  </div>
+                ) : (
+                  <div className="noc-tier-empty">No devices in this architectural tier matching filter</div>
+                )}
+              </div>
+            );
+          })}
         </div>
-      ))}
+      )}
+
+      {/* ── View 2: SRE High-Density Table View ── */}
+      {viewMode === 'table' && (
+        <div className="noc-sre-table-wrap">
+          <table className="noc-sre-table">
+            <thead>
+              <tr>
+                <th className="sortable" onClick={() => handleTableSort('name')}>
+                  <div className="th-content">
+                    <span>Device Name</span>
+                    <ArrowUpDown size={12} className={`sort-icon ${tableSortCol === 'name' ? 'active' : ''}`} />
+                  </div>
+                </th>
+                <th className="sortable" onClick={() => handleTableSort('tier')}>
+                  <div className="th-content">
+                    <span>Tier</span>
+                    <ArrowUpDown size={12} className={`sort-icon ${tableSortCol === 'tier' ? 'active' : ''}`} />
+                  </div>
+                </th>
+                <th className="sortable" onClick={() => handleTableSort('location')}>
+                  <div className="th-content">
+                    <span>Location</span>
+                    <ArrowUpDown size={12} className={`sort-icon ${tableSortCol === 'location' ? 'active' : ''}`} />
+                  </div>
+                </th>
+                <th className="sortable" onClick={() => handleTableSort('health')}>
+                  <div className="th-content">
+                    <span>Health</span>
+                    <ArrowUpDown size={12} className={`sort-icon ${tableSortCol === 'health' ? 'active' : ''}`} />
+                  </div>
+                </th>
+                <th className="sortable" onClick={() => handleTableSort('alerts')}>
+                  <div className="th-content">
+                    <span>Active Alerts</span>
+                    <ArrowUpDown size={12} className={`sort-icon ${tableSortCol === 'alerts' ? 'active' : ''}`} />
+                  </div>
+                </th>
+                <th className="sortable" onClick={() => handleTableSort('snow')}>
+                  <div className="th-content">
+                    <span>ServiceNow</span>
+                    <ArrowUpDown size={12} className={`sort-icon ${tableSortCol === 'snow' ? 'active' : ''}`} />
+                  </div>
+                </th>
+                <th className="sortable" onClick={() => handleTableSort('last_seen')}>
+                  <div className="th-content">
+                    <span>Last Event</span>
+                    <ArrowUpDown size={12} className={`sort-icon ${tableSortCol === 'last_seen' ? 'active' : ''}`} />
+                  </div>
+                </th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedTableDevices.map(device => {
+                const health = getDeviceHealth(device);
+                const tierId = deriveDeviceTier(device.device_name);
+                const tierMeta = TIER_METADATA[tierId];
+                const activeCount = (device.active_alerts || []).length;
+                const snow = getSnowSummary(device);
+                const locLabel = getLocationLabel(device.location || deriveLocation(device.device_name));
+
+                return (
+                  <tr
+                    key={device.device_name}
+                    className={health === 'critical' ? 'row-critical' : ''}
+                  >
+                    <td>
+                      <div className="noc-device-cell">
+                        <button
+                          type="button"
+                          className="noc-device-name-link"
+                          onClick={() => openDevicePanel(device)}
+                        >
+                          {device.device_name}
+                        </button>
+                        <span className="noc-device-id-sub">{device.device_id || 'ID: —'}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`noc-tier-mini-badge tier-${tierId}`}>
+                        {tierMeta.tag}
+                      </span>
+                    </td>
+                    <td>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                        {locLabel}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`badge health-${health}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                        <span className={`device-tile-status-dot ${health}`} style={{ width: '6px', height: '6px' }} />
+                        {health.toUpperCase()}
+                      </span>
+                    </td>
+                    <td>
+                      {activeCount > 0 ? (
+                        <span className="device-tile-alert-count" style={{ margin: 0 }}>
+                          <AlertTriangle size={11} /> {activeCount} active
+                        </span>
+                      ) : (
+                        <span style={{ color: 'var(--text-tertiary)', fontSize: '0.75rem' }}>—</span>
+                      )}
+                    </td>
+                    <td>
+                      <div className="noc-table-snow-pills">
+                        {snow.created.length > 0 && (
+                          <span className="badge snow-new" title={snow.created.map(s => s.snow_incident).join(', ')}>
+                            <PlusCircle size={10} /> {snow.created.length}
+                          </span>
+                        )}
+                        {snow.reopened.length > 0 && (
+                          <span className="badge snow-reopen" title={snow.reopened.map(s => s.snow_incident).join(', ')}>
+                            <RotateCcw size={10} /> {snow.reopened.length}
+                          </span>
+                        )}
+                        {snow.commented.length > 0 && (
+                          <span className="badge snow-comment" title={snow.commented.map(s => s.snow_incident).join(', ')}>
+                            <MessageSquarePlus size={10} /> {snow.commented.length}
+                          </span>
+                        )}
+                        {snow.created.length === 0 && snow.reopened.length === 0 && snow.commented.length === 0 && (
+                          <span style={{ color: 'var(--text-tertiary)', fontSize: '0.75rem' }}>None</span>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                        {formatTimestamp(device.last_alert_time, 'No recent events')}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <button
+                        type="button"
+                        className="noc-table-action-btn"
+                        onClick={() => openDevicePanel(device)}
+                        title={`Inspect ${device.device_name}`}
+                      >
+                        <span>Inspect</span>
+                        <ChevronRight size={13} />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* ── View 3: Regional Site Matrix View ── */}
+      {viewMode === 'matrix' && (
+        <div className="noc-matrix-grid">
+          {siteMatrix.map(site => (
+            <div
+              key={site.code}
+              className={`noc-site-card site-${site.status}`}
+            >
+              <div>
+                <div className="noc-site-header">
+                  <h3 className="noc-site-title">{site.label}</h3>
+                  <span className={`badge health-${site.status}`}>
+                    {site.status.toUpperCase()}
+                  </span>
+                </div>
+                <p className="noc-site-device-count">{site.devices.length} Devices Registered</p>
+
+                <div className="noc-site-stats-row">
+                  <div className="noc-site-stat-item">
+                    <span className="noc-site-stat-label">Active Alerts</span>
+                    <span className={`noc-site-stat-val ${site.totalAlerts > 0 ? 'alert-val' : ''}`}>
+                      <Flame size={14} />
+                      {site.totalAlerts}
+                    </span>
+                  </div>
+                  <div className="noc-site-stat-item">
+                    <span className="noc-site-stat-label">Avoided Tickets</span>
+                    <span className="noc-site-stat-val zap-val">
+                      <Zap size={14} />
+                      {site.avoidedTickets}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="noc-site-breakdown">
+                  {site.critical > 0 && (
+                    <span className="noc-tier-stat-pill critical">
+                      <AlertTriangle size={10} /> {site.critical} Critical
+                    </span>
+                  )}
+                  {site.warning > 0 && (
+                    <span className="noc-tier-stat-pill warning">
+                      <AlertTriangle size={10} /> {site.warning} Warning
+                    </span>
+                  )}
+                  <span className="noc-tier-stat-pill healthy">
+                    <CheckCircle size={10} /> {site.healthy} Healthy
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="noc-site-drilldown-btn"
+                onClick={() => {
+                  setSearchQuery(site.code);
+                  handleViewModeChange('topology');
+                }}
+              >
+                <span>Inspect Site Devices</span>
+                <ChevronRight size={13} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {filteredDevices.length === 0 && (
         <div className="empty-state" style={{ padding: '3.5rem 1rem', textAlign: 'center' }}>

@@ -2202,6 +2202,540 @@
 }
 
 /* ==========================================================================
+   NOC Phase 10: Multi-Mode Representation Engine
+   ========================================================================== */
+
+/* ── Segmented View Switcher ── */
+.noc-view-switcher {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.noc-view-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: calc(var(--radius-md) - 2px);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.noc-view-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.noc-view-btn.active {
+  color: #fff;
+  background: var(--accent-blue);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* ── View 1: Executive Topology View ── */
+.noc-topology-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  width: 100%;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.noc-tier-section {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.4rem 1.4rem;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+  transition: border-color var(--transition-normal);
+}
+
+.noc-tier-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 4px;
+}
+
+.noc-tier-section.tier-core::before {
+  background: var(--accent-blue);
+}
+
+.noc-tier-section.tier-dist_sec::before {
+  background: var(--accent-purple);
+}
+
+.noc-tier-section.tier-access::before {
+  background: var(--accent-teal);
+}
+
+.noc-tier-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.15rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--card-border);
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.noc-tier-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.noc-tier-icon-wrap {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  background: var(--bg-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid var(--card-border);
+}
+
+.noc-tier-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.noc-tier-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.noc-tier-tag {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  letter-spacing: 0.05em;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--card-border);
+}
+
+.tier-core .noc-tier-tag {
+  color: var(--accent-blue);
+  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.tier-dist_sec .noc-tier-tag {
+  color: var(--accent-purple);
+  border-color: rgba(168, 85, 247, 0.3);
+  background: rgba(168, 85, 247, 0.08);
+}
+
+.tier-access .noc-tier-tag {
+  color: var(--accent-teal);
+  border-color: rgba(20, 184, 166, 0.3);
+  background: rgba(20, 184, 166, 0.08);
+}
+
+.noc-tier-subtitle {
+  margin: 0.2rem 0 0 0;
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
+  line-height: 1.3;
+}
+
+.noc-tier-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.noc-tier-stat-badge {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  padding: 0.25rem 0.65rem;
+  background: var(--bg-tertiary);
+  border-radius: 999px;
+  border: 1px solid var(--card-border);
+}
+
+.noc-tier-stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+}
+
+.noc-tier-stat-pill.critical {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.noc-tier-stat-pill.warning {
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.noc-tier-stat-pill.healthy {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.noc-tier-mini-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 0.1rem 0.38rem;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+  background: var(--bg-tertiary);
+  color: var(--text-tertiary);
+}
+
+.noc-tier-mini-badge.tier-core {
+  color: var(--accent-blue);
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.noc-tier-mini-badge.tier-dist_sec {
+  color: var(--accent-purple);
+  background: rgba(168, 85, 247, 0.1);
+}
+
+.noc-tier-mini-badge.tier-access {
+  color: var(--accent-teal);
+  background: rgba(20, 184, 166, 0.1);
+}
+
+.noc-tier-empty {
+  padding: 1.5rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+.device-tile-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ── View 2: SRE High-Density Table View ── */
+.noc-sre-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.noc-sre-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.82rem;
+}
+
+.noc-sre-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--card-border);
+  white-space: nowrap;
+  user-select: none;
+  z-index: 2;
+}
+
+.noc-sre-table thead th.sortable {
+  cursor: pointer;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.noc-sre-table thead th.sortable:hover {
+  color: var(--text-primary);
+  background: var(--card-border);
+}
+
+.noc-sre-table thead th .th-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.noc-sre-table thead th .sort-icon {
+  opacity: 0.4;
+  transition: opacity var(--transition-fast);
+}
+
+.noc-sre-table thead th .sort-icon.active {
+  opacity: 1;
+  color: var(--accent-blue);
+}
+
+.noc-sre-table tbody tr {
+  border-bottom: 1px solid var(--card-border);
+  transition: background var(--transition-fast);
+}
+
+.noc-sre-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.noc-sre-table tbody tr:hover {
+  background: var(--bg-tertiary);
+}
+
+.noc-sre-table tbody tr.row-critical {
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.noc-sre-table tbody tr.row-critical:hover {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.noc-sre-table tbody td {
+  padding: 0.75rem 1rem;
+  vertical-align: middle;
+  color: var(--text-primary);
+}
+
+.noc-device-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.noc-device-name-link {
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 0.84rem;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.noc-device-name-link:hover {
+  color: var(--accent-blue);
+  text-decoration: underline;
+}
+
+.noc-device-id-sub {
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono, monospace);
+}
+
+.noc-table-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.32rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  border: 1px solid var(--card-border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.noc-table-action-btn:hover {
+  color: #fff;
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+}
+
+.noc-table-snow-pills {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+/* ── View 3: Regional Site Matrix View ── */
+.noc-matrix-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+  width: 100%;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.noc-site-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal), border-color var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+
+.noc-site-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--card-border-hover);
+}
+
+.noc-site-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+}
+
+.noc-site-card.site-nominal::before {
+  background: var(--accent-green);
+}
+
+.noc-site-card.site-degraded::before {
+  background: var(--accent-yellow);
+}
+
+.noc-site-card.site-critical::before {
+  background: var(--accent-red);
+}
+
+.noc-site-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.noc-site-title {
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.noc-site-device-count {
+  font-size: 0.74rem;
+  color: var(--text-tertiary);
+  margin: 0.2rem 0 0.85rem 0;
+}
+
+.noc-site-stats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+  background: var(--bg-tertiary);
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 0.85rem;
+  border: 1px solid var(--card-border);
+}
+
+.noc-site-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.noc-site-stat-label {
+  font-size: 0.68rem;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.noc-site-stat-val {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.noc-site-stat-val.alert-val {
+  color: var(--accent-red);
+}
+
+.noc-site-stat-val.zap-val {
+  color: var(--accent-blue);
+}
+
+.noc-site-breakdown {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.noc-site-drilldown-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.noc-site-drilldown-btn:hover {
+  color: #fff;
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+}
+
+/* ==========================================================================
    ALERT PATTERNS VIEW
    ========================================================================== */
 

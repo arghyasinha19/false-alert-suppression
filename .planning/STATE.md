@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Executive & Observability Network Operations Center (NOC) Overhaul
-status: planning
-last_updated: "2026-10-01T04:25:00.000Z"
+status: in_progress
+last_updated: "2026-10-01T05:05:00.000Z"
 last_activity: 2026-10-01
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 2
-  completed_plans: 1
-  percent: 25
+  completed_plans: 2
+  percent: 50
 ---
 
 # Project State
@@ -18,27 +18,21 @@ progress:
 ## Current Position
 
 Phase: Phase 10 — Multi-Mode Representation Engine
-Plan: 10-01 (Ready for execution)
-Status: Planned (Ready to execute)
-Last activity: 2026-10-01 — Phase 10 plan and UI spec created
+Plan: 10-01
+Status: Complete ✓
+Next: Phase 11 — Multi-Dimensional Filters & Micro-Visualizations
+Last activity: 2026-10-01 — Phase 10 Multi-Mode Representation Engine completed and verified
 
 ## Key Decisions Made
 
-- Port 8004 used for Dashboard FastAPI backend to match frontend `VITE_API_BASE`.
-- Vite dev server runs on port 5173 for local frontend serving.
-- Created `start_dashboard.py` to allow concurrent, graceful startup of both backend and frontend services.
-- Native datetime-local inputs for custom range filtering with fallback clearing to presets.
-- Decoupled `scopeAlerts` filtering by time/device scope while keeping `categoryFilter` table-level.
-- Resolved layout overflow: constrained `.content-body`, responsive 4-column KPI grid, and separated simulate action.
-- Added skeleton shimmer loading to Alert Patterns and non-intrusive warning banner for Ops Assistant API key errors.
-- Deduplicated location pin emojis in Network Operations and used contextual icons (`<Server>` vs `<MapPin>`).
-- Cleaned up 18 dead imports/variables across React components achieving 0 linter warnings.
-- Implemented collapsible 72px sidebar rail with CSS transitions, centered icon alignment, floating tooltips on hover, and localStorage state persistence.
-- Integrated contextual header breadcrumbs ('DNAC Ops Center > {View Name}') with subtle design token typography.
-- Built AnimatedCounter component with cubic ease-out interpolation for all 8 KPI cards.
-- Added .view-transition-container for 0.28s view crossfades with vertical drift.
-- Redesigned ServiceNow Incident Activity section with top-border card accents, total impact chip, monospace incident pills, and constrained grid width.
+- Implemented 3 dedicated representation perspectives: Executive Topology (hierarchical 3-tier view), SRE High-Density Table (compact sortable triage table with sticky headers), and Regional Site Matrix (multi-region health status cards).
+- Embedded segmented 3-button switcher directly in `.filter-bar` with `localStorage` persistence under `'dnac_noc_view_mode'`.
+- Core/Distribution-Security/Access tier classification derived automatically from device naming conventions (`deriveDeviceTier`) and metadata tags (`TIER_METADATA`).
+- SRE Table provides multi-column sorting (`name`, `tier`, `location`, `health`, `alerts`, `snow`, `last_seen`) with default descending severity weighting and monospace device identifiers.
+- Regional Site Matrix aggregates site alerts, noise suppression savings (avoided tickets), and provides instant "Inspect Site Devices →" filter drilldowns.
+- Preserved slide-out detail drawer integration across all views via standardized `renderDeviceTile` and action buttons.
 
 ## Blockers/Concerns
 
-- None. All 5 audit-fix items resolved, test verified, and validated in browser.
+- None. Both FastAPI Backend and Vite Frontend running healthy. All linters (`oxlint`) and production builds (`vite build`) passing with 0 warnings.
+
