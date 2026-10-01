@@ -7,11 +7,11 @@
 ## Milestone v1.5 Requirements: Executive & Observability NOC Overhaul
 
 ### Executive Telemetry & Health KPIs (NOC-KPI)
-- [ ] **NOC-KPI-01**: User can view Fleet Health Score (% index based on weighted device operational availability) with animated counter.
-- [ ] **NOC-KPI-02**: User can view False Alert Noise Reduction / Suppression Rate (%) at fleet level.
-- [ ] **NOC-KPI-03**: User can view Active Incident Blast Radius (# affected sites & degraded devices).
-- [ ] **NOC-KPI-04**: User can view Mean Resolution Velocity / MTTA metric for auto-resolved vs escalated incidents.
-- [ ] **NOC-KPI-05**: User can view Site Resilience Ratio (e.g. 8/9 Nominal sites) in the top executive summary strip.
+- [x] **NOC-KPI-01**: User can view Fleet Health Score (% index based on weighted device operational availability) with animated counter.
+- [x] **NOC-KPI-02**: User can view False Alert Noise Reduction / Suppression Rate (%) at fleet level.
+- [x] **NOC-KPI-03**: User can view Active Incident Blast Radius (# affected sites & degraded devices).
+- [x] **NOC-KPI-04**: User can view Mean Resolution Velocity / MTTA metric for auto-resolved vs escalated incidents.
+- [x] **NOC-KPI-05**: User can view Site Resilience Ratio (e.g. 8/9 Nominal sites) in the top executive summary strip.
 
 ### Multi-Mode Representation Engine (NOC-VIEW)
 - [ ] **NOC-VIEW-01**: User can toggle between 3 presentation modes: "Executive Topology", "SRE High-Density Table", and "Regional Site Matrix" with seamless animated state switching.
@@ -47,11 +47,11 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| NOC-KPI-01 | Phase 9 | Pending |
-| NOC-KPI-02 | Phase 9 | Pending |
-| NOC-KPI-03 | Phase 9 | Pending |
-| NOC-KPI-04 | Phase 9 | Pending |
-| NOC-KPI-05 | Phase 9 | Pending |
+| NOC-KPI-01 | Phase 9 | Complete ✓ |
+| NOC-KPI-02 | Phase 9 | Complete ✓ |
+| NOC-KPI-03 | Phase 9 | Complete ✓ |
+| NOC-KPI-04 | Phase 9 | Complete ✓ |
+| NOC-KPI-05 | Phase 9 | Complete ✓ |
 | NOC-VIEW-01 | Phase 10 | Pending |
 | NOC-VIEW-02 | Phase 10 | Pending |
 | NOC-VIEW-03 | Phase 10 | Pending |

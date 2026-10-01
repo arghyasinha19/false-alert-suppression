@@ -1877,6 +1877,219 @@
 }
 
 /* ==========================================================================
+   NOC: Executive Telemetry & Health KPI Strip (Phase 9)
+   ========================================================================== */
+
+.noc-executive-strip {
+  display: grid;
+  grid-template-columns: minmax(290px, 1.4fr) repeat(4, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 1500px) {
+  .noc-executive-strip {
+    grid-template-columns: minmax(260px, 1.2fr) repeat(4, minmax(180px, 1fr));
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 1280px) {
+  .noc-executive-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .noc-hero-card {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .noc-executive-strip {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Hero Card: Fleet Health Score */
+.noc-hero-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.35rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--card-border);
+  transition: all var(--transition-normal);
+  box-shadow: var(--shadow-sm);
+}
+
+.noc-hero-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0.08;
+  transition: opacity var(--transition-normal);
+}
+
+.noc-hero-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.noc-hero-card.sla-nominal {
+  border-color: rgba(16, 185, 129, 0.35);
+}
+.noc-hero-card.sla-nominal::before {
+  background: radial-gradient(circle at top right, var(--accent-green) 0%, transparent 70%);
+}
+.noc-hero-card.sla-nominal::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-green), var(--accent-teal));
+}
+
+.noc-hero-card.sla-degraded {
+  border-color: rgba(245, 158, 11, 0.35);
+}
+.noc-hero-card.sla-degraded::before {
+  background: radial-gradient(circle at top right, var(--accent-yellow) 0%, transparent 70%);
+}
+.noc-hero-card.sla-degraded::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-yellow), var(--accent-orange));
+}
+
+.noc-hero-card.sla-critical {
+  border-color: rgba(239, 68, 68, 0.4);
+}
+.noc-hero-card.sla-critical::before {
+  background: radial-gradient(circle at top right, var(--accent-red) 0%, transparent 70%);
+}
+.noc-hero-card.sla-critical::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-red), var(--accent-orange));
+}
+
+.noc-hero-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.noc-hero-value-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0.35rem 0 0.25rem 0;
+}
+
+.noc-hero-card .value {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.noc-hero-card.sla-nominal .value {
+  color: var(--accent-green);
+}
+.noc-hero-card.sla-degraded .value {
+  color: var(--accent-yellow);
+}
+.noc-hero-card.sla-critical .value {
+  color: var(--accent-red);
+}
+
+.noc-kpi-subtitle {
+  margin: 0.35rem 0 0 0;
+  font-size: 0.73rem;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.noc-resilience-bar {
+  width: 100%;
+  height: 5px;
+  background: rgba(239, 68, 68, 0.25);
+  border-radius: 999px;
+  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.noc-resilience-fill {
+  height: 100%;
+  background: var(--accent-green);
+  border-radius: 999px;
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.kpi-card .value-unit {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: normal;
+}
+
+/* SLA Status Badges */
+.badge.health-nominal {
+  background: rgba(16, 185, 129, 0.14);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+}
+
+.badge.health-degraded {
+  background: rgba(245, 158, 11, 0.14);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+}
+
+.badge.health-critical {
+  background: rgba(239, 68, 68, 0.14);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+}
+
+/* ==========================================================================
    NOC: DNAC Status Badges
    ========================================================================== */
 
