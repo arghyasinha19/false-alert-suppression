@@ -1879,154 +1879,201 @@
 }
 
 /* ==========================================================================
-   NOC: Executive Telemetry & Health KPI Strip (Phase 9)
+   NOC: Executive Telemetry & Health KPI Strip
    ========================================================================== */
 
 .noc-executive-strip {
   display: grid;
-  grid-template-columns: minmax(290px, 1.4fr) repeat(4, minmax(200px, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 1rem;
   margin-bottom: 1.5rem;
 }
 
-@media (max-width: 1500px) {
+@media (max-width: 1400px) {
   .noc-executive-strip {
-    grid-template-columns: minmax(260px, 1.2fr) repeat(4, minmax(180px, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.85rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .noc-executive-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.75rem;
   }
 }
 
-@media (max-width: 1280px) {
-  .noc-executive-strip {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .noc-hero-card {
-    grid-column: 1 / -1;
-  }
-}
-
-@media (max-width: 768px) {
+@media (max-width: 600px) {
   .noc-executive-strip {
     grid-template-columns: 1fr;
   }
 }
 
-/* Hero Card: Fleet Health Score */
-.noc-hero-card {
+/* Unified NOC KPI Card */
+.noc-kpi-card {
   background: var(--card-bg);
   border-radius: var(--radius-lg);
-  padding: 1.25rem 1.35rem;
+  padding: 1.15rem 1.25rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  min-height: 156px;
   position: relative;
   overflow: hidden;
   border: 1px solid var(--card-border);
-  transition: all var(--transition-normal);
   box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
 }
 
-.noc-hero-card::before {
+.noc-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* 3px Top Colored Accent Stripe for every card */
+.noc-kpi-card::after {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  bottom: 0;
-  pointer-events: none;
+  height: 3px;
+  opacity: 1;
+}
+
+/* Subtle top-right radial glow for cohesive depth */
+.noc-kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 140px;
+  height: 140px;
   border-radius: inherit;
-  opacity: 0.08;
+  pointer-events: none;
+  opacity: 0.05;
   transition: opacity var(--transition-normal);
 }
 
-.noc-hero-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-lg);
+.noc-kpi-card:hover::before {
+  opacity: 0.1;
 }
 
-.noc-hero-card.sla-nominal {
-  border-color: rgba(16, 185, 129, 0.35);
-}
-.noc-hero-card.sla-nominal::before {
-  background: radial-gradient(circle at top right, var(--accent-green) 0%, transparent 70%);
-}
-.noc-hero-card.sla-nominal::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
+/* Category Accent Styles */
+.noc-kpi-card.sla-nominal::after,
+.noc-kpi-card.highlight-green::after {
   background: linear-gradient(90deg, var(--accent-green), var(--accent-teal));
 }
+.noc-kpi-card.sla-nominal::before,
+.noc-kpi-card.highlight-green::before {
+  background: radial-gradient(circle at top right, var(--accent-green) 0%, transparent 70%);
+}
 
-.noc-hero-card.sla-degraded {
-  border-color: rgba(245, 158, 11, 0.35);
-}
-.noc-hero-card.sla-degraded::before {
-  background: radial-gradient(circle at top right, var(--accent-yellow) 0%, transparent 70%);
-}
-.noc-hero-card.sla-degraded::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
+.noc-kpi-card.sla-degraded::after,
+.noc-kpi-card.highlight-yellow::after {
   background: linear-gradient(90deg, var(--accent-yellow), var(--accent-orange));
 }
+.noc-kpi-card.sla-degraded::before,
+.noc-kpi-card.highlight-yellow::before {
+  background: radial-gradient(circle at top right, var(--accent-yellow) 0%, transparent 70%);
+}
 
-.noc-hero-card.sla-critical {
-  border-color: rgba(239, 68, 68, 0.4);
-}
-.noc-hero-card.sla-critical::before {
-  background: radial-gradient(circle at top right, var(--accent-red) 0%, transparent 70%);
-}
-.noc-hero-card.sla-critical::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
+.noc-kpi-card.sla-critical::after,
+.noc-kpi-card.highlight-red::after {
   background: linear-gradient(90deg, var(--accent-red), var(--accent-orange));
 }
+.noc-kpi-card.sla-critical::before,
+.noc-kpi-card.highlight-red::before {
+  background: radial-gradient(circle at top right, var(--accent-red) 0%, transparent 70%);
+}
 
-.noc-hero-top {
+.noc-kpi-card.highlight-blue::after {
+  background: linear-gradient(90deg, var(--accent-blue), var(--accent-indigo));
+}
+.noc-kpi-card.highlight-blue::before {
+  background: radial-gradient(circle at top right, var(--accent-blue) 0%, transparent 70%);
+}
+
+.noc-kpi-card.highlight-purple::after {
+  background: linear-gradient(90deg, var(--accent-purple), var(--accent-indigo));
+}
+.noc-kpi-card.highlight-purple::before {
+  background: radial-gradient(circle at top right, var(--accent-purple) 0%, transparent 70%);
+}
+
+/* Card Top: Icon (left) + Badge Pill (right) */
+.noc-kpi-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.85rem;
 }
 
-.noc-hero-value-wrap {
+.noc-kpi-top .kpi-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Card Body */
+.noc-kpi-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: space-between;
+}
+
+.noc-kpi-main {
+  display: flex;
+  flex-direction: column;
+}
+
+.noc-kpi-title {
+  margin: 0 0 0.35rem 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+  line-height: 1.2;
+}
+
+.noc-kpi-value-row {
   display: flex;
   align-items: baseline;
-  gap: 0.5rem;
-  margin: 0.35rem 0 0.25rem 0;
+  gap: 0.4rem;
+  margin: 0.15rem 0 0.35rem 0;
 }
 
-.noc-hero-card .value {
-  font-size: 2.2rem;
+.noc-kpi-value {
+  font-size: 1.85rem;
   font-weight: 800;
+  line-height: 1.1;
   color: var(--text-primary);
-  line-height: 1;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
 }
 
-.noc-hero-card.sla-nominal .value {
-  color: var(--accent-green);
+.noc-kpi-unit {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: normal;
 }
-.noc-hero-card.sla-degraded .value {
-  color: var(--accent-yellow);
-}
-.noc-hero-card.sla-critical .value {
-  color: var(--accent-red);
+
+.noc-kpi-footer {
+  display: flex;
+  flex-direction: column;
+  margin-top: 0.25rem;
 }
 
 .noc-kpi-subtitle {
-  margin: 0.35rem 0 0 0;
-  font-size: 0.73rem;
+  margin: 0;
+  font-size: 0.72rem;
   color: var(--text-tertiary);
   font-weight: 500;
   line-height: 1.25;
@@ -2035,10 +2082,9 @@
 .noc-resilience-bar {
   width: 100%;
   height: 5px;
-  background: rgba(239, 68, 68, 0.25);
+  background: rgba(239, 68, 68, 0.22);
   border-radius: 999px;
-  margin-top: 0.5rem;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.3rem;
   overflow: hidden;
   position: relative;
 }
@@ -2089,6 +2135,49 @@
   letter-spacing: 0.05em;
   padding: 0.2rem 0.5rem;
   border-radius: 999px;
+}
+
+/* Subtle Badges for KPI Strip */
+.badge.badge-subtle {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.badge.badge-subtle.blue {
+  background: rgba(59, 130, 246, 0.14);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.badge.badge-subtle.purple {
+  background: rgba(139, 92, 246, 0.14);
+  color: #a78bfa;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+}
+
+.badge.badge-subtle.green {
+  background: rgba(16, 185, 129, 0.14);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.badge.badge-subtle.yellow {
+  background: rgba(245, 158, 11, 0.14);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.badge.badge-subtle.red {
+  background: rgba(239, 68, 68, 0.14);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
 }
 
 /* ==========================================================================

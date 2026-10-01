@@ -1109,94 +1109,136 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
 
       {/* Executive Telemetry & Health KPI Strip */}
       <div className="noc-executive-strip">
-        {/* Card 1: Fleet Health Score (Hero Card) */}
-        <div className={`glass-card kpi-card noc-hero-card sla-${executiveKPI.slaStatus}`}>
-          <div className="noc-hero-top">
+        {/* Card 1: Fleet Health Score */}
+        <div className={`glass-card noc-kpi-card sla-${executiveKPI.slaStatus}`}>
+          <div className="noc-kpi-top">
             <div className={`kpi-icon ${executiveKPI.slaStatus === 'nominal' ? 'green' : executiveKPI.slaStatus === 'degraded' ? 'yellow' : 'red'}`}>
-              <ShieldCheck size={22} />
+              <ShieldCheck size={20} />
             </div>
             <span className={`badge health-${executiveKPI.slaStatus}`}>
               {executiveKPI.slaLabel}
             </span>
           </div>
-          <div className="kpi-content">
-            <h3>Fleet Health Score</h3>
-            <div className="noc-hero-value-wrap">
-              <span className="value">
-                <AnimatedCounter value={executiveKPI.fleetHealthScore} duration={800} suffix="%" />
-              </span>
+          <div className="noc-kpi-body">
+            <div className="noc-kpi-main">
+              <h3 className="noc-kpi-title">Fleet Health Score</h3>
+              <div className="noc-kpi-value-row">
+                <span className="noc-kpi-value">
+                  <AnimatedCounter value={executiveKPI.fleetHealthScore} duration={800} suffix="%" />
+                </span>
+              </div>
             </div>
-            <p className="noc-kpi-subtitle">
-              {executiveKPI.slaStatus === 'nominal'
-                ? `${executiveKPI.fleetHealthScore}% Operational availability`
-                : `${executiveKPI.degradedNodesCount} node${executiveKPI.degradedNodesCount !== 1 ? 's' : ''} require attention`}
-            </p>
+            <div className="noc-kpi-footer">
+              <p className="noc-kpi-subtitle">
+                {executiveKPI.slaStatus === 'nominal'
+                  ? `${executiveKPI.fleetHealthScore}% Operational availability`
+                  : `${executiveKPI.degradedNodesCount} node${executiveKPI.degradedNodesCount !== 1 ? 's' : ''} require attention`}
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Card 2: Noise Suppression Efficiency */}
-        <div className="glass-card kpi-card highlight-blue">
-          <div className="kpi-icon blue">
-            <Zap size={20} />
+        <div className="glass-card noc-kpi-card highlight-blue">
+          <div className="noc-kpi-top">
+            <div className="kpi-icon blue">
+              <Zap size={20} />
+            </div>
+            <span className="badge badge-subtle blue">AI EDGE FILTER</span>
           </div>
-          <div className="kpi-content">
-            <h3>Noise Suppression</h3>
-            <p className="value">
-              <AnimatedCounter value={executiveKPI.suppressionRate} duration={800} decimals={1} suffix="%" />
-            </p>
-            <p className="noc-kpi-subtitle">Alerts filtered at edge</p>
+          <div className="noc-kpi-body">
+            <div className="noc-kpi-main">
+              <h3 className="noc-kpi-title">Noise Suppression</h3>
+              <div className="noc-kpi-value-row">
+                <span className="noc-kpi-value">
+                  <AnimatedCounter value={executiveKPI.suppressionRate} duration={800} decimals={1} suffix="%" />
+                </span>
+              </div>
+            </div>
+            <div className="noc-kpi-footer">
+              <p className="noc-kpi-subtitle">Alerts filtered at edge</p>
+            </div>
           </div>
         </div>
 
         {/* Card 3: Active Blast Radius */}
-        <div className={`glass-card kpi-card ${executiveKPI.degradedNodesCount > 0 ? (executiveKPI.critical > 0 ? 'highlight-red' : 'highlight-yellow') : 'highlight-green'}`}>
-          <div className={`kpi-icon ${executiveKPI.degradedNodesCount > 0 ? (executiveKPI.critical > 0 ? 'red' : 'yellow') : 'green'}`}>
-            <Flame size={20} />
+        <div className={`glass-card noc-kpi-card ${executiveKPI.degradedNodesCount > 0 ? (executiveKPI.critical > 0 ? 'highlight-red' : 'highlight-yellow') : 'highlight-green'}`}>
+          <div className="noc-kpi-top">
+            <div className={`kpi-icon ${executiveKPI.degradedNodesCount > 0 ? (executiveKPI.critical > 0 ? 'red' : 'yellow') : 'green'}`}>
+              <Flame size={20} />
+            </div>
+            <span className={`badge badge-subtle ${executiveKPI.degradedNodesCount > 0 ? (executiveKPI.critical > 0 ? 'red' : 'yellow') : 'green'}`}>
+              {executiveKPI.critical > 0 ? 'ACTIVE IMPACT' : executiveKPI.degradedNodesCount > 0 ? 'DEGRADED' : 'CLEAR'}
+            </span>
           </div>
-          <div className="kpi-content">
-            <h3>Active Blast Radius</h3>
-            <p className="value">
-              <AnimatedCounter value={executiveKPI.degradedNodesCount} duration={800} />
-              <span className="value-unit"> Nodes</span>
-            </p>
-            <p className="noc-kpi-subtitle">
-              {executiveKPI.degradedNodesCount === 0
-                ? '0 affected locations'
-                : `Across ${executiveKPI.affectedSitesCount} / ${executiveKPI.totalSitesCount} locations`}
-            </p>
+          <div className="noc-kpi-body">
+            <div className="noc-kpi-main">
+              <h3 className="noc-kpi-title">Active Blast Radius</h3>
+              <div className="noc-kpi-value-row">
+                <span className="noc-kpi-value">
+                  <AnimatedCounter value={executiveKPI.degradedNodesCount} duration={800} />
+                </span>
+                <span className="noc-kpi-unit">Nodes</span>
+              </div>
+            </div>
+            <div className="noc-kpi-footer">
+              <p className="noc-kpi-subtitle">
+                {executiveKPI.degradedNodesCount === 0
+                  ? '0 affected locations'
+                  : `Across ${executiveKPI.affectedSitesCount} / ${executiveKPI.totalSitesCount} locations`}
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Card 4: Mean Resolution Velocity */}
-        <div className="glass-card kpi-card highlight-purple">
-          <div className="kpi-icon purple">
-            <Timer size={20} />
+        <div className="glass-card noc-kpi-card highlight-purple">
+          <div className="noc-kpi-top">
+            <div className="kpi-icon purple">
+              <Timer size={20} />
+            </div>
+            <span className="badge badge-subtle purple">DLX BUFFER</span>
           </div>
-          <div className="kpi-content">
-            <h3>Resolution Velocity</h3>
-            <p className="value">~15m</p>
-            <p className="noc-kpi-subtitle">DLX verification window</p>
+          <div className="noc-kpi-body">
+            <div className="noc-kpi-main">
+              <h3 className="noc-kpi-title">Resolution Velocity</h3>
+              <div className="noc-kpi-value-row">
+                <span className="noc-kpi-value">~15m</span>
+              </div>
+            </div>
+            <div className="noc-kpi-footer">
+              <p className="noc-kpi-subtitle">DLX verification window</p>
+            </div>
           </div>
         </div>
 
         {/* Card 5: Site Resilience Index */}
-        <div className="glass-card kpi-card highlight-green">
-          <div className="kpi-icon green">
-            <Radio size={20} />
-          </div>
-          <div className="kpi-content">
-            <h3>Site Resilience</h3>
-            <p className="value">
-              {executiveKPI.nominalSitesCount} / {executiveKPI.totalSitesCount}
-              <span className="value-unit"> Sites</span>
-            </p>
-            <div className="noc-resilience-bar" title={`${executiveKPI.resiliencePct}% of physical regions nominal`}>
-              <div
-                className="noc-resilience-fill"
-                style={{ width: `${executiveKPI.resiliencePct}%` }}
-              />
+        <div className="glass-card noc-kpi-card highlight-green">
+          <div className="noc-kpi-top">
+            <div className="kpi-icon green">
+              <Radio size={20} />
             </div>
-            <p className="noc-kpi-subtitle">{executiveKPI.resiliencePct}% regions nominal</p>
+            <span className="badge badge-subtle green">{executiveKPI.resiliencePct}% SITES</span>
+          </div>
+          <div className="noc-kpi-body">
+            <div className="noc-kpi-main">
+              <h3 className="noc-kpi-title">Site Resilience</h3>
+              <div className="noc-kpi-value-row">
+                <span className="noc-kpi-value">
+                  {executiveKPI.nominalSitesCount} / {executiveKPI.totalSitesCount}
+                </span>
+                <span className="noc-kpi-unit">Sites</span>
+              </div>
+            </div>
+            <div className="noc-kpi-footer">
+              <div className="noc-resilience-bar" title={`${executiveKPI.resiliencePct}% of physical regions nominal`}>
+                <div
+                  className="noc-resilience-fill"
+                  style={{ width: `${executiveKPI.resiliencePct}%` }}
+                />
+              </div>
+              <p className="noc-kpi-subtitle">{executiveKPI.resiliencePct}% regions nominal</p>
+            </div>
           </div>
         </div>
       </div>
