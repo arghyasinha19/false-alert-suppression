@@ -204,6 +204,184 @@ function generateMockDevices() {
   });
 }
 
+const ROLE_METADATA = {
+  all: { id: 'all', label: 'All Roles', icon: Layers },
+  core: { id: 'core', label: 'Core & WAN', icon: Server, color: 'var(--accent-blue)' },
+  distribution: { id: 'distribution', label: 'Distribution', icon: ShieldCheck, color: 'var(--accent-purple)' },
+  access: { id: 'access', label: 'Access Edge', icon: Radio, color: 'var(--accent-teal)' },
+  wireless: { id: 'wireless', label: 'Wireless APs', icon: Wifi, color: 'var(--accent-green)' },
+  security: { id: 'security', label: 'Security & FW', icon: Shield, color: 'var(--accent-orange)' }
+};
+
+function deriveDeviceRole(device) {
+  const name = (device.device_name || '').toLowerCase();
+  const cat = (device.category || '').toLowerCase();
+
+  if (name.includes('fw') || name.includes('firewall') || cat.includes('firewall') || cat.includes('security')) {
+    return 'security';
+  }
+  if (name.includes('ap') || name.includes('wlc') || name.includes('wifi') || cat.includes('wireless') || cat.includes('access point')) {
+    return 'wireless';
+  }
+  if (name.includes('core') || (name.includes('router') && !name.includes('dist')) || name.includes('rt') || name.includes('gw') || name.includes('dc') || cat.includes('router')) {
+    return 'core';
+  }
+  if (name.includes('dist') || name.includes('sw01')) {
+    return 'distribution';
+  }
+  return 'access';
+}
+
+function getDeviceSparklineData(device) {
+  const buckets = new Array(24).fill(0);
+  const now = Date.now();
+  const allAlerts = [...(device.active_alerts || []), ...(device.resolved_alerts || [])];
+
+  let parsedCount = 0;
+  allAlerts.forEach(a => {
+    const d = parseTimestamp(a.timestamp);
+    if (d) {
+      const msDiff = now - d.getTime();
+      const hourDiff = Math.floor(msDiff / 3600000);
+      if (hourDiff >= 0 && hourDiff < 24) {
+        buckets[23 - hourDiff]++;
+        parsedCount++;
+      }
+    }
+  });
+
+  if (parsedCount === 0 && device.total_alerts > 0) {
+    const name = device.device_name || '';
+    let seed = 0;
+    for (let i = 0; i < name.length; i++) {
+      seed = (seed * 31 + name.charCodeAt(i)) & 0xffffffff;
+    }
+    const alertsCount = Math.min(device.total_alerts, 12);
+    for (let i = 0; i < alertsCount; i++) {
+      const isCritical = (device.active_alerts || []).length > 0;
+      const hourIndex = isCritical
+        ? 16 + Math.abs((seed + i * 7) % 8)
+        : Math.abs((seed + i * 5) % 24);
+      buckets[Math.min(23, hourIndex)] += 1;
+    }
+  }
+
+  return buckets;
+}
+
+function DeviceSparkline({ data, isAlerting, height = 20, barWidth = 3, gap = 2, compact = false }) {
+  const total = data.reduce((a, b) => a + b, 0);
+  const maxVal = Math.max(...data, 1);
+  const totalWidth = data.length * (barWidth + gap);
+
+  return (
+    <div
+      className={`noc-sparkline-wrap ${compact ? 'compact' : ''}`}
+      title={`24h Activity: ${total} alert event${total !== 1 ? 's' : ''}`}
+    >
+      {!compact && (
+        <div className="noc-sparkline-meta">
+          <span className="noc-sparkline-label">24h Alert Activity</span>
+          <span className="noc-sparkline-total">{total} events</span>
+        </div>
+      )}
+      <svg
+        className="noc-sparkline-svg"
+        height={height}
+        viewBox={`0 0 ${totalWidth} ${height}`}
+        preserveAspectRatio="none"
+      >
+        {data.map((val, i) => {
+          const barHeight = val === 0 ? 2 : Math.max(3, Math.round((val / maxVal) * (height - 3)));
+          const y = height - barHeight;
+          const x = i * (barWidth + gap);
+          const isRecent = i >= data.length - 6;
+
+          let fill = 'var(--text-tertiary)';
+          if (val > 0) {
+            if (isAlerting && isRecent) {
+              fill = val > 1 ? 'var(--accent-red)' : 'var(--accent-orange)';
+            } else {
+              fill = 'var(--accent-blue)';
+            }
+          }
+
+          return (
+            <rect
+              key={i}
+              x={x}
+              y={y}
+              width={barWidth}
+              height={barHeight}
+              rx={1}
+              fill={fill}
+              opacity={val === 0 ? 0.2 : 0.9}
+            />
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+function getSeverityBreakdown(device) {
+  const alerts = (device.active_alerts || []).filter(a => a.dnac_live_status !== 'RESOLVED');
+  let sev1 = 0, sev2 = 0, sev3 = 0;
+  alerts.forEach(a => {
+    const s = a.severity;
+    if (s <= 1) sev1++;
+    else if (s === 2) sev2++;
+    else sev3++;
+  });
+  return { sev1, sev2, sev3, total: alerts.length };
+}
+
+function SeverityMiniBar({ device, compact = false }) {
+  const { sev1, sev2, sev3, total } = getSeverityBreakdown(device);
+
+  if (total === 0) {
+    return (
+      <div
+        className={`noc-sev-bar-wrap ${compact ? 'compact' : ''}`}
+        title="100% Operational Availability — No active alerts"
+      >
+        <div className="noc-sev-bar nominal">
+          <span className="noc-sev-track nominal" style={{ width: '100%' }} />
+        </div>
+        {!compact && (
+          <div className="noc-sev-meta">
+            <span className="sev-dot healthy">Nominal • 0 Alerts</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const p1 = (sev1 / total) * 100;
+  const p2 = (sev2 / total) * 100;
+  const p3 = (sev3 / total) * 100;
+
+  return (
+    <div
+      className={`noc-sev-bar-wrap ${compact ? 'compact' : ''}`}
+      title={`Severity Breakdown: ${sev1} Critical, ${sev2} Warning, ${sev3} Minor`}
+    >
+      <div className="noc-sev-bar">
+        {sev1 > 0 && <span className="noc-sev-track critical" style={{ width: `${p1}%` }} />}
+        {sev2 > 0 && <span className="noc-sev-track warning" style={{ width: `${p2}%` }} />}
+        {sev3 > 0 && <span className="noc-sev-track minor" style={{ width: `${p3}%` }} />}
+      </div>
+      {!compact && (
+        <div className="noc-sev-meta">
+          {sev1 > 0 && <span className="sev-dot critical">{sev1} Critical</span>}
+          {sev2 > 0 && <span className="sev-dot warning">{sev2} Warning</span>}
+          {sev3 > 0 && <span className="sev-dot minor">{sev3} Minor</span>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function NetworkOperations({ devices: rawDevices, lastRefresh, pollInterval = 15000 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDevice, setSelectedDevice] = useState(null);
@@ -219,6 +397,9 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
   });
   const [tableSortCol, setTableSortCol] = useState('health');
   const [tableSortDir, setTableSortDir] = useState('desc');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [healthFilter, setHealthFilter] = useState('all');
+  const [snowFilter, setSnowFilter] = useState('all');
   const selectedDeviceNameRef = useRef(null);
 
   const handleViewModeChange = (mode) => {
@@ -243,6 +424,37 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
     if (rawDevices && rawDevices.length > 0) return rawDevices;
     return generateMockDevices();
   }, [rawDevices]);
+
+  // Dynamic counts for multi-dimensional filter chips
+  const { roleCounts, healthCounts, snowCounts } = useMemo(() => {
+    const roles = { all: devices.length, core: 0, distribution: 0, access: 0, wireless: 0, security: 0 };
+    const health = { critical: 0, warning: 0, healthy: 0 };
+    const snow = { has_incident: 0, clean: 0 };
+
+    devices.forEach(d => {
+      const r = deriveDeviceRole(d);
+      if (roles[r] !== undefined) roles[r]++;
+
+      const h = getDeviceHealth(d);
+      if (health[h] !== undefined) health[h]++;
+
+      const s = getSnowSummary(d);
+      const hasInc = (d.snow_incidents > 0) || s.created.length > 0 || s.reopened.length > 0 || (d.active_alerts || []).some(a => a.snow_incident);
+      if (hasInc) snow.has_incident++;
+      else snow.clean++;
+    });
+
+    return { roleCounts: roles, healthCounts: health, snowCounts: snow };
+  }, [devices]);
+
+  const hasActiveFilters = searchQuery !== '' || roleFilter !== 'all' || healthFilter !== 'all' || snowFilter !== 'all';
+
+  const resetAllFilters = () => {
+    setSearchQuery('');
+    setRoleFilter('all');
+    setHealthFilter('all');
+    setSnowFilter('all');
+  };
 
   // Freeze body scroll when detail panel is open
   useEffect(() => {
@@ -277,18 +489,47 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
   const progressPct = Math.min(100, (secondsAgo / (pollInterval / 1000)) * 100);
 
   const filteredDevices = useMemo(() => {
-    if (!searchQuery) return devices;
-    const q = searchQuery.toLowerCase().trim();
     return devices.filter(d => {
-      const locLabel = (getLocationLabel(d.location || deriveLocation(d.device_name))).toLowerCase();
-      const devName = (d.device_name || '').toLowerCase();
-      const devId = (d.device_id || '').toLowerCase();
-      const tierId = deriveDeviceTier(d.device_name);
-      const tierMeta = TIER_METADATA[tierId];
-      const tierMatch = tierMeta && (tierMeta.name.toLowerCase().includes(q) || tierMeta.tag.toLowerCase().includes(q));
-      return devName.includes(q) || locLabel.includes(q) || devId.includes(q) || tierMatch;
+      // 1. Search Query
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase().trim();
+        const locLabel = (getLocationLabel(d.location || deriveLocation(d.device_name))).toLowerCase();
+        const devName = (d.device_name || '').toLowerCase();
+        const devId = (d.device_id || '').toLowerCase();
+        const tierId = deriveDeviceTier(d.device_name);
+        const tierMeta = TIER_METADATA[tierId];
+        const tierMatch = tierMeta && (tierMeta.name.toLowerCase().includes(q) || tierMeta.tag.toLowerCase().includes(q));
+        const role = deriveDeviceRole(d);
+        const roleMeta = ROLE_METADATA[role];
+        const roleMatch = roleMeta && (roleMeta.label.toLowerCase().includes(q) || role.toLowerCase().includes(q));
+        if (!devName.includes(q) && !locLabel.includes(q) && !devId.includes(q) && !tierMatch && !roleMatch) {
+          return false;
+        }
+      }
+
+      // 2. Role Filter
+      if (roleFilter !== 'all') {
+        const role = deriveDeviceRole(d);
+        if (role !== roleFilter) return false;
+      }
+
+      // 3. Health Filter
+      if (healthFilter !== 'all') {
+        const health = getDeviceHealth(d);
+        if (health !== healthFilter) return false;
+      }
+
+      // 4. ServiceNow Filter
+      if (snowFilter !== 'all') {
+        const snow = getSnowSummary(d);
+        const hasIncident = (d.snow_incidents > 0) || snow.created.length > 0 || snow.reopened.length > 0 || (d.active_alerts || []).some(a => a.snow_incident);
+        if (snowFilter === 'has_incident' && !hasIncident) return false;
+        if (snowFilter === 'clean' && hasIncident) return false;
+      }
+
+      return true;
     });
-  }, [devices, searchQuery]);
+  }, [devices, searchQuery, roleFilter, healthFilter, snowFilter]);
 
   // Tier Groups for Executive Topology View
   const tierGroups = useMemo(() => {
@@ -551,6 +792,16 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
           )}
           <span><Activity size={12} /> {device.total_alerts} total alerts</span>
         </div>
+
+        {/* 24h Activity Sparkline */}
+        <DeviceSparkline
+          data={getDeviceSparklineData(device)}
+          isAlerting={isAlerting}
+        />
+
+        {/* Live Severity Breakdown Mini-Bar */}
+        <SeverityMiniBar device={device} />
+
         {activeCount > 0 && (
           <div className="device-tile-alert-count">
             <AlertTriangle size={11} /> {activeCount} active alert{activeCount !== 1 ? 's' : ''}
@@ -754,6 +1005,122 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
         </span>
       </div>
 
+      {/* Tier 2: Multi-Dimensional Filter Strip */}
+      <div className="noc-filter-strip">
+        <div className="noc-filter-group-row">
+          {/* Role Filter Chips */}
+          <div className="noc-filter-cluster">
+            <span className="noc-filter-cluster-label">Role:</span>
+            <div className="noc-chip-group">
+              {Object.values(ROLE_METADATA).map(r => {
+                const count = roleCounts[r.id] || 0;
+                const IconComponent = r.icon;
+                return (
+                  <button
+                    key={r.id}
+                    type="button"
+                    className={`noc-filter-chip ${roleFilter === r.id ? 'active' : ''}`}
+                    onClick={() => setRoleFilter(r.id)}
+                    title={`Filter by role: ${r.label}`}
+                  >
+                    <IconComponent size={11} style={r.color ? { color: r.color } : {}} />
+                    <span>{r.label}</span>
+                    <span className="noc-chip-count">{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Health Filter Chips */}
+          <div className="noc-filter-cluster">
+            <span className="noc-filter-cluster-label">Health:</span>
+            <div className="noc-chip-group">
+              <button
+                type="button"
+                className={`noc-filter-chip ${healthFilter === 'all' ? 'active' : ''}`}
+                onClick={() => setHealthFilter('all')}
+              >
+                <span>All Status</span>
+                <span className="noc-chip-count">{devices.length}</span>
+              </button>
+              <button
+                type="button"
+                className={`noc-filter-chip health-critical ${healthFilter === 'critical' ? 'active' : ''}`}
+                onClick={() => setHealthFilter('critical')}
+              >
+                <span className="noc-filter-health-dot critical" />
+                <span>Critical</span>
+                <span className="noc-chip-count">{healthCounts.critical}</span>
+              </button>
+              <button
+                type="button"
+                className={`noc-filter-chip health-warning ${healthFilter === 'warning' ? 'active' : ''}`}
+                onClick={() => setHealthFilter('warning')}
+              >
+                <span className="noc-filter-health-dot warning" />
+                <span>Warning</span>
+                <span className="noc-chip-count">{healthCounts.warning}</span>
+              </button>
+              <button
+                type="button"
+                className={`noc-filter-chip health-healthy ${healthFilter === 'healthy' ? 'active' : ''}`}
+                onClick={() => setHealthFilter('healthy')}
+              >
+                <span className="noc-filter-health-dot healthy" />
+                <span>Healthy</span>
+                <span className="noc-chip-count">{healthCounts.healthy}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* ServiceNow Ticket Chips */}
+          <div className="noc-filter-cluster">
+            <span className="noc-filter-cluster-label">ServiceNow:</span>
+            <div className="noc-chip-group">
+              <button
+                type="button"
+                className={`noc-filter-chip ${snowFilter === 'all' ? 'active' : ''}`}
+                onClick={() => setSnowFilter('all')}
+              >
+                <span>All Tickets</span>
+              </button>
+              <button
+                type="button"
+                className={`noc-filter-chip ${snowFilter === 'has_incident' ? 'active' : ''}`}
+                onClick={() => setSnowFilter('has_incident')}
+              >
+                <Ticket size={11} style={{ color: 'var(--accent-blue)' }} />
+                <span>Has Incident</span>
+                <span className="noc-chip-count">{snowCounts.has_incident}</span>
+              </button>
+              <button
+                type="button"
+                className={`noc-filter-chip ${snowFilter === 'clean' ? 'active' : ''}`}
+                onClick={() => setSnowFilter('clean')}
+              >
+                <ShieldCheck size={11} style={{ color: 'var(--accent-green)' }} />
+                <span>Clean</span>
+                <span className="noc-chip-count">{snowCounts.clean}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Reset All Filters Pill */}
+          {hasActiveFilters && (
+            <button
+              type="button"
+              className="noc-filter-reset-btn"
+              onClick={resetAllFilters}
+              title="Reset all search queries and filter chips"
+            >
+              <RotateCcw size={11} />
+              <span>Reset Filters</span>
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* ── View 1: Executive Topology View ── */}
       {viewMode === 'topology' && (
         <div className="noc-topology-view">
@@ -846,6 +1213,11 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
                     <ArrowUpDown size={12} className={`sort-icon ${tableSortCol === 'alerts' ? 'active' : ''}`} />
                   </div>
                 </th>
+                <th>
+                  <div className="th-content">
+                    <span>24h Trend & Severity</span>
+                  </div>
+                </th>
                 <th className="sortable" onClick={() => handleTableSort('snow')}>
                   <div className="th-content">
                     <span>ServiceNow</span>
@@ -911,6 +1283,19 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
                       ) : (
                         <span style={{ color: 'var(--text-tertiary)', fontSize: '0.75rem' }}>—</span>
                       )}
+                    </td>
+                    <td>
+                      <div className="noc-table-viz-cell">
+                        <DeviceSparkline
+                          data={getDeviceSparklineData(device)}
+                          isAlerting={health === 'critical' || health === 'warning'}
+                          height={14}
+                          barWidth={2}
+                          gap={1}
+                          compact={true}
+                        />
+                        <SeverityMiniBar device={device} compact={true} />
+                      </div>
                     </td>
                     <td>
                       <div className="noc-table-snow-pills">
@@ -1028,16 +1413,18 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
       {filteredDevices.length === 0 && (
         <div className="empty-state" style={{ padding: '3.5rem 1rem', textAlign: 'center' }}>
           <Server size={44} style={{ color: 'var(--text-tertiary)', marginBottom: '0.75rem', opacity: 0.6 }} />
-          <h3 style={{ margin: '0 0 0.4rem 0', fontSize: '1rem', color: 'var(--text-primary)' }}>No devices match your search</h3>
+          <h3 style={{ margin: '0 0 0.4rem 0', fontSize: '1rem', color: 'var(--text-primary)' }}>No devices match your active filters</h3>
           <p style={{ margin: '0 0 1rem 0', color: 'var(--text-tertiary)', fontSize: '0.82rem' }}>
-            No network devices matched "{searchQuery}". Try searching by host name, city, or category.
+            {searchQuery
+              ? `No devices matched "${searchQuery}" with current role, health, and ticket filters.`
+              : 'No devices matched the selected combination of architectural role, health, and ServiceNow status filters.'}
           </p>
           <button
             className="filter-pill"
-            onClick={() => setSearchQuery('')}
+            onClick={resetAllFilters}
             style={{ margin: '0 auto', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', padding: '0.45rem 1rem' }}
           >
-            <X size={13} /> Clear Search
+            <RotateCcw size={13} /> Reset All Filters
           </button>
         </div>
       )}

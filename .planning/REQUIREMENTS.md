@@ -20,10 +20,10 @@
 - [x] **NOC-VIEW-04**: In Regional Site Matrix view, user can view site-level health status cards with quick-click filtering by site.
 
 ### Filter Bar & Micro-Visualizations (NOC-VIZ)
-- [ ] **NOC-VIZ-01**: User can filter device inventory by Role chips (All, Core, Distribution, Access, Wireless, Security).
-- [ ] **NOC-VIZ-02**: User can filter by Health status chips (All, Healthy, Warning, Critical) and ServiceNow ticket state.
-- [ ] **NOC-VIZ-03**: User can see a 24-hour alert distribution micro-bar/sparkline on each device card showing activity volume over time.
-- [ ] **NOC-VIZ-04**: User can see live severity distribution mini-bars and pulsing status indicators for active alerts.
+- [x] **NOC-VIZ-01**: User can filter device inventory by Role chips (All, Core, Distribution, Access, Wireless, Security).
+- [x] **NOC-VIZ-02**: User can filter by Health status chips (All, Healthy, Warning, Critical) and ServiceNow ticket state.
+- [x] **NOC-VIZ-03**: User can see a 24-hour alert distribution micro-bar/sparkline on each device card showing activity volume over time.
+- [x] **NOC-VIZ-04**: User can see live severity distribution mini-bars and pulsing status indicators for active alerts.
 
 ### Interactive SRE Investigation Drawer (NOC-DRAWER)
 - [ ] **NOC-DRAWER-01**: User can view an interactive, multi-agent chronological decision timeline for each alert (Ingestion → Agent 1 Backdate → Agent 2 ML Transience → Agent 3 DLX Queue → Agent 4 ServiceNow).
@@ -56,10 +56,10 @@
 | NOC-VIEW-02 | Phase 10 | Complete ✓ |
 | NOC-VIEW-03 | Phase 10 | Complete ✓ |
 | NOC-VIEW-04 | Phase 10 | Complete ✓ |
-| NOC-VIZ-01 | Phase 11 | Pending |
-| NOC-VIZ-02 | Phase 11 | Pending |
-| NOC-VIZ-03 | Phase 11 | Pending |
-| NOC-VIZ-04 | Phase 11 | Pending |
+| NOC-VIZ-01 | Phase 11 | Complete ✓ |
+| NOC-VIZ-02 | Phase 11 | Complete ✓ |
+| NOC-VIZ-03 | Phase 11 | Complete ✓ |
+| NOC-VIZ-04 | Phase 11 | Complete ✓ |
 | NOC-DRAWER-01 | Phase 12 | Pending |
 | NOC-DRAWER-02 | Phase 12 | Pending |
 | NOC-DRAWER-03 | Phase 12 | Pending |

@@ -2736,6 +2736,295 @@
 }
 
 /* ==========================================================================
+   NOC Phase 11: Multi-Dimensional Filters & Micro-Visualizations
+   ========================================================================== */
+
+/* ── Multi-Dimensional Filter Strip (Tier 2) ── */
+.noc-filter-strip {
+  background: var(--bg-secondary);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--shadow-xs);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.noc-filter-group-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.15rem;
+}
+
+.noc-filter-cluster {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.noc-filter-cluster-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.noc-chip-group {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.noc-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.6rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.noc-filter-chip:hover {
+  color: var(--text-primary);
+  border-color: var(--card-border-hover);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.noc-filter-chip.active {
+  color: #fff;
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.noc-filter-chip.active .noc-chip-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+.noc-chip-count {
+  font-size: 0.65rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--text-tertiary);
+  font-weight: 700;
+}
+
+/* Health chip specific dot */
+.noc-filter-health-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.noc-filter-health-dot.critical {
+  background: var(--health-critical);
+  box-shadow: 0 0 4px var(--health-critical);
+}
+
+.noc-filter-health-dot.warning {
+  background: var(--health-warning);
+  box-shadow: 0 0 4px var(--health-warning);
+}
+
+.noc-filter-health-dot.healthy {
+  background: var(--health-healthy);
+  box-shadow: 0 0 4px var(--health-healthy);
+}
+
+.noc-filter-reset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: auto;
+  padding: 0.28rem 0.65rem;
+  font-size: 0.73rem;
+  font-weight: 600;
+  color: var(--accent-blue);
+  background: var(--accent-blue-light);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.noc-filter-reset-btn:hover {
+  background: var(--accent-blue);
+  color: #fff;
+}
+
+/* ── 24h Activity Sparkline Component ── */
+.noc-sparkline-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.6rem;
+  margin-bottom: 0.35rem;
+  padding: 0.45rem 0.55rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--card-border);
+}
+
+.noc-sparkline-wrap.compact {
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  gap: 0;
+}
+
+.noc-sparkline-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  line-height: 1;
+}
+
+.noc-sparkline-label {
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.noc-sparkline-total {
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-family: var(--font-mono, monospace);
+}
+
+.noc-sparkline-svg {
+  width: 100%;
+  display: block;
+  overflow: visible;
+}
+
+/* ── Severity Mini-Bar Component ── */
+.noc-sev-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 0.45rem;
+}
+
+.noc-sev-bar-wrap.compact {
+  margin-top: 0.2rem;
+  gap: 0;
+}
+
+.noc-sev-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--bg-tertiary);
+  border-radius: 999px;
+  overflow: hidden;
+  display: flex;
+}
+
+.noc-sev-bar.nominal {
+  background: rgba(16, 185, 129, 0.15);
+}
+
+.noc-sev-track {
+  height: 100%;
+  transition: width 0.4s ease;
+}
+
+.noc-sev-track.critical {
+  background: var(--accent-red);
+}
+
+.noc-sev-track.warning {
+  background: var(--accent-orange);
+}
+
+.noc-sev-track.minor {
+  background: var(--accent-blue);
+}
+
+.noc-sev-track.nominal {
+  background: var(--accent-green);
+  opacity: 0.6;
+}
+
+.noc-sev-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.67rem;
+  font-weight: 600;
+}
+
+.sev-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.sev-dot.critical {
+  color: var(--accent-red);
+}
+
+.sev-dot.warning {
+  color: var(--accent-orange);
+}
+
+.sev-dot.minor {
+  color: var(--accent-blue);
+}
+
+.sev-dot.healthy {
+  color: var(--accent-green);
+}
+
+/* ── SRE Table Activity Cell ── */
+.noc-table-viz-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 95px;
+  max-width: 120px;
+}
+
+/* ── Radar Pulse Animation for Critical Indicators ── */
+@keyframes noc-radar-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+.device-tile-status-dot.critical,
+.badge.health-critical .device-tile-status-dot {
+  animation: noc-radar-pulse 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+}
+
+/* ==========================================================================
    ALERT PATTERNS VIEW
    ========================================================================== */
 
