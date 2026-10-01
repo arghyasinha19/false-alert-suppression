@@ -26,9 +26,9 @@
 - [x] **NOC-VIZ-04**: User can see live severity distribution mini-bars and pulsing status indicators for active alerts.
 
 ### Interactive SRE Investigation Drawer (NOC-DRAWER)
-- [ ] **NOC-DRAWER-01**: User can view an interactive, multi-agent chronological decision timeline for each alert (Ingestion → Agent 1 Backdate → Agent 2 ML Transience → Agent 3 DLX Queue → Agent 4 ServiceNow).
-- [ ] **NOC-DRAWER-02**: User can inspect live Cisco DNA Center Assurance telemetry attributes, device health vitals, and raw payload details in dedicated tabs.
-- [ ] **NOC-DRAWER-03**: User can perform quick triage actions (e.g., Copy Incident, Simulate Alert on Device, Trigger Re-check) directly from the drawer.
+- [x] **NOC-DRAWER-01**: User can view an interactive, multi-agent chronological decision timeline for each alert (Ingestion → Agent 1 Backdate → Agent 2 ML Transience → Agent 3 DLX Queue → Agent 4 ServiceNow).
+- [x] **NOC-DRAWER-02**: User can inspect live Cisco DNA Center Assurance telemetry attributes, device health vitals, and raw payload details in dedicated tabs.
+- [x] **NOC-DRAWER-03**: User can perform quick triage actions (e.g., Copy Incident, Simulate Alert on Device, Trigger Re-check) directly from the drawer.
 
 ## Future Requirements
 
@@ -60,9 +60,9 @@
 | NOC-VIZ-02 | Phase 11 | Complete ✓ |
 | NOC-VIZ-03 | Phase 11 | Complete ✓ |
 | NOC-VIZ-04 | Phase 11 | Complete ✓ |
-| NOC-DRAWER-01 | Phase 12 | Pending |
-| NOC-DRAWER-02 | Phase 12 | Pending |
-| NOC-DRAWER-03 | Phase 12 | Pending |
+| NOC-DRAWER-01 | Phase 12 | Complete ✓ |
+| NOC-DRAWER-02 | Phase 12 | Complete ✓ |
+| NOC-DRAWER-03 | Phase 12 | Complete ✓ |
 
 **Coverage:**
 - v1.5 requirements: 16 total

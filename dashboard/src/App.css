@@ -1388,15 +1388,17 @@
 .detail-panel {
   position: fixed;
   top: 0; right: 0; bottom: 0;
-  width: 540px;
-  max-width: 92vw;
+  width: 580px;
+  max-width: 94vw;
   background: var(--bg-secondary);
   border-left: 1px solid var(--card-border);
   z-index: 201;
   transform: translateX(100%);
   transition: transform var(--transition-slow);
   overflow-y: auto;
-  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.08);
+  box-shadow: -6px 0 32px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
 }
 
 .detail-panel.open { transform: translateX(0); }
@@ -3022,6 +3024,519 @@
 .device-tile-status-dot.critical,
 .badge.health-critical .device-tile-status-dot {
   animation: noc-radar-pulse 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+}
+
+/* ==========================================================================
+   NOC Phase 12: Interactive SRE Investigation Drawer & Incident Timeline
+   ========================================================================== */
+
+/* ── Segmented Drawer Tabs ── */
+.noc-drawer-tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.5rem 1.25rem;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--card-border);
+  position: sticky;
+  top: 57px;
+  z-index: 4;
+  overflow-x: auto;
+}
+
+.noc-drawer-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  border-radius: 4px 4px 0 0;
+}
+
+.noc-drawer-tab-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.noc-drawer-tab-btn.active {
+  color: var(--accent-blue);
+  border-bottom-color: var(--accent-blue);
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.noc-tab-badge {
+  font-size: 0.65rem;
+  padding: 0.08rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--accent-blue);
+  font-weight: 700;
+}
+
+.noc-tab-badge.critical {
+  background: rgba(239, 68, 68, 0.18);
+  color: var(--health-critical);
+}
+
+/* ── Multi-Agent Chronological Decision Stepper ── */
+.noc-agent-stepper {
+  position: relative;
+  margin-left: 14px;
+  padding-left: 20px;
+  border-left: 2px dashed var(--card-border);
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  margin-top: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+
+.noc-stepper-item {
+  position: relative;
+}
+
+.noc-stepper-node {
+  position: absolute;
+  left: -31px;
+  top: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  border: 2px solid var(--card-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  transition: all var(--transition-fast);
+}
+
+.noc-stepper-node.ingest {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+.noc-stepper-node.temporal {
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.noc-stepper-node.ml {
+  border-color: var(--accent-purple);
+  color: var(--accent-purple);
+}
+
+.noc-stepper-node.dlx {
+  border-color: var(--health-warning);
+  color: var(--health-warning);
+}
+
+.noc-stepper-node.itsm {
+  border-color: var(--health-critical);
+  color: var(--health-critical);
+}
+
+.noc-stepper-node.healthy {
+  border-color: var(--health-healthy);
+  color: var(--health-healthy);
+}
+
+.noc-stepper-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.noc-stepper-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.noc-stepper-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.noc-stepper-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.noc-stepper-latency {
+  font-size: 0.65rem;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono, monospace);
+  background: var(--bg-tertiary);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+
+.noc-stepper-badge {
+  font-size: 0.64rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+}
+
+.noc-stepper-badge.passed {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--health-healthy);
+}
+
+.noc-stepper-badge.suppressed {
+  background: rgba(6, 182, 212, 0.15);
+  color: var(--accent-cyan);
+}
+
+.noc-stepper-badge.escalated {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--health-warning);
+}
+
+.noc-stepper-badge.ticketed {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--health-critical);
+}
+
+.noc-stepper-badge.pending {
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--text-tertiary);
+}
+
+.noc-stepper-desc {
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.noc-stepper-toggle {
+  background: none;
+  border: none;
+  font-size: 0.68rem;
+  color: var(--accent-blue);
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 0.2rem;
+  font-weight: 600;
+}
+
+.noc-stepper-toggle:hover {
+  text-decoration: underline;
+}
+
+.noc-stepper-metrics {
+  margin-top: 0.4rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  border: 1px solid var(--card-border);
+  font-size: 0.72rem;
+  animation: fadeIn 0.2s ease;
+}
+
+.noc-metric-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.2rem 0;
+  color: var(--text-secondary);
+}
+
+.noc-metric-row strong {
+  color: var(--text-primary);
+  font-family: var(--font-mono, monospace);
+}
+
+/* ── Cisco DNA Center Assurance Telemetry Grid ── */
+.noc-telemetry-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.noc-telemetry-card {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.noc-telemetry-card-title {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.noc-telemetry-card-val {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-mono, monospace);
+}
+
+.noc-telemetry-card-sub {
+  font-size: 0.69rem;
+  color: var(--text-secondary);
+}
+
+.noc-gauge-meter {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 0.2rem;
+}
+
+.noc-gauge-bar {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.5s ease;
+}
+
+/* ── Device Inventory & Specs ── */
+.noc-inventory-card {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.noc-inventory-card h4 {
+  font-size: 0.82rem;
+  margin: 0 0 0.65rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-primary);
+}
+
+.noc-spec-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--card-border);
+  font-size: 0.75rem;
+}
+
+.noc-spec-row:last-child {
+  border-bottom: none;
+}
+
+.noc-spec-label {
+  color: var(--text-tertiary);
+  font-weight: 600;
+}
+
+.noc-spec-val {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-family: var(--font-mono, monospace);
+}
+
+/* ── Raw Payloads & JSON Viewer ── */
+.noc-json-viewer {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.noc-json-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.noc-json-search {
+  flex: 1;
+  padding: 0.35rem 0.65rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.74rem;
+}
+
+.noc-code-block {
+  max-height: 420px;
+  overflow: auto;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.85rem;
+  border-radius: var(--radius-sm);
+  color: #cbd5e1;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
+  border: 1px solid var(--card-border);
+}
+
+/* ── SRE Sticky Action Bar ── */
+.noc-drawer-action-bar {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--card-border);
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  z-index: 5;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.12);
+  margin-top: auto;
+}
+
+.noc-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.42rem 0.75rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--card-border);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.noc-action-btn:hover {
+  border-color: var(--card-border-hover);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.noc-action-btn.primary {
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+  color: #fff;
+}
+
+.noc-action-btn.primary:hover {
+  background: #2563eb;
+}
+
+/* ── Floating Toast Notifications ── */
+.noc-toast-container {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+.noc-toast {
+  pointer-events: auto;
+  min-width: 280px;
+  max-width: 380px;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  animation: noc-toast-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.noc-toast.success {
+  border-left: 3px solid var(--health-healthy);
+}
+
+.noc-toast.info {
+  border-left: 3px solid var(--accent-blue);
+}
+
+.noc-toast.warning {
+  border-left: 3px solid var(--health-warning);
+}
+
+.noc-toast-body {
+  flex: 1;
+}
+
+.noc-toast-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.15rem;
+}
+
+.noc-toast-desc {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.noc-toast-close {
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.noc-toast-close:hover {
+  color: var(--text-primary);
+}
+
+@keyframes noc-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* ==========================================================================
