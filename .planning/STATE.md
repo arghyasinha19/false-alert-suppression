@@ -20,7 +20,7 @@ progress:
 Phase: Phase 14 — Backend Live Polling & Telemetry Endpoints
 Plan: 14-01
 Status: Ready to plan
-Last activity: 2026-10-05 — Phase 13 DNAC Client Assurance & Device Extensions completed
+Last activity: 2026-10-05 — Phase 14 context gathered; ready to plan
 
 ## Key Decisions Made
 
@@ -30,6 +30,7 @@ Last activity: 2026-10-05 — Phase 13 DNAC Client Assurance & Device Extensions
 - Structured hardware specifications, management IP, MAC address, serial number, rack placement, and ServiceNow lifetime incident audit.
 - Built searchable formatted JSON payload viewer with live filtering and one-click clipboard copy.
 - Built sticky SRE Action Bar with Copy Incident, Poll DNAC Health, Simulate Alert, and Export Diagnostic Report (JSON), paired with floating animated toast notifications.
+- Phase 14: Unified `GET /api/devices/{name}/telemetry` and `POST /api/devices/{name}/live-poll` returning telemetry + device_info, dual route aliases (/devices and /device), MongoDB caching in `device_telemetry`, and non-blocking offline fallbacks with `source: 'offline'` / `cached_offline`.
 - Verified 100% zero linter errors/warnings and clean Vite production builds.
 
 ## Blockers/Concerns
