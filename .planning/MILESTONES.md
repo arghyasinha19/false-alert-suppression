@@ -44,3 +44,12 @@
   - ServiceNow incident section polish with badges and cards.
   - Complete dark/light mode theme system with CSS variables and header toggle switch.
 
+### v1.5 Executive & Observability Network Operations Center (NOC) Overhaul (Completed 2026-10-01)
+- **Goal:** Transform Network Operations Center into a world-class executive & observability command center featuring enterprise telemetry KPIs, multi-view representation hierarchy, micro-visualizations, and an interactive incident timeline drawer.
+- **Shipped:**
+  - Executive Telemetry & Health KPI Strip (Fleet Health Score %, Noise Suppression Rate %, Blast Radius, MTTR, Site Resilience).
+  - Multi-Mode Representation Engine (Executive Topology, SRE High-Density Sortable Table, Regional Site Matrix).
+  - Multi-Dimensional Filter Bar (Role, Health, ServiceNow ticket chips) and Device Micro-Visualizations (24h activity sparklines, severity mini-bars, live status pulses).
+  - Interactive SRE Investigation Drawer (5-stage chronological multi-agent decision timeline, Assurance telemetry cards, inventory specs, formatted JSON payload viewer, and sticky action bar).
+
+

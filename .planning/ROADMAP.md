@@ -1,6 +1,6 @@
 # Roadmap: False Alert Suppression Pipeline
 
-**Milestone:** v1.5 Executive & Observability Network Operations Center (NOC) Overhaul  
+**Milestone:** v1.6 Live DNAC Assurance Telemetry & Asset Integration  
 **Status:** In Progress  
 
 ## Overview
@@ -17,8 +17,13 @@
 | 8 | v1.4 | Comprehensive Dark & Light Theme System | System-wide theme toggle (Sun/Moon), CSS tokens, localStorage persistence | THEME-01, THEME-02 | Complete ✓ |
 | 9 | v1.5 | Executive Telemetry & Health KPI Strip | Fleet Health Score %, Noise Suppression Ratio, Blast Radius, MTTR, and Site Resilience | NOC-KPI-01 - NOC-KPI-05 | Complete ✓ |
 | 10 | v1.5 | Multi-Mode Representation Engine | Executive Topology, SRE High-Density Sortable Table, and Regional Site Matrix | NOC-VIEW-01 - NOC-VIEW-04 | Complete ✓ |
-| 11 | v1.5 | Multi-Dimensional Filters & Micro-Visualizations | Role & Health filter chips, 24h activity sparklines, severity mini-bars, and status pulses | NOC-VIZ-01 - NOC-VIZ-04 | Pending |
-| 12 | v1.5 | Interactive SRE Drawer & Incident Timeline | Multi-agent decision timeline, Assurance telemetry tabs, and one-click quick triage actions | NOC-DRAWER-01 - NOC-DRAWER-03 | Pending |
+| 11 | v1.5 | Multi-Dimensional Filters & Micro-Visualizations | Role & Health filter chips, 24h activity sparklines, severity mini-bars, and status pulses | NOC-VIZ-01 - NOC-VIZ-04 | Complete ✓ |
+| 12 | v1.5 | Interactive SRE Drawer & Incident Timeline | Multi-agent decision timeline, Assurance telemetry tabs, and one-click quick triage actions | NOC-DRAWER-01 - NOC-DRAWER-03 | Complete ✓ |
+| 13 | v1.6 | DNAC Client Assurance & Device Extensions | Implement `/network-device` and `/device-health` query methods in `DNACClient` | DNAC-01, DNAC-02 | Pending |
+| 14 | v1.6 | Backend Live Polling & Telemetry Endpoints | Add `/api/devices/{name}/telemetry` and `/api/devices/{name}/live-poll` endpoints | DNAC-03, DNAC-04 | Pending |
+| 15 | v1.6 | Frontend SRE Drawer Live Wire-Up | Connect drawer telemetry/inventory tabs and Poll DNAC button to live API with fallback | DNAC-05, DNAC-06 | Pending |
+| 16 | v1.6 | Daemon Orchestration & End-to-End Diagnostics | Auto-start `dnac_sync.py` in launcher and build CLI test tool `test_dnac_integration.py` | DNAC-07, DNAC-08 | Pending |
+
 
 ---
 
@@ -97,3 +102,72 @@
 1. Clicking any device opens a drawer containing a visual multi-agent decision timeline for active alerts. (✓ Verified)
 2. Tabbed navigation inside drawer exposes Overview, Active Alerts, Chronological Timeline, and Assurance Telemetry. (✓ Verified)
 3. Action buttons allow quick triage (e.g. copying incident ticket details, simulating new alert for device). (✓ Verified)
+
+---
+
+## Phase 13: DNAC Client Assurance & Device Extensions
+
+**Goal:** Extend `DNACClient` with robust methods querying Cisco DNA Center's Network Device (`/dna/intent/api/v1/network-device`) and Device Health (`/dna/intent/api/v1/device-health`) APIs with graceful error handling and fallbacks.
+
+**Status:** Pending
+
+**Requirements:**
+- **DNAC-01**: `DNACClient` provides `get_device_by_name_or_ip(device_name_or_ip)` querying `/dna/intent/api/v1/network-device` to retrieve hardware model, serial number, MAC address, OS version, and reachability.
+- **DNAC-02**: `DNACClient` provides `get_device_health(device_id_or_name)` querying `/dna/intent/api/v1/device-health` to retrieve real CPU utilization %, memory %, packet drop %, and health score.
+
+**Success Criteria:**
+1. `DNACClient.get_device_by_name_or_ip()` successfully parses device details or returns None without unhandled exceptions.
+2. `DNACClient.get_device_health()` returns structured numeric telemetry vitals or returns an offline fallback object.
+3. Unit test verifies method signatures, token auth header passing, and mock payload parsing.
+
+---
+
+## Phase 14: Backend Live Polling & Telemetry Endpoints
+
+**Goal:** Implement FastAPI endpoints for device telemetry lookup and on-demand live polling in `dashboard/api.py`, integrating database state with real-time DNAC verification.
+
+**Status:** Pending
+
+**Requirements:**
+- **DNAC-03**: Backend endpoint `GET /api/devices/{device_name}/telemetry` returns structured live DNAC vitals with `source: "dnac_live" | "cached_simulated"` and timestamp.
+- **DNAC-04**: Backend endpoint `POST /api/devices/{device_name}/live-poll` triggers an immediate on-demand DNAC issue and telemetry refresh, returning updated device state.
+
+**Success Criteria:**
+1. Calling `GET /api/devices/{device_name}/telemetry` returns 200 with complete CPU, RAM, and hardware telemetry keys.
+2. Calling `POST /api/devices/{device_name}/live-poll` triggers a real DNAC re-probe and returns updated alert status.
+3. Endpoints return graceful fallbacks when DNAC is offline or unreachable without throwing HTTP 500 errors.
+
+---
+
+## Phase 15: Frontend SRE Drawer Live Wire-Up
+
+**Goal:** Connect the slide-out drawer in `NetworkOperations.jsx` to the new live telemetry and polling endpoints, replacing mock calculations and simulated timeouts.
+
+**Status:** Pending
+
+**Requirements:**
+- **DNAC-05**: Clicking "Poll DNAC" in `NetworkOperations.jsx` triggers `POST /api/devices/{device_name}/live-poll` with visual spinner and toast notification displaying actual response.
+- **DNAC-06**: Assurance Telemetry and Device Inventory tabs in the SRE drawer render live vitals fetched from `/api/devices/{device_name}/telemetry` with live/offline source badges.
+
+**Success Criteria:**
+1. Clicking "Poll DNAC" button displays an active spinner, makes an HTTP call to the backend, and displays a success/failure toast based on actual response.
+2. SRE Drawer Telemetry tab displays real fetched values instead of procedurally generated numbers.
+3. Source badge indicates whether telemetry is live from DNAC or cached from offline storage.
+
+---
+
+## Phase 16: Daemon Orchestration & End-to-End Diagnostics
+
+**Goal:** Integrate the `dnac_sync.py` background service into `start_dashboard.py` and build a step-by-step diagnostic test CLI tool `test_dnac_integration.py`.
+
+**Status:** Pending
+
+**Requirements:**
+- **DNAC-07**: `start_dashboard.py` auto-starts `dashboard/dnac_sync.py` background daemon alongside FastAPI and Vite, handling unified process supervision and graceful SIGINT/SIGTERM termination.
+- **DNAC-08**: Provide standalone interactive CLI test tool `test_dnac_integration.py` with step-by-step verification of credentials, auth token, issue lookup, device inventory, and telemetry vitals (with `--mock` switch for offline verification).
+
+**Success Criteria:**
+1. Running `python start_dashboard.py` starts all 3 services (Backend, Frontend, and Sync daemon) and cleanly kills all 3 on Ctrl+C.
+2. Running `python test_dnac_integration.py` prints clean, step-by-step diagnostic output for authentication, issue lookup, and device telemetry.
+3. `python test_dnac_integration.py --mock` passes completely offline with zero network dependencies.
+

@@ -8,16 +8,16 @@ An intelligent, multi-agent network alert triage and suppression platform for Ci
 
 Accurately identify false or transient network alerts to prevent unnecessary ServiceNow ticket creation and reduce operational noise without missing genuine network degradation.
 
-## Current Milestone: v1.5 Executive & Observability Network Operations Center (NOC) Overhaul
+## Current Milestone: v1.6 Live DNAC Assurance Telemetry & Asset Integration
 
-**Goal:** Transform the Network Operations Center into a world-class executive & observability command center featuring enterprise telemetry KPIs, multi-view representation hierarchy (Executive Topology, SRE Density Matrix, Regional Site Matrix), micro-visualizations (activity sparklines, health rings), and an interactive incident timeline drawer.
+**Goal:** Bridge the Network Operations Center directly with live Cisco DNA Center Assurance and Device Inventory APIs, replace client-side simulated drawer vitals and poll timeouts with real backend endpoints, auto-orchestrate the background sync daemon, and provide an end-to-end testing suite with robust offline fallbacks.
 
 **Target features:**
-- **Executive Observability KPI Strip:** Fleet Health Score (0-100%), Noise Suppression Rate, Incident Blast Radius, Mean Time to Auto-Resolution, and Site Resilience Ratio.
-- **Multi-Mode Representation Engine:** Executive Grid (Topology/Role grouped), High-Density SRE Table/Matrix, and Regional Site Health Overview.
-- **Rich Telemetry & Micro-Visualizations:** 24h alert activity sparkline/micro-bars per device, health gauge rings, severity breakdown mini-bars, and quick-filter pills (by Role, Health, SNOW status).
-- **Interactive SRE Drawer & Incident Timeline:** Chronological decision trail (Ingest → Agent 1 Backdate → Agent 2 ML → Agent 3 Wait → Agent 4 SNOW), live Assurance telemetry metrics, and one-click actions.
-- **Design System & Visual Luxury:** Subtle glassmorphic depth, status pulses, micro-interactions, responsive auto-fill grids, and full dark/light theme polish.
+- **DNAC Device & Assurance API Integration:** Add real client methods in `app/dnac_client.py` for `/dna/intent/api/v1/network-device` (hardware inventory, serial, MAC, OS, IP) and `/dna/intent/api/v1/device-health` (live CPU, memory, packet drop, reachability).
+- **Backend Live Telemetry & Polling Endpoints:** Implement `GET /api/devices/{name}/telemetry` and `POST /api/devices/{name}/live-poll` in `dashboard/api.py`.
+- **Frontend SRE Drawer Live Wiring:** Wire the "Poll DNAC" button and Telemetry/Inventory tabs in `dashboard/src/NetworkOperations.jsx` to live backend data with real-time loading spinners and graceful offline fallback.
+- **Launcher Auto-Orchestration:** Update `start_dashboard.py` to start and gracefully terminate `dashboard/dnac_sync.py` alongside FastAPI and Vite.
+- **End-to-End Verification & Diagnostics Harness:** Provide an interactive step-by-step diagnostic test CLI tool (`test_dnac_integration.py`) verifying credentials, tokens, live issue status, and device telemetry.
 
 ## Requirements
 
@@ -44,17 +44,23 @@ Accurately identify false or transient network alerts to prevent unnecessary Ser
 - ✓ Rich empty states for zero-match filters/searches (Milestone v1.4) — v1.4
 - ✓ ServiceNow Ticket Details section divider and badge styling (Milestone v1.4) — v1.4
 - ✓ Complete dark/light mode theme system with header toggle (Milestone v1.4) — v1.4
+- ✓ Executive Telemetry & Health KPI Strip (Milestone v1.5) — v1.5
+- ✓ Multi-Mode Representation Engine: Topology, SRE Table, Site Matrix (Milestone v1.5) — v1.5
+- ✓ Multi-Dimensional Filter Bar & Micro-Visualizations (Milestone v1.5) — v1.5
+- ✓ Interactive SRE Investigation Drawer & Incident Timeline (Milestone v1.5) — v1.5
 
 ### Active
 
-- [ ] **NOC-01**: Executive Telemetry & Health KPI Strip (Fleet Health Score %, Noise Suppression Ratio, Blast Radius / Degraded Sites, MTTR / Resolution Velocity) with animated counters.
-- [ ] **NOC-02**: Multi-View Representation Engine (Executive Grid with Topology grouping, High-Density SRE Table/Matrix, Regional Site Health Matrix) with seamless view switcher.
-- [ ] **NOC-03**: Multi-Dimensional Filter Bar (Quick-filter pills for Device Role: Core/Distribution/Access/Wireless/Security, Health: Healthy/Warning/Critical, SNOW status, and live search).
-- [ ] **NOC-04**: Device Micro-Visualizations (24-Hour alert distribution sparkline/activity strip, inline severity bar, live pulse indicator, health score pill).
-- [ ] **NOC-05**: SRE Incident Investigation Drawer (Multi-tab/chronological decision timeline: Ingest → Agent 1 → Agent 2 → Agent 3 → Agent 4, DNAC telemetry details, and one-click quick actions).
-- [ ] **NOC-06**: Visual Polish & Luxury Aesthetics (Premium glassmorphism, responsive CSS grid, refined dark/light theme tokens, and fluid view transitions).
+- [ ] **DNAC-01**: DNAC Assurance & Device Client Extensions (`app/dnac_client.py` methods for `/dna/intent/api/v1/network-device` and `/dna/intent/api/v1/device-health` with fallback handling).
+- [ ] **DNAC-02**: Backend Live Polling & Telemetry Endpoints (`dashboard/api.py` endpoints for `GET /api/devices/{name}/telemetry` and `POST /api/devices/{name}/live-poll`).
+- [ ] **DNAC-03**: Frontend SRE Drawer Live Wire-Up (Wire Poll DNAC button and Telemetry/Inventory tabs to live endpoints with loading spinners and offline fallbacks in `NetworkOperations.jsx`).
+- [ ] **DNAC-04**: Launcher Service Orchestration (`start_dashboard.py` auto-starts and monitors `dnac_sync.py` background process).
+- [ ] **DNAC-05**: End-to-End Step-by-Step Diagnostic & Testing Harness (`test_dnac_integration.py` for token auth, issue lookup, device health, and telemetry verification).
 
 ### Out of Scope
+
+- Bypassing DNAC RBAC or making unauthenticated calls.
+- Storing unencrypted DNAC passwords in source code (always load from env vars or `config.yaml`).
 
 - External database querying for historical data beyond currently ingested/cached pipeline alerts.
 - Changing server-side timezone configuration (all comparisons performed in browser client local / UTC normalized time).
@@ -91,4 +97,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-30 after Milestone v1.4 initialization*
+*Last updated: 2026-10-05 after Milestone v1.6 initialization*

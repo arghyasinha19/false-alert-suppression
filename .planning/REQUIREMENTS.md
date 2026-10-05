@@ -1,74 +1,61 @@
 # Requirements: False Alert Suppression Pipeline
 
-**Defined:** 2026-10-01  
-**Milestone:** v1.5 Executive & Observability Network Operations Center (NOC) Overhaul  
+**Defined:** 2026-10-05  
+**Milestone:** v1.6 Live DNAC Assurance Telemetry & Asset Integration  
 **Core Value:** Accurately identify false or transient network alerts to prevent unnecessary ServiceNow ticket creation and reduce operational noise without missing genuine network degradation.
 
-## Milestone v1.5 Requirements: Executive & Observability NOC Overhaul
+## Milestone v1.6 Requirements: Live DNAC Assurance Telemetry & Asset Integration
 
-### Executive Telemetry & Health KPIs (NOC-KPI)
-- [x] **NOC-KPI-01**: User can view Fleet Health Score (% index based on weighted device operational availability) with animated counter.
-- [x] **NOC-KPI-02**: User can view False Alert Noise Reduction / Suppression Rate (%) at fleet level.
-- [x] **NOC-KPI-03**: User can view Active Incident Blast Radius (# affected sites & degraded devices).
-- [x] **NOC-KPI-04**: User can view Mean Resolution Velocity / MTTA metric for auto-resolved vs escalated incidents.
-- [x] **NOC-KPI-05**: User can view Site Resilience Ratio (e.g. 8/9 Nominal sites) in the top executive summary strip.
+### DNAC API Client Extensions (DNAC-CLIENT)
+- [ ] **DNAC-01**: `DNACClient` provides `get_device_by_name_or_ip(device_name_or_ip)` querying `/dna/intent/api/v1/network-device` to retrieve hardware model, serial number, MAC address, OS version, and reachability.
+- [ ] **DNAC-02**: `DNACClient` provides `get_device_health(device_id_or_name)` querying `/dna/intent/api/v1/device-health` to retrieve real CPU utilization %, memory %, packet drop %, and health score.
 
-### Multi-Mode Representation Engine (NOC-VIEW)
-- [x] **NOC-VIEW-01**: User can toggle between 3 presentation modes: "Executive Topology", "SRE High-Density Table", and "Regional Site Matrix" with seamless animated state switching.
-- [x] **NOC-VIEW-02**: In Executive Topology view, devices are organized by network infrastructure tier (Core & WAN, Distribution & Security, Campus & Access) with roll-up health indicators.
-- [x] **NOC-VIEW-03**: In SRE High-Density Table view, user can sort by device name, active alerts, severity, last seen, and health with inline status chips and sticky headers.
-- [x] **NOC-VIEW-04**: In Regional Site Matrix view, user can view site-level health status cards with quick-click filtering by site.
+### Backend Endpoints & Live Polling (DNAC-API)
+- [ ] **DNAC-03**: Backend endpoint `GET /api/devices/{device_name}/telemetry` returns structured live DNAC vitals with `source: "dnac_live" | "cached_simulated"` and timestamp.
+- [ ] **DNAC-04**: Backend endpoint `POST /api/devices/{device_name}/live-poll` triggers an immediate on-demand DNAC issue and telemetry refresh, returning updated device state.
 
-### Filter Bar & Micro-Visualizations (NOC-VIZ)
-- [x] **NOC-VIZ-01**: User can filter device inventory by Role chips (All, Core, Distribution, Access, Wireless, Security).
-- [x] **NOC-VIZ-02**: User can filter by Health status chips (All, Healthy, Warning, Critical) and ServiceNow ticket state.
-- [x] **NOC-VIZ-03**: User can see a 24-hour alert distribution micro-bar/sparkline on each device card showing activity volume over time.
-- [x] **NOC-VIZ-04**: User can see live severity distribution mini-bars and pulsing status indicators for active alerts.
+### Frontend SRE Drawer Live Integration (DNAC-UI)
+- [ ] **DNAC-05**: Clicking "Poll DNAC" in `NetworkOperations.jsx` triggers `POST /api/devices/{device_name}/live-poll` with visual spinner and toast notification displaying actual response.
+- [ ] **DNAC-06**: Assurance Telemetry and Device Inventory tabs in the SRE drawer render live vitals fetched from `/api/devices/{device_name}/telemetry` with live/offline source badges.
 
-### Interactive SRE Investigation Drawer (NOC-DRAWER)
-- [x] **NOC-DRAWER-01**: User can view an interactive, multi-agent chronological decision timeline for each alert (Ingestion → Agent 1 Backdate → Agent 2 ML Transience → Agent 3 DLX Queue → Agent 4 ServiceNow).
-- [x] **NOC-DRAWER-02**: User can inspect live Cisco DNA Center Assurance telemetry attributes, device health vitals, and raw payload details in dedicated tabs.
-- [x] **NOC-DRAWER-03**: User can perform quick triage actions (e.g., Copy Incident, Simulate Alert on Device, Trigger Re-check) directly from the drawer.
+### Service Orchestration (DNAC-OPS)
+- [ ] **DNAC-07**: `start_dashboard.py` auto-starts `dashboard/dnac_sync.py` background daemon alongside FastAPI and Vite, handling unified process supervision and graceful SIGINT/SIGTERM termination.
+
+### Testing & Diagnostics Harness (DNAC-TEST)
+- [ ] **DNAC-08**: Provide standalone interactive CLI test tool `test_dnac_integration.py` with step-by-step verification of credentials, auth token, issue lookup, device inventory, and telemetry vitals (with `--mock` switch for offline verification).
 
 ## Future Requirements
 
-- Real-time WebSockets streaming updates instead of polling interval.
-- Geographic interactive vector map (Leaflet or Mapbox).
+- Real-time WebSockets streaming updates for telemetry metrics instead of polling.
 - Multi-tenancy support for partitioned customer network views.
+- Dynamic interface flap timeline graph per port.
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Modifying ML training checkpoints or models | Handled in dedicated ML training pipeline workflows; this milestone focuses on observability, representations, and NOC UX. |
-| Third-party heavy charting libraries (e.g. D3, Highcharts) | Dashboard uses lightweight SVG sparklines and Recharts aligned with design tokens. |
+| Bypassing DNAC RBAC or making unauthenticated calls | All calls must authenticate with basic auth credentials to obtain temporary tokens. |
+| Hardcoding cleartext passwords | Passwords must load from environment variables (`DNAC_PASSWORD`) or `config.yaml`. |
+| Modifying ML training checkpoints | ML models operate independently downstream from DNAC ingestion. |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| NOC-KPI-01 | Phase 9 | Complete ✓ |
-| NOC-KPI-02 | Phase 9 | Complete ✓ |
-| NOC-KPI-03 | Phase 9 | Complete ✓ |
-| NOC-KPI-04 | Phase 9 | Complete ✓ |
-| NOC-KPI-05 | Phase 9 | Complete ✓ |
-| NOC-VIEW-01 | Phase 10 | Complete ✓ |
-| NOC-VIEW-02 | Phase 10 | Complete ✓ |
-| NOC-VIEW-03 | Phase 10 | Complete ✓ |
-| NOC-VIEW-04 | Phase 10 | Complete ✓ |
-| NOC-VIZ-01 | Phase 11 | Complete ✓ |
-| NOC-VIZ-02 | Phase 11 | Complete ✓ |
-| NOC-VIZ-03 | Phase 11 | Complete ✓ |
-| NOC-VIZ-04 | Phase 11 | Complete ✓ |
-| NOC-DRAWER-01 | Phase 12 | Complete ✓ |
-| NOC-DRAWER-02 | Phase 12 | Complete ✓ |
-| NOC-DRAWER-03 | Phase 12 | Complete ✓ |
+| DNAC-01 | Phase 13 | Pending |
+| DNAC-02 | Phase 13 | Pending |
+| DNAC-03 | Phase 14 | Pending |
+| DNAC-04 | Phase 14 | Pending |
+| DNAC-05 | Phase 15 | Pending |
+| DNAC-06 | Phase 15 | Pending |
+| DNAC-07 | Phase 16 | Pending |
+| DNAC-08 | Phase 16 | Pending |
 
 **Coverage:**
-- v1.5 requirements: 16 total
-- Mapped to phases: 16 (100%)
+- v1.6 requirements: 8 total
+- Mapped to phases: 8 (100%)
 - Unmapped: 0 ✓
 
 ---
-*Requirements defined: 2026-10-01*  
-*Last updated: 2026-10-01 after Milestone v1.5 requirements definition*
+*Requirements defined: 2026-10-05*  
+*Last updated: 2026-10-05 after Milestone v1.6 requirements definition*
