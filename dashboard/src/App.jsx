@@ -254,7 +254,12 @@ function App() {
           )}
           {activeView === 'noc' && (
             <div key="noc" className="view-transition-container">
-              <NetworkOperations devices={devices} lastRefresh={lastRefresh} pollInterval={POLL_INTERVAL} />
+              <NetworkOperations
+                devices={devices}
+                lastRefresh={lastRefresh}
+                pollInterval={POLL_INTERVAL}
+                onRefresh={fetchData}
+              />
             </div>
           )}
           {activeView === 'patterns' && (

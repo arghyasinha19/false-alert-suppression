@@ -606,7 +606,7 @@ function AgentDecisionStepper({ timeline, alertIndex, expandedMetrics, onToggleM
   );
 }
 
-export default function NetworkOperations({ devices: rawDevices, lastRefresh, pollInterval = 15000 }) {
+export default function NetworkOperations({ devices: rawDevices, lastRefresh, pollInterval = 15000, onRefresh }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [panelOpen, setPanelOpen] = useState(false);
@@ -629,7 +629,10 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
   const [payloadSearch, setPayloadSearch] = useState('');
   const [stepperExpanded, setStepperExpanded] = useState({});
   const [pollingHealth, setPollingHealth] = useState(false);
+  const [deviceTelemetry, setDeviceTelemetry] = useState(null);
+  const [loadingTelemetry, setLoadingTelemetry] = useState(false);
   const selectedDeviceNameRef = useRef(null);
+  const telemetryAbortRef = useRef(null);
 
   const addToast = (title, desc, type = 'info') => {
     const id = Date.now() + Math.random().toString(36).substr(2, 4);
@@ -647,12 +650,97 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
     setStepperExpanded(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handlePollDNAC = () => {
+  const fetchDeviceTelemetry = (deviceName) => {
+    if (!deviceName) return;
+    if (telemetryAbortRef.current) {
+      telemetryAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    telemetryAbortRef.current = controller;
+    setLoadingTelemetry(true);
+
+    fetch(`/api/devices/${encodeURIComponent(deviceName)}/telemetry`, { signal: controller.signal })
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error ${res.status}`);
+        }
+        return res.json();
+      })
+      .then(data => {
+        if (selectedDeviceNameRef.current === deviceName) {
+          setDeviceTelemetry(data);
+          setLoadingTelemetry(false);
+        }
+      })
+      .catch(err => {
+        if (err.name === 'AbortError') return;
+        console.warn(`[Telemetry] Failed to load telemetry for ${deviceName}:`, err);
+        if (selectedDeviceNameRef.current === deviceName) {
+          setLoadingTelemetry(false);
+          setDeviceTelemetry(prev => (prev && prev.device_name === deviceName ? prev : {
+            device_name: deviceName,
+            source: 'offline',
+            synced_at: new Date().toISOString(),
+            telemetry: null,
+            device_info: null
+          }));
+        }
+      });
+  };
+
+  const handlePollDNAC = async () => {
+    if (!selectedDevice || pollingHealth) return;
     setPollingHealth(true);
-    setTimeout(() => {
+    try {
+      const resp = await fetch(
+        `/api/devices/${encodeURIComponent(selectedDevice.device_name)}/live-poll`,
+        { method: 'POST' }
+      );
+      if (!resp.ok) {
+        throw new Error(`HTTP error ${resp.status}`);
+      }
+      const data = await resp.json();
+
+      // Update local drawer telemetry immediately
+      if (data.telemetry || data.device_info) {
+        setDeviceTelemetry({
+          device_name: selectedDevice.device_name,
+          source: data.source || (data.dnac_reachable ? 'dnac_live' : 'cached_offline'),
+          synced_at: data.timestamp,
+          telemetry: data.telemetry,
+          device_info: data.device_info
+        });
+      }
+
+      // Trigger fleet-wide dashboard refresh
+      if (typeof onRefresh === 'function') {
+        onRefresh();
+      }
+
+      // Dynamic toast feedback
+      if (data.status === 'success') {
+        addToast(
+          'DNAC Live Synchronized',
+          `Synchronized ${data.alerts_updated ?? 0} alerts and refreshed telemetry for ${selectedDevice.device_name}.`,
+          'success'
+        );
+      } else {
+        addToast(
+          'DNAC Controller Unreachable',
+          'Cisco DNA Center Assurance returned offline status. Retaining cached telemetry.',
+          'warning'
+        );
+      }
+    } catch (err) {
+      console.error('Failed to poll DNAC:', err);
+      addToast(
+        'Assurance Polling Failed',
+        `Network error connecting to /api/devices/${selectedDevice.device_name}/live-poll.`,
+        'error'
+      );
+    } finally {
       setPollingHealth(false);
-      addToast('DNAC Assurance Polled', 'Device reachability and live assurance telemetry synchronized with Cisco DNA Center.', 'success');
-    }, 700);
+    }
   };
 
   const handleViewModeChange = (mode) => {
@@ -1003,12 +1091,18 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
     setPanelOpen(true);
     setResolvedExpanded(false);
     setDrawerTab('triage');
+    fetchDeviceTelemetry(device.device_name);
   };
   const closePanel = () => {
+    if (telemetryAbortRef.current) {
+      telemetryAbortRef.current.abort();
+    }
     setPanelOpen(false);
     setTimeout(() => {
       setSelectedDevice(null);
       selectedDeviceNameRef.current = null;
+      setDeviceTelemetry(null);
+      setLoadingTelemetry(false);
       setDrawerTab('triage');
     }, 300);
   };
@@ -1735,8 +1829,97 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
           const snow = getSnowSummary(selectedDevice);
           const activeAlerts = selectedDevice.active_alerts || [];
           const resolvedAlerts = selectedDevice.resolved_alerts || [];
-          const vitals = getDeviceTelemetryVitals(selectedDevice);
+          const proceduralVitals = getDeviceTelemetryVitals(selectedDevice);
           const health = getDeviceHealth(selectedDevice);
+
+          // Phase 15: Determine live or cached provenance and telemetry state
+          const hasLoadedDeviceTelemetry = Boolean(deviceTelemetry && deviceTelemetry.device_name === selectedDevice.device_name);
+          const liveTelemetry = hasLoadedDeviceTelemetry ? deviceTelemetry.telemetry : null;
+          const liveDeviceInfo = hasLoadedDeviceTelemetry ? deviceTelemetry.device_info : null;
+          const telemetrySource = hasLoadedDeviceTelemetry ? deviceTelemetry.source : (loadingTelemetry ? 'loading' : 'cached_offline');
+
+          // Metric extraction with honest null state support
+          const displayCpu = liveTelemetry ? liveTelemetry.cpu : (loadingTelemetry ? null : proceduralVitals.cpu);
+          const displayRam = liveTelemetry ? liveTelemetry.memory : (loadingTelemetry ? null : proceduralVitals.ramPct);
+          const displayPacketLoss = liveTelemetry ? (liveTelemetry.packet_drop != null ? `${liveTelemetry.packet_drop}%` : null) : (loadingTelemetry ? null : proceduralVitals.packetLoss);
+          const displayCrcErrors = liveTelemetry ? (liveTelemetry.interface_error_count != null ? liveTelemetry.interface_error_count : null) : (loadingTelemetry ? null : proceduralVitals.crcErrors);
+          const displayReachable = liveTelemetry ? (liveTelemetry.reachable ? 'Optimal (100%)' : 'Degraded / Unreachable') : (loadingTelemetry ? null : proceduralVitals.reachability);
+          const displayTemp = liveTelemetry ? (liveTelemetry.temperature != null ? `${liveTelemetry.temperature}°C` : null) : (loadingTelemetry ? null : proceduralVitals.temp);
+          const displayPoe = liveTelemetry ? (liveTelemetry.poe_status || null) : (loadingTelemetry ? null : proceduralVitals.poeUsage);
+          const displayPsu = liveTelemetry ? 'Dual Redundant (OK)' : proceduralVitals.psuState;
+
+          const displayModel = liveDeviceInfo?.model && liveDeviceInfo.model !== 'Unknown' ? liveDeviceInfo.model : proceduralVitals.model;
+          const displayOs = liveDeviceInfo?.os_version && liveDeviceInfo.os_version !== 'Unknown' ? liveDeviceInfo.os_version : proceduralVitals.osVer;
+          const displaySerial = liveDeviceInfo?.serial && liveDeviceInfo.serial !== 'Unknown' ? liveDeviceInfo.serial : proceduralVitals.serial;
+          const displayMac = liveDeviceInfo?.mac && liveDeviceInfo.mac !== 'Unknown' ? liveDeviceInfo.mac : proceduralVitals.mac;
+          const displayIp = liveDeviceInfo?.ip_address && liveDeviceInfo.ip_address !== 'Unknown' ? liveDeviceInfo.ip_address : (selectedDevice.ip_address || proceduralVitals.ip);
+
+          const formatUptimeSeconds = (secs) => {
+            if (secs == null || isNaN(secs) || secs <= 0) return null;
+            const d = Math.floor(secs / 86400);
+            const h = Math.floor((secs % 86400) / 3600);
+            return `${d} days, ${h} hours`;
+          };
+          const displayUptime = (liveTelemetry && formatUptimeSeconds(liveTelemetry.uptime_seconds)) || liveDeviceInfo?.uptime || proceduralVitals.uptime;
+
+          const vitals = {
+            ...proceduralVitals,
+            cpu: displayCpu,
+            ramPct: displayRam,
+            packetLoss: displayPacketLoss,
+            crcErrors: displayCrcErrors,
+            reachability: displayReachable,
+            temp: displayTemp,
+            poeUsage: displayPoe,
+            psuState: displayPsu,
+            model: displayModel,
+            osVer: displayOs,
+            serial: displaySerial,
+            mac: displayMac,
+            ip: displayIp,
+            uptime: displayUptime,
+          };
+
+          const renderProvenanceBanner = () => {
+            const timeStr = deviceTelemetry?.synced_at ? formatTimestamp(deviceTelemetry.synced_at) : (lastRefresh ? formatTimestamp(lastRefresh) : 'Just now');
+            if (telemetrySource === 'dnac_live') {
+              return (
+                <div className="noc-provenance-banner live">
+                  <span className="noc-banner-text">
+                    <Activity size={13} />
+                    <span>Live telemetry from Cisco DNA Center Assurance • Synced at {formatTimeOnly(deviceTelemetry?.synced_at || new Date())}</span>
+                  </span>
+                  {loadingTelemetry && <span className="noc-loading-dot" title="Refreshing telemetry..." />}
+                </div>
+              );
+            }
+            if (telemetrySource === 'offline') {
+              return (
+                <div className="noc-provenance-banner offline">
+                  <span className="noc-banner-text">
+                    <AlertTriangle size={13} />
+                    <span>DNAC Unreachable • Displaying offline baseline record</span>
+                  </span>
+                  <button type="button" className="noc-retry-btn" onClick={handlePollDNAC} disabled={pollingHealth} title="Retry live polling">
+                    <RefreshCw size={11} className={pollingHealth ? 'spin' : ''} />
+                    <span>Retry Poll</span>
+                  </button>
+                </div>
+              );
+            }
+            return (
+              <div className="noc-provenance-banner cached">
+                <span className="noc-banner-text">
+                  <Clock size={13} />
+                  <span>Cached telemetry from MongoDB store • Synced {timeStr}</span>
+                </span>
+                <button type="button" className="noc-retry-btn" onClick={handlePollDNAC} disabled={pollingHealth} title="Re-poll live DNAC controller">
+                  <RefreshCw size={11} className={pollingHealth ? 'spin' : ''} />
+                  <span>Poll DNAC</span>
+                </button>
+              </div>
+            );
+          };
 
           return (
             <>
@@ -1745,6 +1928,24 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
                 <h2>
                   <span className={`device-tile-status-dot ${health}`} style={{ display: 'inline-block', marginRight: '8px', verticalAlign: 'middle' }} />
                   {selectedDevice.device_name}
+                  <span style={{ marginLeft: '10px' }}>
+                    {telemetrySource === 'dnac_live' ? (
+                      <span className="noc-provenance-pill live">
+                        <span style={{ color: 'var(--accent-green-bright)' }}>●</span> DNAC LIVE
+                        {loadingTelemetry && <span className="noc-loading-dot" />}
+                      </span>
+                    ) : telemetrySource === 'offline' ? (
+                      <span className="noc-provenance-pill offline">
+                        <span>○</span> OFFLINE
+                        {loadingTelemetry && <span className="noc-loading-dot" />}
+                      </span>
+                    ) : (
+                      <span className="noc-provenance-pill cached">
+                        <span>⟳</span> CACHED
+                        {loadingTelemetry && <span className="noc-loading-dot" />}
+                      </span>
+                    )}
+                  </span>
                 </h2>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <button
@@ -1916,6 +2117,7 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
                 {/* TAB 2: Assurance Telemetry */}
                 {drawerTab === 'telemetry' && (
                   <div>
+                    {renderProvenanceBanner()}
                     <h3 style={{ fontSize: '0.88rem', margin: '0 0 0.85rem 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <Activity size={15} style={{ color: 'var(--accent-blue)' }} /> Cisco DNA Center Assurance Vitals
                     </h3>
@@ -1923,15 +2125,15 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
                     <div className="noc-telemetry-grid">
                       <div className="noc-telemetry-card">
                         <span className="noc-telemetry-card-title"><Cpu size={12} /> CPU Utilization</span>
-                        <span className="noc-telemetry-card-val" style={{ color: vitals.cpu > 85 ? 'var(--health-critical)' : vitals.cpu > 70 ? 'var(--health-warning)' : 'var(--health-healthy)' }}>
-                          {vitals.cpu}%
+                        <span className="noc-telemetry-card-val" style={{ color: vitals.cpu > 85 ? 'var(--health-critical)' : vitals.cpu > 70 ? 'var(--health-warning)' : vitals.cpu != null ? 'var(--health-healthy)' : 'var(--text-tertiary)' }}>
+                          {vitals.cpu != null ? `${vitals.cpu}%` : <span className="noc-null-val">—</span>}
                         </span>
-                        <div className="noc-gauge-meter">
+                        <div className={`noc-gauge-meter ${vitals.cpu == null ? 'muted' : ''}`}>
                           <div
                             className="noc-gauge-bar"
                             style={{
-                              width: `${vitals.cpu}%`,
-                              background: vitals.cpu > 85 ? 'var(--health-critical)' : vitals.cpu > 70 ? 'var(--health-warning)' : 'var(--health-healthy)'
+                              width: `${vitals.cpu || 0}%`,
+                              background: vitals.cpu > 85 ? 'var(--health-critical)' : vitals.cpu > 70 ? 'var(--health-warning)' : vitals.cpu != null ? 'var(--health-healthy)' : 'transparent'
                             }}
                           />
                         </div>
@@ -1940,35 +2142,47 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
 
                       <div className="noc-telemetry-card">
                         <span className="noc-telemetry-card-title"><HardDrive size={12} /> System RAM</span>
-                        <span className="noc-telemetry-card-val">{vitals.ramPct}%</span>
-                        <div className="noc-gauge-meter">
-                          <div className="noc-gauge-bar" style={{ width: `${vitals.ramPct}%`, background: 'var(--accent-blue)' }} />
+                        <span className="noc-telemetry-card-val">
+                          {vitals.ramPct != null ? `${vitals.ramPct}%` : <span className="noc-null-val">—</span>}
+                        </span>
+                        <div className={`noc-gauge-meter ${vitals.ramPct == null ? 'muted' : ''}`}>
+                          <div className="noc-gauge-bar" style={{ width: `${vitals.ramPct || 0}%`, background: vitals.ramPct != null ? 'var(--accent-blue)' : 'transparent' }} />
                         </div>
-                        <span className="noc-telemetry-card-sub">{vitals.ramAllocated} GB of {vitals.ramTotal} GB</span>
+                        <span className="noc-telemetry-card-sub">{vitals.ramPct != null ? `${vitals.ramPct}% allocated` : 'Memory stats unmeasured'}</span>
                       </div>
 
                       <div className="noc-telemetry-card">
                         <span className="noc-telemetry-card-title"><AlertTriangle size={12} /> Packet Drops & CRC</span>
-                        <span className="noc-telemetry-card-val">{vitals.packetLoss}</span>
-                        <span className="noc-telemetry-card-sub">{vitals.crcErrors} CRC errors in 60m</span>
+                        <span className="noc-telemetry-card-val">
+                          {vitals.packetLoss != null ? vitals.packetLoss : <span className="noc-null-val">—</span>}
+                        </span>
+                        <span className="noc-telemetry-card-sub">
+                          {vitals.crcErrors != null ? `${vitals.crcErrors} CRC errors in 60m` : 'Error counters unavailable'}
+                        </span>
                       </div>
 
                       <div className="noc-telemetry-card">
                         <span className="noc-telemetry-card-title"><Radio size={12} /> Reachability & Latency</span>
-                        <span className="noc-telemetry-card-val">{vitals.latency}</span>
-                        <span className="noc-telemetry-card-sub">{vitals.reachability}</span>
+                        <span className="noc-telemetry-card-val" style={{ fontSize: '0.92rem' }}>
+                          {vitals.reachability || <span className="noc-null-val">No Signal</span>}
+                        </span>
+                        <span className="noc-telemetry-card-sub">ICMP / SNMP Poller</span>
                       </div>
 
                       <div className="noc-telemetry-card">
                         <span className="noc-telemetry-card-title"><Zap size={12} /> PoE & Power Delivery</span>
-                        <span className="noc-telemetry-card-val" style={{ fontSize: '0.92rem' }}>{vitals.poeUsage}</span>
+                        <span className="noc-telemetry-card-val" style={{ fontSize: '0.92rem' }}>
+                          {vitals.poeUsage || <span className="noc-null-val">—</span>}
+                        </span>
                         <span className="noc-telemetry-card-sub">{vitals.psuState}</span>
                       </div>
 
                       <div className="noc-telemetry-card">
                         <span className="noc-telemetry-card-title"><Flame size={12} /> Operating Temp</span>
-                        <span className="noc-telemetry-card-val">{vitals.temp}</span>
-                        <span className="noc-telemetry-card-sub">Dual Chassis Fans OK</span>
+                        <span className="noc-telemetry-card-val">
+                          {vitals.temp || <span className="noc-null-val">—</span>}
+                        </span>
+                        <span className="noc-telemetry-card-sub">Chassis Thermal Sensors</span>
                       </div>
                     </div>
                   </div>
@@ -1977,6 +2191,7 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
                 {/* TAB 3: Device Inventory */}
                 {drawerTab === 'inventory' && (
                   <div>
+                    {renderProvenanceBanner()}
                     <div className="noc-inventory-card">
                       <h4><Server size={14} /> Hardware Specifications</h4>
                       <div className="noc-spec-row"><span className="noc-spec-label">Model</span><span className="noc-spec-val">{vitals.model}</span></div>
@@ -2010,6 +2225,7 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
                   const fullPayload = {
                     device: selectedDevice,
                     telemetry_vitals: vitals,
+                    live_telemetry_payload: deviceTelemetry,
                     active_alerts: activeAlerts,
                     multi_agent_pipeline_config: {
                       temporal_window_seconds: 7200,

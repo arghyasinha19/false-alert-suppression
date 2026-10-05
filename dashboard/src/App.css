@@ -3357,6 +3357,126 @@
   font-family: var(--font-mono, monospace);
 }
 
+/* ── Cisco DNA Center Assurance Provenance & Live Badges ── */
+.noc-provenance-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  vertical-align: middle;
+  transition: all var(--transition-fast);
+}
+
+.noc-provenance-pill.live {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--accent-green-bright);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.noc-provenance-pill.cached {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--accent-yellow-bright);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.noc-provenance-pill.offline {
+  background: rgba(100, 116, 139, 0.12);
+  color: var(--text-tertiary);
+  border: 1px solid rgba(100, 116, 139, 0.25);
+}
+
+.noc-loading-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: noc-pulse 1.2s infinite ease-in-out;
+  margin-left: 2px;
+}
+
+@keyframes noc-pulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+.noc-provenance-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.74rem;
+  font-weight: 500;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.85rem;
+  border: 1px solid var(--card-border);
+}
+
+.noc-provenance-banner.live {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.2);
+  color: var(--accent-green-bright);
+}
+
+.noc-provenance-banner.cached {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.2);
+  color: var(--accent-yellow-bright);
+}
+
+.noc-provenance-banner.offline {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.2);
+  color: var(--health-critical);
+}
+
+.noc-banner-text {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.noc-retry-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.noc-retry-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.noc-null-val {
+  color: var(--text-tertiary);
+  font-style: italic;
+  font-weight: 500;
+}
+
+.noc-gauge-meter.muted {
+  background: rgba(255, 255, 255, 0.04);
+}
+
 /* ── Cisco DNA Center Assurance Telemetry Grid ── */
 .noc-telemetry-grid {
   display: grid;

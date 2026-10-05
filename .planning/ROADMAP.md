@@ -143,16 +143,16 @@
 
 **Goal:** Connect the slide-out drawer in `NetworkOperations.jsx` to the new live telemetry and polling endpoints, replacing mock calculations and simulated timeouts.
 
-**Status:** Pending
+**Status:** Complete ✓
 
 **Requirements:**
 - **DNAC-05**: Clicking "Poll DNAC" in `NetworkOperations.jsx` triggers `POST /api/devices/{device_name}/live-poll` with visual spinner and toast notification displaying actual response.
 - **DNAC-06**: Assurance Telemetry and Device Inventory tabs in the SRE drawer render live vitals fetched from `/api/devices/{device_name}/telemetry` with live/offline source badges.
 
 **Success Criteria:**
-1. Clicking "Poll DNAC" button displays an active spinner, makes an HTTP call to the backend, and displays a success/failure toast based on actual response.
-2. SRE Drawer Telemetry tab displays real fetched values instead of procedurally generated numbers.
-3. Source badge indicates whether telemetry is live from DNAC or cached from offline storage.
+1. Clicking "Poll DNAC" button displays an active spinner, makes an HTTP call to the backend, and displays a success/failure toast based on actual response. (✓ Verified)
+2. SRE Drawer Telemetry tab displays real fetched values instead of procedurally generated numbers. (✓ Verified)
+3. Source badge indicates whether telemetry is live from DNAC or cached from offline storage. (✓ Verified)
 
 ---
 
