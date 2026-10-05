@@ -1,23 +1,31 @@
 # Requirements: False Alert Suppression Pipeline
 
 **Defined:** 2026-10-05  
-**Milestone:** v1.8 Interactive Network Topology Graph Diagram  
+**Milestone:** v1.9 UI/UX Audit Remediation  
 **Core Value:** Accurately identify false or transient network alerts to prevent unnecessary ServiceNow ticket creation and reduce operational noise without missing genuine network degradation.
 
-## Milestone v1.8 Requirements: Interactive Network Topology Graph Diagram
+## Milestone v1.9 Requirements: UI/UX Audit Remediation
 
-### Interactive Canvas & Viewport Navigation (GRAPH-CANVAS)
-- [x] **GRAPH-01**: User can view network devices in an interactive, zoomable and pannable SVG canvas graph diagram with smooth mouse wheel zooming, drag-to-pan, and fit-to-screen controls.
-- [x] **GRAPH-02**: Canvas provides floating navigation controls (Zoom In, Zoom Out, Fit to View, Reset 100%) and a fast sub-mode toggle between Graph View and Card Grid View.
+### Critical Layout & Status Fixes (UI-CRITICAL)
+- [ ] **UI-01**: Fix responsive collapse below 1100px in the `.content-area` by removing `calc(100vw - ...)` constraints and letting flexbox size it correctly.
+- [ ] **UI-02**: Sidebar connection status must accurately reflect API failures by explicitly handling fetch errors, updating the "LIVE" badge to "Stale" on failure, and properly separating mock data from live status.
+- [ ] **UI-03**: Constrain the topology graph canvas to its own bounds with independent scroll and zoom containers to prevent overflowing the main window.
 
-### Hierarchical Network Topology & Edge Links (GRAPH-LINKS)
-- [x] **GRAPH-03**: Devices are arranged into 3 distinct hierarchical network tiers (Core & WAN Backbone at top, Distribution & Security in middle, Campus & Access Edge at bottom) with subtle background tier lanes.
-- [x] **GRAPH-04**: Interconnected network links (edges) connect upstream and downstream devices with health-aware styling (teal for nominal, amber for warning, red for critical) and subtle animated traffic pulses.
+### Data Visibility & Bounds (UI-VISIBILITY)
+- [ ] **UI-04**: Add permanently visible scrollbars to data tables, implement right-edge gradient masks on horizontally scrolling tables, and explicitly cap vertical lists (e.g., "Showing 5 of 7").
 
-### Health-Aware Node Cards & SRE Drawer Integration (GRAPH-NODES)
-- [x] **GRAPH-05**: Device nodes render as rich micro-cards with role icons, hostnames, management IPs, health status dots (including pulsing red for critical), and active alert count badges.
-- [x] **GRAPH-06**: Clicking any device node on the graph canvas opens the 580px slide-out SRE details drawer for that device with glowing selection highlight.
-- [x] **GRAPH-07**: Node rendering reactively adapts to active Role, Health, and search query filters by highlighting matches and dimming non-matches.
+### Trust & Contrast Remediation (UI-CONTRAST)
+- [ ] **UI-05**: Adjust `text-tertiary` to meet contrast minimums (`#64748b` in light mode, `#94a3b8` in dark mode) and darken blue pill text to pass AA contrast.
+- [ ] **UI-06**: Refactor charts to use CSS tokens from `index.css` via `getComputedStyle` or a theme palette object, ensuring chart legends, grids, and axes integrate with dark mode.
+
+### Accessibility & Hit Areas (UI-A11Y)
+- [ ] **UI-07**: Increase all interactive element (buttons, pills, selects) minimum heights to 32px with 44px hit areas, and raise table/filter typography to 12-13px.
+- [ ] **UI-08**: Update the Ops Assistant chat panel to be non-modal (inset the content area) or properly manage focus and dim the backdrop.
+- [ ] **UI-16**: Update sidebar navigation to use real `<button>` elements, add `aria-current="page"`, add a `:focus-visible` ring, and trigger tooltips on focus.
+- [ ] **UI-17**: Ensure all form controls have visible labels, add `scope="col"` to table headers, and provide visually-hidden captions per table.
+
+### Craft & Consistency Polish (UI-POLISH)
+- [ ] **UI-09-22**: Address medium-priority inconsistencies including scaling typography (12/13/15/18/24/34), standardizing KPI cards to the NOC card design, clarifying domain shorthand, unifying empty states, and removing demo simulation scaffolding.
 
 ## Future Requirements
 
@@ -38,19 +46,23 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| GRAPH-01 | Phase 17 | Complete ✓ |
-| GRAPH-02 | Phase 17 | Complete ✓ |
-| GRAPH-03 | Phase 17 | Complete ✓ |
-| GRAPH-04 | Phase 17 | Complete ✓ |
-| GRAPH-05 | Phase 18 | Complete ✓ |
-| GRAPH-06 | Phase 18 | Complete ✓ |
-| GRAPH-07 | Phase 18 | Complete ✓ |
+| UI-01 | | |
+| UI-02 | | |
+| UI-03 | | |
+| UI-04 | | |
+| UI-05 | | |
+| UI-06 | | |
+| UI-07 | | |
+| UI-08 | | |
+| UI-16 | | |
+| UI-17 | | |
+| UI-09-22 | | |
 
 **Coverage:**
-- v1.8 requirements: 7 total
-- Mapped to phases: 7 (100%)
-- Unmapped: 0 ✓
+- v1.9 requirements: 11 total
+- Mapped to phases: 0 (0%)
+- Unmapped: 11
 
 ---
 *Requirements defined: 2026-10-05*  
-*Last updated: 2026-10-05 after Milestone v1.8 research*
+*Last updated: 2026-10-05 after Milestone v1.9 scoping*
