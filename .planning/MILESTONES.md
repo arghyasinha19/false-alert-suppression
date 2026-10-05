@@ -61,5 +61,9 @@
   - Dual Provenance Indicators: Live header status pills (`● DNAC LIVE` / `⟳ CACHED` / `○ OFFLINE`) and sticky tab banners with timestamps and retry polling.
   - Real Live Poll & Fleet-Wide Synchronization: Replaced simulated timeouts with real HTTP live-poll calls, dynamic toast notifications, and `onRefresh()` propagation across Executive Topology, SRE Table, and Regional Site Matrix.
 
-
-
+### v1.7 NOC Details Drawer Scrollbar & Usability Polish (Completed 2026-10-05)
+- **Goal:** Ensure the device details pane across Executive Topology (and other NOC views) features an accessible, clearly visible, theme-aware scrollbar with a cleanly separated fixed header/tabs, independently scrollable content container, and pinned action bar.
+- **Shipped:**
+  - Dedicated Theme-Aware Scrollbar: High-contrast scrollbar styling for `.detail-panel-body` in both dark and light modes, eliminating invisible/transparent scrollbars so operators immediately perceive scrollability.
+  - Flexbox Viewport Architecture: Locked outer `.detail-panel` to `height: 100vh; overflow: hidden; display: flex; flex-direction: column;`, anchored `.detail-panel-header` and `.noc-drawer-tabs` at top (`flex-shrink: 0`), pinned `.noc-drawer-action-bar` at bottom (`flex-shrink: 0`), and isolated scrolling strictly to `.detail-panel-body` (`flex: 1 1 auto; overflow-y: auto; min-height: 0;`).
+  - Cross-Tab Viewport Verification: Smooth scrolling across all 4 workspaces (Alert Triage, Assurance Telemetry, Device Inventory, Raw Payloads) with automated contract tests in `tests/test_drawer_scrollbar_contract.py`.

@@ -8,14 +8,15 @@ An intelligent, multi-agent network alert triage and suppression platform for Ci
 
 Accurately identify false or transient network alerts to prevent unnecessary ServiceNow ticket creation and reduce operational noise without missing genuine network degradation.
 
-## Current Milestone: v1.7 NOC Details Drawer Scrollbar & Usability Polish
+## Current Milestone: v1.8 Interactive Network Topology Graph Diagram
 
-**Goal:** Ensure the device details pane in Executive Topology (and across all NOC views) features an accessible, clearly visible, theme-aware scrollbar with a cleanly separated fixed header/tabs, independently scrollable content container, and pinned action bar.
+**Goal:** Transform the Topology view into a true interactive network graph diagram where devices are rendered as interconnected visual nodes with link edges, hierarchical/force-directed layouts, pan & zoom controls, real-time health indicator pulses, and full integration with the SRE details drawer.
 
 **Target features:**
-- **Theme-Aware High-Contrast Scrollbar:** Replace transparent global scrollbar overrides with explicit styling (`::-webkit-scrollbar`, `scrollbar-width`, and `scrollbar-color`) ensuring the scroll thumb is clearly visible in both dark and light modes.
-- **Fixed-Header & Fixed-Footer Drawer Architecture:** Refactor `.detail-panel` into a robust flex column where the header and tab navigation are anchored at the top, the SRE action bar is pinned at the bottom, and `.detail-panel-body` scrolls independently (`flex: 1; overflow-y: auto; min-height: 0;`).
-- **Cross-Tab Content Overflow Verification:** Verify that long content in all 4 drawer workspaces (Alert Triage multi-agent timeline, Assurance Telemetry vitals grid, Device Inventory hardware table, and Raw Payloads JSON viewer) scrolls smoothly without layout clipping or hidden controls.
+- **Interactive Graph Canvas:** Zoomable, pannable network diagram rendering devices as custom nodes connected by topology link edges (Core ↔ Distribution ↔ Access).
+- **Topological Interconnections & Link Status:** Visual links showing uplink/downlink relationships, traffic flow, and link degradation or interface alerts.
+- **Health-Aware Graph Nodes:** Custom node rendering with device role icons, hostnames, IPs, health badges, and animated pulses for critical alerts.
+- **SRE Drawer & View Switcher Integration:** Clicking a node opens the full SRE triage drawer; seamlessly toggled via the representation view switcher alongside Table and Matrix views.
 
 ## Requirements
 
@@ -49,12 +50,16 @@ Accurately identify false or transient network alerts to prevent unnecessary Ser
 - ✓ DNAC Client Assurance & Device Extensions (`app/dnac_client.py`, `app/exceptions.py`) — v1.6
 - ✓ Backend Live Polling & Telemetry Endpoints (`GET /api/devices/{name}/telemetry`, `POST /api/devices/{name}/live-poll`) — v1.6
 - ✓ Frontend SRE Drawer Live Wire-Up (Real-time polling, loading spinners, provenance badges, honest null states) — v1.6
+- ✓ Detail drawer high-contrast theme-aware visible scrollbar (`DRAWER-01`) — v1.7
+- ✓ Fixed-header, fixed-tabs, and pinned-footer flexbox drawer architecture (`DRAWER-02`) — v1.7
+- ✓ Unclipped cross-tab viewport scrolling across all 4 SRE workspaces (`DRAWER-03`) — v1.7
 
 ### Active
 
-- [ ] **DRAWER-01**: Detail drawer body features dedicated, visible, theme-aware custom scrollbar styling in both dark and light modes.
-- [ ] **DRAWER-02**: Header and tab navigation stay fixed at top while sticky action bar stays pinned at bottom, with `.detail-panel-body` scrolling independently without parent panel jitter.
-- [ ] **DRAWER-03**: All 4 drawer tabs (Alert Triage, Assurance Telemetry, Device Inventory, Raw Payloads) support smooth vertical scrolling across various viewport heights.
+- [ ] **TOPO-01**: User can view network devices in an interactive topology graph diagram with nodes and connecting links between tiers.
+- [ ] **TOPO-02**: Topology graph links visually represent hierarchical connections (Core ↔ Distribution ↔ Access) with status indicators for link degradation or interface errors.
+- [ ] **TOPO-03**: Graph canvas supports pan, zoom, fit-to-view, and responsive layout adapting to dark and light modes.
+- [ ] **TOPO-04**: Clicking any device node in the graph diagram opens the slide-out SRE details drawer with full triage, telemetry, inventory, and action bar support.
 
 ### Out of Scope
 
