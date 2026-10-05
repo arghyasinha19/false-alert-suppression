@@ -52,4 +52,14 @@
   - Multi-Dimensional Filter Bar (Role, Health, ServiceNow ticket chips) and Device Micro-Visualizations (24h activity sparklines, severity mini-bars, live status pulses).
   - Interactive SRE Investigation Drawer (5-stage chronological multi-agent decision timeline, Assurance telemetry cards, inventory specs, formatted JSON payload viewer, and sticky action bar).
 
+### v1.6 Live DNAC Assurance Telemetry & Asset Integration (Completed 2026-10-05)
+- **Goal:** Bridge the Network Operations Center directly with live Cisco DNA Center Assurance and Device Inventory APIs, replace client-side simulated drawer vitals and artificial poll timeouts with real backend endpoints, add live provenance indicators, and deliver an interactive SRE workstation with zero-delay fleet synchronization.
+- **Shipped:**
+  - DNAC API Client Extensions (`app/dnac_client.py`): Query methods `get_device_by_name_or_ip` and `get_device_health`, automated 401 token authentication retries, and typed exception hierarchy (`app/exceptions.py`).
+  - Backend Endpoints & Live Polling API (`dashboard/api.py`, `dashboard/device_service.py`): Added `GET /api/devices/{name}/telemetry` and `POST /api/devices/{name}/live-poll` with dual singular/plural route aliases, two-tier UUID resolution, MongoDB caching in `device_telemetry`, and non-blocking offline fallbacks.
+  - Interactive SRE Drawer Live Wire-Up (`NetworkOperations.jsx`): Immediate live telemetry retrieval on drawer open, `AbortController` cancellation, subtle loading animations, and honest null state rendering.
+  - Dual Provenance Indicators: Live header status pills (`● DNAC LIVE` / `⟳ CACHED` / `○ OFFLINE`) and sticky tab banners with timestamps and retry polling.
+  - Real Live Poll & Fleet-Wide Synchronization: Replaced simulated timeouts with real HTTP live-poll calls, dynamic toast notifications, and `onRefresh()` propagation across Executive Topology, SRE Table, and Regional Site Matrix.
+
+
 

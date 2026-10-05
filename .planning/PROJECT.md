@@ -8,16 +8,13 @@ An intelligent, multi-agent network alert triage and suppression platform for Ci
 
 Accurately identify false or transient network alerts to prevent unnecessary ServiceNow ticket creation and reduce operational noise without missing genuine network degradation.
 
-## Current Milestone: v1.6 Live DNAC Assurance Telemetry & Asset Integration
+## Current State: v1.6 Live DNAC Assurance Telemetry & Asset Integration (Shipped 2026-10-05)
 
-**Goal:** Bridge the Network Operations Center directly with live Cisco DNA Center Assurance and Device Inventory APIs, replace client-side simulated drawer vitals and poll timeouts with real backend endpoints, auto-orchestrate the background sync daemon, and provide an end-to-end testing suite with robust offline fallbacks.
+The False Alert Suppression platform now connects directly with live Cisco DNA Center Assurance and Device Inventory APIs. The SRE slide-out triage drawer features live hardware vitals (CPU, memory, packet drop, reachability, PoE, interface errors), hardware specifications (serial, MAC, OS, IP), dual-placement provenance badges (`● DNAC LIVE` / `⟳ CACHED` / `○ OFFLINE`), on-demand live polling, and fleet-wide synchronization across all 3 presentation modes.
 
-**Target features:**
-- **DNAC Device & Assurance API Integration:** Add real client methods in `app/dnac_client.py` for `/dna/intent/api/v1/network-device` (hardware inventory, serial, MAC, OS, IP) and `/dna/intent/api/v1/device-health` (live CPU, memory, packet drop, reachability).
-- **Backend Live Telemetry & Polling Endpoints:** Implement `GET /api/devices/{name}/telemetry` and `POST /api/devices/{name}/live-poll` in `dashboard/api.py`.
-- **Frontend SRE Drawer Live Wiring:** Wire the "Poll DNAC" button and Telemetry/Inventory tabs in `dashboard/src/NetworkOperations.jsx` to live backend data with real-time loading spinners and graceful offline fallback.
-- **Launcher Auto-Orchestration:** Update `start_dashboard.py` to start and gracefully terminate `dashboard/dnac_sync.py` alongside FastAPI and Vite.
-- **End-to-End Verification & Diagnostics Harness:** Provide an interactive step-by-step diagnostic test CLI tool (`test_dnac_integration.py`) verifying credentials, tokens, live issue status, and device telemetry.
+## Next Milestone Goals
+
+- Define via `/gsd-new-milestone`.
 
 ## Requirements
 
@@ -48,20 +45,19 @@ Accurately identify false or transient network alerts to prevent unnecessary Ser
 - ✓ Multi-Mode Representation Engine: Topology, SRE Table, Site Matrix (Milestone v1.5) — v1.5
 - ✓ Multi-Dimensional Filter Bar & Micro-Visualizations (Milestone v1.5) — v1.5
 - ✓ Interactive SRE Investigation Drawer & Incident Timeline (Milestone v1.5) — v1.5
+- ✓ DNAC Client Assurance & Device Extensions (`app/dnac_client.py`, `app/exceptions.py`) — v1.6
+- ✓ Backend Live Polling & Telemetry Endpoints (`GET /api/devices/{name}/telemetry`, `POST /api/devices/{name}/live-poll`) — v1.6
+- ✓ Frontend SRE Drawer Live Wire-Up (Real-time polling, loading spinners, provenance badges, honest null states) — v1.6
 
 ### Active
 
-- [ ] **DNAC-01**: DNAC Assurance & Device Client Extensions (`app/dnac_client.py` methods for `/dna/intent/api/v1/network-device` and `/dna/intent/api/v1/device-health` with fallback handling).
-- [ ] **DNAC-02**: Backend Live Polling & Telemetry Endpoints (`dashboard/api.py` endpoints for `GET /api/devices/{name}/telemetry` and `POST /api/devices/{name}/live-poll`).
-- [ ] **DNAC-03**: Frontend SRE Drawer Live Wire-Up (Wire Poll DNAC button and Telemetry/Inventory tabs to live endpoints with loading spinners and offline fallbacks in `NetworkOperations.jsx`).
-- [ ] **DNAC-04**: Launcher Service Orchestration (`start_dashboard.py` auto-starts and monitors `dnac_sync.py` background process).
-- [ ] **DNAC-05**: End-to-End Step-by-Step Diagnostic & Testing Harness (`test_dnac_integration.py` for token auth, issue lookup, device health, and telemetry verification).
+(None currently — run `/gsd-new-milestone` to define next milestone scope)
 
 ### Out of Scope
 
 - Bypassing DNAC RBAC or making unauthenticated calls.
 - Storing unencrypted DNAC passwords in source code (always load from env vars or `config.yaml`).
-
+- Daemon supervisor bundling (`start_dashboard.py` auto-starting `dnac_sync.py`) and standalone CLI diagnostic script — Removed per user decision; existing independent `dnac_sync.py` and pytest test suites satisfy operational and testing needs.
 - External database querying for historical data beyond currently ingested/cached pipeline alerts.
 - Changing server-side timezone configuration (all comparisons performed in browser client local / UTC normalized time).
 
@@ -69,6 +65,7 @@ Accurately identify false or transient network alerts to prevent unnecessary Ser
 
 - The React dashboard defaults to connecting to `http://127.0.0.1:8004` (as defined in `VITE_API_BASE`).
 - When MongoDB is offline, the FastAPI backend automatically falls back to `data/simulated_alerts.json`, providing a complete mock operations environment with 60 realistic alerts and live simulation capabilities.
+- Live DNAC Assurance vitals and hardware inventory are cached in MongoDB collection `device_telemetry`.
 
 ## Key Decisions
 
@@ -78,6 +75,10 @@ Accurately identify false or transient network alerts to prevent unnecessary Ser
 | Tickets Avoided is derived (`Suppressed + Auto-Resolving`) | Avoids double-counting avoided tickets in the total processed metric. | ✓ Good |
 | Scope-based KPI calculation | Distinguishes device/time scope from category filter so KPI cards display overall scope volume while the table and charts filter by category. | ✓ Good |
 | Port 8004 for Dashboard API | Avoids conflict with standard dev ports (8000/8080) and matches `VITE_API_BASE` in the frontend. | ✓ Good |
+| Two-tier UUID resolution in `device_service.py` | Fast lookups via MongoDB cache with dynamic DNAC fallback. | ✓ Good |
+| Non-blocking HTTP 200 fallbacks on offline DNAC | Prevents UI crashes and preserves offline demoability. | ✓ Good |
+| Dual provenance badges in header and tab banners | SREs know data origin at a glance. | ✓ Good |
+| Fleet-wide `onRefresh()` after live poll | Synchronizes device state across all 3 representation modes. | ✓ Good |
 
 ## Evolution
 
@@ -97,4 +98,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-05 after Milestone v1.6 initialization*
+*Last updated: 2026-10-05 after Milestone v1.6 completion*

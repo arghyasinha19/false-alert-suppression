@@ -104,54 +104,13 @@
 
 ---
 
-## Phase 13: DNAC Client Assurance & Device Extensions
+<details>
+<summary>✅ v1.6 Live DNAC Assurance Telemetry & Asset Integration (Phases 13-15) — SHIPPED 2026-10-05</summary>
 
-**Goal:** Extend `DNACClient` with robust methods querying Cisco DNA Center's Network Device (`/dna/intent/api/v1/network-device`) and Device Health (`/dna/intent/api/v1/device-health`) APIs with graceful error handling and fallbacks.
+Full archive: [.planning/milestones/v1.6-ROADMAP.md](milestones/v1.6-ROADMAP.md)
 
-**Status:** Complete ✓
+- [x] **Phase 13: DNAC Client Assurance & Device Extensions** (1/1 plan) — completed 2026-10-05
+- [x] **Phase 14: Backend Live Polling & Telemetry Endpoints** (1/1 plan) — completed 2026-10-05
+- [x] **Phase 15: Frontend SRE Drawer Live Wire-Up** (1/1 plan) — completed 2026-10-05
 
-**Requirements:**
-- **DNAC-01**: `DNACClient` provides `get_device_by_name_or_ip(device_name_or_ip)` querying `/dna/intent/api/v1/network-device` to retrieve hardware model, serial number, MAC address, OS version, and reachability.
-- **DNAC-02**: `DNACClient` provides `get_device_health(device_id_or_name)` querying `/dna/intent/api/v1/device-health` to retrieve real CPU utilization %, memory %, packet drop %, and health score.
-
-**Success Criteria:**
-1. `DNACClient.get_device_by_name_or_ip()` successfully parses device details or returns None without unhandled exceptions.
-2. `DNACClient.get_device_health()` returns structured numeric telemetry vitals or returns an offline fallback object.
-3. Unit test verifies method signatures, token auth header passing, and mock payload parsing.
-
----
-
-## Phase 14: Backend Live Polling & Telemetry Endpoints
-
-**Goal:** Implement FastAPI endpoints for device telemetry lookup and on-demand live polling in `dashboard/api.py`, integrating database state with real-time DNAC verification.
-
-**Status:** Complete ✓
-
-**Requirements:**
-- **DNAC-03**: Backend endpoint `GET /api/devices/{device_name}/telemetry` returns structured live DNAC vitals with `source: "dnac_live" | "cached_simulated"` and timestamp.
-- **DNAC-04**: Backend endpoint `POST /api/devices/{device_name}/live-poll` triggers an immediate on-demand DNAC issue and telemetry refresh, returning updated device state.
-
-**Success Criteria:**
-1. Calling `GET /api/devices/{device_name}/telemetry` returns 200 with complete CPU, RAM, and hardware telemetry keys.
-2. Calling `POST /api/devices/{device_name}/live-poll` triggers a real DNAC re-probe and returns updated alert status.
-3. Endpoints return graceful fallbacks when DNAC is offline or unreachable without throwing HTTP 500 errors.
-
----
-
-## Phase 15: Frontend SRE Drawer Live Wire-Up
-
-**Goal:** Connect the slide-out drawer in `NetworkOperations.jsx` to the new live telemetry and polling endpoints, replacing mock calculations and simulated timeouts.
-
-**Status:** Complete ✓
-
-**Requirements:**
-- **DNAC-05**: Clicking "Poll DNAC" in `NetworkOperations.jsx` triggers `POST /api/devices/{device_name}/live-poll` with visual spinner and toast notification displaying actual response.
-- **DNAC-06**: Assurance Telemetry and Device Inventory tabs in the SRE drawer render live vitals fetched from `/api/devices/{device_name}/telemetry` with live/offline source badges.
-
-**Success Criteria:**
-1. Clicking "Poll DNAC" button displays an active spinner, makes an HTTP call to the backend, and displays a success/failure toast based on actual response. (✓ Verified)
-2. SRE Drawer Telemetry tab displays real fetched values instead of procedurally generated numbers. (✓ Verified)
-3. Source badge indicates whether telemetry is live from DNAC or cached from offline storage. (✓ Verified)
-
-
-
+</details>
