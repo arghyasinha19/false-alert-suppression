@@ -1390,12 +1390,14 @@
   top: 0; right: 0; bottom: 0;
   width: 580px;
   max-width: 94vw;
+  height: 100vh;
+  max-height: 100vh;
   background: var(--bg-secondary);
   border-left: 1px solid var(--card-border);
   z-index: 201;
   transform: translateX(100%);
   transition: transform var(--transition-slow);
-  overflow-y: auto;
+  overflow: hidden;
   box-shadow: -6px 0 32px rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
@@ -1409,9 +1411,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: sticky;
-  top: 0;
   background: var(--bg-secondary);
+  flex-shrink: 0;
   z-index: 5;
 }
 
@@ -1432,7 +1433,65 @@
 
 .detail-panel-close:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 
-.detail-panel-body { padding: 1.25rem 1.5rem; }
+.detail-panel-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1.25rem 1.5rem 2rem;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ==========================================================================
+   NOC Phase 16: Details Drawer Dedicated Scrollbar Styling
+   ========================================================================== */
+
+/* Dark Mode (Default) Scrollbars */
+.detail-panel-body {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.28) rgba(255, 255, 255, 0.04);
+}
+
+.detail-panel-body::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+  display: block;
+}
+
+.detail-panel-body::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 999px;
+}
+
+.detail-panel-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  transition: background 0.2s ease;
+}
+
+.detail-panel-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+/* Light Mode Scrollbars */
+[data-theme="light"] .detail-panel-body {
+  scrollbar-color: rgba(0, 0, 0, 0.28) rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .detail-panel-body::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .detail-panel-body::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.28);
+}
+
+[data-theme="light"] .detail-panel-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.45);
+}
 
 .detail-alert-item {
   padding: 1rem;
@@ -3126,8 +3185,7 @@
   padding: 0.5rem 1.25rem;
   background: var(--bg-tertiary);
   border-bottom: 1px solid var(--card-border);
-  position: sticky;
-  top: 57px;
+  flex-shrink: 0;
   z-index: 4;
   overflow-x: auto;
 }
@@ -3620,10 +3678,7 @@
 
 /* ── SRE Sticky Action Bar ── */
 .noc-drawer-action-bar {
-  position: sticky;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  flex-shrink: 0;
   background: var(--bg-secondary);
   border-top: 1px solid var(--card-border);
   padding: 0.75rem 1.25rem;

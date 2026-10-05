@@ -7,13 +7,13 @@
 ## Milestone v1.7 Requirements: NOC Details Drawer Scrollbar & Usability Polish
 
 ### Drawer Scrollbar Accessibility & Styling (DRAWER-STYLE)
-- [ ] **DRAWER-01**: Detail drawer body features dedicated, visible, theme-aware custom scrollbar styling in both dark and light modes, eliminating invisible/transparent scrollbars so users always see scroll position and affordance.
+- [x] **DRAWER-01**: Detail drawer body features dedicated, visible, theme-aware custom scrollbar styling in both dark and light modes, eliminating invisible/transparent scrollbars so users always see scroll position and affordance.
 
 ### Drawer Flex Layout Architecture (DRAWER-LAYOUT)
-- [ ] **DRAWER-02**: Detail drawer flex layout cleanly anchors the header and tab navigation at the top, pins the sticky SRE action bar at the bottom, and isolates scrolling strictly to `.detail-panel-body` (`flex: 1; overflow-y: auto; min-height: 0;`), preventing full-panel jitter.
+- [x] **DRAWER-02**: Detail drawer flex layout cleanly anchors the header and tab navigation at the top, pins the sticky SRE action bar at the bottom, and isolates scrolling strictly to `.detail-panel-body` (`flex: 1; overflow-y: auto; min-height: 0;`), preventing full-panel jitter.
 
 ### Cross-Tab Viewport & Scrolling Verification (DRAWER-TABS)
-- [ ] **DRAWER-03**: All 4 drawer tabs (Alert Triage multi-agent timeline, Assurance Telemetry vitals grid, Device Inventory hardware table, and Raw Payloads JSON viewer) support smooth, unclipped vertical scrolling across varying viewport heights.
+- [x] **DRAWER-03**: All 4 drawer tabs (Alert Triage multi-agent timeline, Assurance Telemetry vitals grid, Device Inventory hardware table, and Raw Payloads JSON viewer) support smooth, unclipped vertical scrolling across varying viewport heights.
 
 ## Future Requirements
 
@@ -33,9 +33,9 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DRAWER-01 | Phase 16 | Pending |
-| DRAWER-02 | Phase 16 | Pending |
-| DRAWER-03 | Phase 16 | Pending |
+| DRAWER-01 | Phase 16 | Complete ✓ |
+| DRAWER-02 | Phase 16 | Complete ✓ |
+| DRAWER-03 | Phase 16 | Complete ✓ |
 
 **Coverage:**
 - v1.7 requirements: 3 total
