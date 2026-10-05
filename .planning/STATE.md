@@ -18,9 +18,9 @@ progress:
 ## Current Position
 
 Phase: Phase 18 — Health Nodes, Filter Sync & SRE Drawer
-Plan: Not planned yet
-Status: Ready to plan
-Last activity: 2026-10-05 — Phase 17 executed and verified: SVG Topology Canvas & Hierarchical Links (GRAPH-01 - GRAPH-04 complete)
+Plan: 18-01 (Ready)
+Status: Ready to execute
+Last activity: 2026-10-05 — Phase 18 planned: Health Nodes, Filter Sync & SRE Drawer (18-PLAN.md ready)
 
 ## Key Decisions Made
 
@@ -31,7 +31,9 @@ Last activity: 2026-10-05 — Phase 17 executed and verified: SVG Topology Canva
 - Added floating glassmorphic navigation toolbar (Zoom In, Zoom Out, Fit to View, 1:1 Reset) with bounded zoom (0.4x - 2.2x) and pointer drag panning.
 - Added top toolbar sub-mode toggle between "Graph View" and "Card Grid View" in NetworkOperations, preserving operator choice.
 - Wired node clicks to open the SRE drawer with full live DNAC telemetry, inventory, timeline, and triage action bar.
+- Phase 18 Architecture: Pass full `devices` fleet to `TopologyGraphView` to preserve topological structure during filtering, while smoothly dimming non-matching nodes to 18% opacity and non-participating edges to 12%.
+- Vector Role Icons: Integrated crisp inline SVG paths for Core (Server/Router), Distribution & Security (Shield/Firewall), and Campus & Access (Switch/Wifi AP).
 
 ## Blockers/Concerns
 
-- None. Phase 17 complete with all automated and browser subagent tests passing. Ready to plan Phase 18.
+- None. Phase 18 plan is ready to execute with `/gsd-execute-phase 18`.
