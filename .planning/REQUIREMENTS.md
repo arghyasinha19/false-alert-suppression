@@ -1,47 +1,56 @@
 # Requirements: False Alert Suppression Pipeline
 
 **Defined:** 2026-10-05  
-**Milestone:** v1.7 NOC Details Drawer Scrollbar & Usability Polish  
+**Milestone:** v1.8 Interactive Network Topology Graph Diagram  
 **Core Value:** Accurately identify false or transient network alerts to prevent unnecessary ServiceNow ticket creation and reduce operational noise without missing genuine network degradation.
 
-## Milestone v1.7 Requirements: NOC Details Drawer Scrollbar & Usability Polish
+## Milestone v1.8 Requirements: Interactive Network Topology Graph Diagram
 
-### Drawer Scrollbar Accessibility & Styling (DRAWER-STYLE)
-- [x] **DRAWER-01**: Detail drawer body features dedicated, visible, theme-aware custom scrollbar styling in both dark and light modes, eliminating invisible/transparent scrollbars so users always see scroll position and affordance.
+### Interactive Canvas & Viewport Navigation (GRAPH-CANVAS)
+- [ ] **GRAPH-01**: User can view network devices in an interactive, zoomable and pannable SVG canvas graph diagram with smooth mouse wheel zooming, drag-to-pan, and fit-to-screen controls.
+- [ ] **GRAPH-02**: Canvas provides floating navigation controls (Zoom In, Zoom Out, Fit to View, Reset 100%) and a fast sub-mode toggle between Graph View and Card Grid View.
 
-### Drawer Flex Layout Architecture (DRAWER-LAYOUT)
-- [x] **DRAWER-02**: Detail drawer flex layout cleanly anchors the header and tab navigation at the top, pins the sticky SRE action bar at the bottom, and isolates scrolling strictly to `.detail-panel-body` (`flex: 1; overflow-y: auto; min-height: 0;`), preventing full-panel jitter.
+### Hierarchical Network Topology & Edge Links (GRAPH-LINKS)
+- [ ] **GRAPH-03**: Devices are arranged into 3 distinct hierarchical network tiers (Core & WAN Backbone at top, Distribution & Security in middle, Campus & Access Edge at bottom) with subtle background tier lanes.
+- [ ] **GRAPH-04**: Interconnected network links (edges) connect upstream and downstream devices with health-aware styling (teal for nominal, amber for warning, red for critical) and subtle animated traffic pulses.
 
-### Cross-Tab Viewport & Scrolling Verification (DRAWER-TABS)
-- [x] **DRAWER-03**: All 4 drawer tabs (Alert Triage multi-agent timeline, Assurance Telemetry vitals grid, Device Inventory hardware table, and Raw Payloads JSON viewer) support smooth, unclipped vertical scrolling across varying viewport heights.
+### Health-Aware Node Cards & SRE Drawer Integration (GRAPH-NODES)
+- [ ] **GRAPH-05**: Device nodes render as rich micro-cards with role icons, hostnames, management IPs, health status dots (including pulsing red for critical), and active alert count badges.
+- [ ] **GRAPH-06**: Clicking any device node on the graph canvas opens the 580px slide-out SRE details drawer for that device with glowing selection highlight.
+- [ ] **GRAPH-07**: Node rendering reactively adapts to active Role, Health, and search query filters by highlighting matches and dimming non-matches.
 
 ## Future Requirements
 
 - Real-time WebSockets streaming updates for telemetry metrics instead of polling.
 - Multi-tenancy support for partitioned customer network views.
 - Dynamic interface flap timeline graph per port.
+- User-customizable drag-and-drop node pinning with layout state persisted in localStorage.
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Redesigning the entire dashboard layout | Only the device details drawer panel and its scrollable content areas are in scope. |
-| Altering backend API endpoints | The bug is purely client-side CSS/layout styling and flex container sizing. |
-| Changing multi-agent timeline logic | Timeline steps and metrics render unchanged within the scrollable body. |
+| Third-party heavy canvas libraries (`reactflow` v11) | Incompatible with React 19; native SVG delivers zero bundle bloat and 100% theme integration. |
+| Manual port wiring CAD editor | Operators monitor and triage existing infrastructure; topology links are computed deterministically. |
+| Altering backend API endpoints | Topology graph is purely client-side SVG representation consuming existing `/api/alerts` and `/api/devices`. |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DRAWER-01 | Phase 16 | Complete ✓ |
-| DRAWER-02 | Phase 16 | Complete ✓ |
-| DRAWER-03 | Phase 16 | Complete ✓ |
+| GRAPH-01 | Phase 17 | Pending |
+| GRAPH-02 | Phase 17 | Pending |
+| GRAPH-03 | Phase 17 | Pending |
+| GRAPH-04 | Phase 17 | Pending |
+| GRAPH-05 | Phase 18 | Pending |
+| GRAPH-06 | Phase 18 | Pending |
+| GRAPH-07 | Phase 18 | Pending |
 
 **Coverage:**
-- v1.7 requirements: 3 total
-- Mapped to phases: 3 (100%)
+- v1.8 requirements: 7 total
+- Mapped to phases: 7 (100%)
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-10-05*  
-*Last updated: 2026-10-05 after Milestone v1.7 initialization*
+*Last updated: 2026-10-05 after Milestone v1.8 research*
