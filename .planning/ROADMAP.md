@@ -1,7 +1,7 @@
 # Roadmap: False Alert Suppression Pipeline
 
-**Milestone:** v1.6 Live DNAC Assurance Telemetry & Asset Integration  
-**Status:** Complete ✓  
+**Milestone:** v1.7 NOC Details Drawer Scrollbar & Usability Polish  
+**Status:** In Progress  
 
 ## Overview
 
@@ -22,6 +22,7 @@
 | 13 | v1.6 | DNAC Client Assurance & Device Extensions | Implement `/network-device` and `/device-health` query methods in `DNACClient` | DNAC-01, DNAC-02 | Complete ✓ |
 | 14 | v1.6 | Backend Live Polling & Telemetry Endpoints | Add `/api/devices/{name}/telemetry` and `/api/devices/{name}/live-poll` endpoints | DNAC-03, DNAC-04 | Complete ✓ |
 | 15 | v1.6 | Frontend SRE Drawer Live Wire-Up | Connect drawer telemetry/inventory tabs and Poll DNAC button to live API with fallback | DNAC-05, DNAC-06 | Complete ✓ |
+| 16 | v1.7 | Details Drawer Scrollbar & Viewport Layout | Accessible, visible, theme-aware scrollbars and fixed-header flex layout for device details drawer | DRAWER-01 - DRAWER-03 | In Progress |
 
 
 ---
@@ -114,3 +115,21 @@ Full archive: [.planning/milestones/v1.6-ROADMAP.md](milestones/v1.6-ROADMAP.md)
 - [x] **Phase 15: Frontend SRE Drawer Live Wire-Up** (1/1 plan) — completed 2026-10-05
 
 </details>
+
+---
+
+## Phase 16: Details Drawer Scrollbar & Viewport Layout
+
+**Goal:** Ensure the device details pane across Executive Topology (and other NOC views) features an accessible, clearly visible, theme-aware scrollbar with a cleanly separated fixed header/tabs, independently scrollable content container, and pinned action bar.
+
+**Status:** In Progress
+
+**Requirements:**
+- **DRAWER-01**: Detail drawer body features dedicated, visible, theme-aware custom scrollbar styling in both dark and light modes, eliminating invisible/transparent scrollbars so users always see scroll position and affordance.
+- **DRAWER-02**: Detail drawer flex layout cleanly anchors the header and tab navigation at the top, pins the sticky SRE action bar at the bottom, and isolates scrolling strictly to `.detail-panel-body` (`flex: 1; overflow-y: auto; min-height: 0;`), preventing full-panel jitter.
+- **DRAWER-03**: All 4 drawer tabs (Alert Triage multi-agent timeline, Assurance Telemetry vitals grid, Device Inventory hardware table, and Raw Payloads JSON viewer) support smooth, unclipped vertical scrolling across varying viewport heights.
+
+**Success Criteria:**
+1. Clicking any device in the topology view opens the details drawer with an immediately visible, styled scrollbar track and thumb in both light and dark themes.
+2. The drawer header and tab switcher remain fixed at the top while the sticky SRE action bar remains pinned at the bottom, with only the content body scrolling.
+3. Content in all 4 drawer tabs (Alert Triage, Assurance Telemetry, Device Inventory, Raw Payloads) can be scrolled to the very bottom without clipping or hiding action buttons.

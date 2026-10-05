@@ -8,13 +8,14 @@ An intelligent, multi-agent network alert triage and suppression platform for Ci
 
 Accurately identify false or transient network alerts to prevent unnecessary ServiceNow ticket creation and reduce operational noise without missing genuine network degradation.
 
-## Current State: v1.6 Live DNAC Assurance Telemetry & Asset Integration (Shipped 2026-10-05)
+## Current Milestone: v1.7 NOC Details Drawer Scrollbar & Usability Polish
 
-The False Alert Suppression platform now connects directly with live Cisco DNA Center Assurance and Device Inventory APIs. The SRE slide-out triage drawer features live hardware vitals (CPU, memory, packet drop, reachability, PoE, interface errors), hardware specifications (serial, MAC, OS, IP), dual-placement provenance badges (`● DNAC LIVE` / `⟳ CACHED` / `○ OFFLINE`), on-demand live polling, and fleet-wide synchronization across all 3 presentation modes.
+**Goal:** Ensure the device details pane in Executive Topology (and across all NOC views) features an accessible, clearly visible, theme-aware scrollbar with a cleanly separated fixed header/tabs, independently scrollable content container, and pinned action bar.
 
-## Next Milestone Goals
-
-- Define via `/gsd-new-milestone`.
+**Target features:**
+- **Theme-Aware High-Contrast Scrollbar:** Replace transparent global scrollbar overrides with explicit styling (`::-webkit-scrollbar`, `scrollbar-width`, and `scrollbar-color`) ensuring the scroll thumb is clearly visible in both dark and light modes.
+- **Fixed-Header & Fixed-Footer Drawer Architecture:** Refactor `.detail-panel` into a robust flex column where the header and tab navigation are anchored at the top, the SRE action bar is pinned at the bottom, and `.detail-panel-body` scrolls independently (`flex: 1; overflow-y: auto; min-height: 0;`).
+- **Cross-Tab Content Overflow Verification:** Verify that long content in all 4 drawer workspaces (Alert Triage multi-agent timeline, Assurance Telemetry vitals grid, Device Inventory hardware table, and Raw Payloads JSON viewer) scrolls smoothly without layout clipping or hidden controls.
 
 ## Requirements
 
@@ -51,7 +52,9 @@ The False Alert Suppression platform now connects directly with live Cisco DNA C
 
 ### Active
 
-(None currently — run `/gsd-new-milestone` to define next milestone scope)
+- [ ] **DRAWER-01**: Detail drawer body features dedicated, visible, theme-aware custom scrollbar styling in both dark and light modes.
+- [ ] **DRAWER-02**: Header and tab navigation stay fixed at top while sticky action bar stays pinned at bottom, with `.detail-panel-body` scrolling independently without parent panel jitter.
+- [ ] **DRAWER-03**: All 4 drawer tabs (Alert Triage, Assurance Telemetry, Device Inventory, Raw Payloads) support smooth vertical scrolling across various viewport heights.
 
 ### Out of Scope
 

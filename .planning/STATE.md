@@ -1,26 +1,26 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.6
-milestone_name: Live DNAC Assurance Telemetry & Asset Integration
-status: complete
-last_updated: "2026-10-05T09:22:00.000Z"
+milestone: v1.7
+milestone_name: NOC Details Drawer Scrollbar & Usability Polish
+status: planning
+last_updated: "2026-10-05T09:54:00.000Z"
 last_activity: 2026-10-05
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 3
-  completed_plans: 3
-  percent: 100
+  total_phases: 1
+  completed_phases: 0
+  total_plans: 1
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Current Position
 
-Phase: Phase 15 — Frontend SRE Drawer Live Wire-Up
-Plan: 15-01
-Status: Complete
-Last activity: 2026-10-05 — Milestone v1.6 Live DNAC Assurance Telemetry & Asset Integration completed (Phases 13, 14, 15 complete; Phase 16 omitted per user request)
+Phase: Phase 16 — Details Drawer Scrollbar & Viewport Layout
+Plan: Not started (defining requirements)
+Status: Planning
+Last activity: 2026-10-05 — Milestone v1.7 started to fix details pane scrollbar visibility and layout
 
 ## Key Decisions Made
 
