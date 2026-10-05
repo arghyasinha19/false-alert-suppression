@@ -1,7 +1,7 @@
 # Roadmap: False Alert Suppression Pipeline
 
-**Milestone:** v1.8 Interactive Network Topology Graph Diagram  
-**Status:** In Progress  
+**Milestone:** v1.9 UI/UX Audit Remediation  
+**Status:** Planning  
 
 ## Overview
 
@@ -25,146 +25,111 @@
 | 16 | v1.7 | Details Drawer Scrollbar & Viewport Layout | Accessible, visible, theme-aware scrollbars and fixed-header flex layout for device details drawer | DRAWER-01 - DRAWER-03 | Complete ✓ |
 | 17 | v1.8 | SVG Topology Canvas & Hierarchical Links | Zoomable/pannable SVG graph canvas, hierarchical tier placement, and animated connection links | GRAPH-01 - GRAPH-04 | Complete ✓ |
 | 18 | v1.8 | Health Nodes, Filter Sync & SRE Drawer | Rich micro-cards, pulsing alert indicators, filter reactivity, and drawer integration | GRAPH-05 - GRAPH-07 | Complete ✓ |
-
-
-
----
-
-## Phase 9: Executive Telemetry & Health KPI Strip
-
-**Goal:** Transform the top summary grid into an enterprise-grade Executive & Observability telemetry strip featuring Fleet Health Score (% index), Noise Suppression Rate (%), Active Blast Radius, Mean Time to Auto-Resolution, and Site Resilience Ratio with animated counters.
-
-**Status:** Complete ✓
-
-**Requirements:**
-- **NOC-KPI-01**: User can view Fleet Health Score (% index based on weighted device operational availability) with animated counter. (✓ Verified)
-- **NOC-KPI-02**: User can view False Alert Noise Reduction / Suppression Rate (%) at fleet level. (✓ Verified)
-- **NOC-KPI-03**: User can view Active Incident Blast Radius (# affected sites & degraded devices). (✓ Verified)
-- **NOC-KPI-04**: User can view Mean Resolution Velocity / MTTA metric for auto-resolved vs escalated incidents. (✓ Verified)
-- **NOC-KPI-05**: User can view Site Resilience Ratio (e.g. 8/9 Nominal sites) in the top executive summary strip. (✓ Verified)
-
-**Success Criteria:**
-1. Top summary grid displays 5 executive observability KPI cards with icons, subtitles, and animated counters (`0 → N`). (✓ Verified)
-2. Fleet Health Score calculates weighted availability reflecting critical vs warning device impacts. (✓ Verified)
-3. Noise Suppression Rate clearly illustrates the percentage of alerts suppressed or auto-resolved at the network edge. (✓ Verified)
-4. Blast Radius and Site Resilience indicate regional operational health at a glance. (✓ Verified)
-
----
-
-## Phase 10: Multi-Mode Representation Engine
-
-**Goal:** Provide 3 distinct representation modes for Network Operations: "Executive Topology" (infrastructure tier grouping), "SRE High-Density Table" (sortable telemetry table), and "Regional Site Matrix" (site status cards) with fluid view switching.
-
-**Status:** Complete ✓
-
-**Requirements:**
-- **NOC-VIEW-01**: User can toggle between 3 presentation modes: "Executive Topology", "SRE High-Density Table", and "Regional Site Matrix" with seamless animated state switching. (✓ Verified)
-- **NOC-VIEW-02**: In Executive Topology view, devices are organized by network infrastructure tier (Core & WAN, Distribution & Security, Campus & Access) with roll-up health indicators. (✓ Verified)
-- **NOC-VIEW-03**: In SRE High-Density Table view, user can sort by device name, active alerts, severity, last seen, and health with inline status chips and sticky headers. (✓ Verified)
-- **NOC-VIEW-04**: In Regional Site Matrix view, user can view site-level health status cards with quick-click filtering by site. (✓ Verified)
-
-**Success Criteria:**
-1. A segmented view switcher allows instant toggling between Executive Topology, SRE High-Density Table, and Regional Site Matrix. (✓ Verified)
-2. Executive Topology cleanly groups devices by tier with roll-up health metrics. (✓ Verified)
-3. SRE Table presents high-density rows with sorting on key metrics, sticky headers, and quick pagination or clean scrolling. (✓ Verified)
-4. Regional Site Matrix provides an executive geo-site health view. (✓ Verified)
-
----
-
-## Phase 11: Multi-Dimensional Filters & Micro-Visualizations
-
-**Goal:** Provide rapid triage filtering across Device Roles, Health states, and ServiceNow tickets, augmented with device card micro-visualizations including 24-hour activity sparklines and severity breakdown mini-bars.
-
-**Status:** Complete ✓
-
-**Requirements:**
-- **NOC-VIZ-01**: User can filter device inventory by Role chips (All, Core, Distribution, Access, Wireless, Security). (✓ Verified)
-- **NOC-VIZ-02**: User can filter by Health status chips (All, Healthy, Warning, Critical) and ServiceNow ticket state. (✓ Verified)
-- **NOC-VIZ-03**: User can see a 24-hour alert distribution micro-bar/sparkline on each device card showing activity volume over time. (✓ Verified)
-- **NOC-VIZ-04**: User can see live severity distribution mini-bars and pulsing status indicators for active alerts. (✓ Verified)
-
-**Success Criteria:**
-1. Filter bar features clickable pill chips for Role and Health with instant reactive filtering. (✓ Verified)
-2. Device cards display SVG/canvas micro-visualizations representing recent alert distributions. (✓ Verified)
-3. Critical and warning devices display visual pulse animations denoting active incident state. (✓ Verified)
-
----
-
-## Phase 12: Interactive SRE Investigation Drawer & Incident Timeline
-
-**Goal:** Elevate the device slide-out panel into an enterprise SRE triage workstation with an interactive chronological multi-agent decision timeline (Ingest → Agent 1 → Agent 2 → Agent 3 → Agent 4), Assurance telemetry vitals tabs, and one-click triage actions.
-
-**Status:** Complete ✓
-
-**Requirements:**
-- **NOC-DRAWER-01**: User can view an interactive, multi-agent chronological decision timeline for each alert (Ingestion → Agent 1 Backdate → Agent 2 ML Transience → Agent 3 DLX Queue → Agent 4 ServiceNow). (✓ Verified)
-- **NOC-DRAWER-02**: User can inspect live Cisco DNA Center Assurance telemetry attributes, device health vitals, and raw payload details in dedicated tabs. (✓ Verified)
-- **NOC-DRAWER-03**: User can perform quick triage actions (e.g., Copy Incident, Simulate Alert on Device, Trigger Re-check) directly from the drawer. (✓ Verified)
-
-**Success Criteria:**
-1. Clicking any device opens a drawer containing a visual multi-agent decision timeline for active alerts. (✓ Verified)
-2. Tabbed navigation inside drawer exposes Overview, Active Alerts, Chronological Timeline, and Assurance Telemetry. (✓ Verified)
-3. Action buttons allow quick triage (e.g. copying incident ticket details, simulating new alert for device). (✓ Verified)
+| 19 | v1.9 | Critical Layout & Status Fixes | Fix responsive collapse below 1100px and ensure connection status reflects offline states | UI-01, UI-02 | Not started |
+| 20 | v1.9 | Data Visibility & Bounds | Implement persistent scrollbars, table edge masks, and strict independent scroll bounds for the topology graph | UI-03, UI-04 | Not started |
+| 21 | v1.9 | Trust & Contrast Remediation | Fix text-tertiary contrast ratios and route chart colors through CSS tokens for dark mode reliability | UI-05, UI-06 | Not started |
+| 22 | v1.9 | Accessibility & Hit Areas | Increase hit areas to 32px minimum, fix sidebar keyboard navigation, add aria-current, ensure accessible names | UI-07, UI-08, UI-16, UI-17 | Not started |
+| 23 | v1.9 | Craft & Consistency Polish | Standardize typography scale, KPI cards, empty states, and eliminate demo scaffolding | UI-09-UI-22 | Not started |
 
 ---
 
 <details>
-<summary>✅ v1.6 Live DNAC Assurance Telemetry & Asset Integration (Phases 13-15) — SHIPPED 2026-10-05</summary>
+<summary>✅ v1.0 - v1.7 Past Milestones</summary>
 
-Full archive: [.planning/milestones/v1.6-ROADMAP.md](milestones/v1.6-ROADMAP.md)
-
-- [x] **Phase 13: DNAC Client Assurance & Device Extensions** (1/1 plan) — completed 2026-10-05
-- [x] **Phase 14: Backend Live Polling & Telemetry Endpoints** (1/1 plan) — completed 2026-10-05
-- [x] **Phase 15: Frontend SRE Drawer Live Wire-Up** (1/1 plan) — completed 2026-10-05
-
+Refer to repository history for prior phase details.
 </details>
 
 <details>
-<summary>✅ v1.7 NOC Details Drawer Scrollbar & Usability Polish (Phase 16) — SHIPPED 2026-10-05</summary>
+<summary>✅ v1.8 Interactive Network Topology Graph Diagram (Phases 17-18) — SHIPPED 2026-10-05</summary>
 
-- [x] **Phase 16: Details Drawer Scrollbar & Viewport Layout** (1/1 plan) — completed 2026-10-05
-
+- [x] **Phase 17: SVG Topology Canvas & Hierarchical Links** (1/1 plan) — completed 2026-10-05
+- [x] **Phase 18: Health Nodes, Filter Sync & SRE Drawer** (1/1 plan) — completed 2026-10-05
 </details>
 
 ---
 
-## Phase 17: SVG Topology Canvas & Hierarchical Links
+## Phase 19: Critical Layout & Status Fixes
 
-**Goal:** Implement the interactive SVG network topology graph canvas with smooth pan/zoom controls, deterministic 3-tier coordinate calculation (Core, Distribution & Security, Access Edge), and animated connection links with traffic pulses and link health states.
+**Goal:** Fix the 1100px breakpoint collapse in `.content-area` and ensure the API connection status correctly reflects offline states instead of returning false positives.
 
-**Status:** Complete ✓
+**Status:** Not started
 
 **Requirements:**
-- **GRAPH-01**: User can view network devices in an interactive, zoomable and pannable SVG canvas graph diagram with smooth mouse wheel zooming, drag-to-pan, and fit-to-screen controls. (✓ Verified)
-- **GRAPH-02**: Canvas provides floating navigation controls (Zoom In, Zoom Out, Fit to View, Reset 100%) and a fast sub-mode toggle between Graph View and Card Grid View. (✓ Verified)
-- **GRAPH-03**: Devices are arranged into 3 distinct hierarchical network tiers (Core & WAN Backbone at top, Distribution & Security in middle, Campus & Access Edge at bottom) with subtle background tier lanes. (✓ Verified)
-- **GRAPH-04**: Interconnected network links (edges) connect upstream and downstream devices with health-aware styling (teal for nominal, amber for warning, red for critical) and subtle animated traffic pulses. (✓ Verified)
+- **UI-01**: Fix responsive collapse below 1100px in the `.content-area` by removing `calc(100vw - ...)` constraints and letting flexbox size it correctly.
+- **UI-02**: Sidebar connection status must accurately reflect API failures by explicitly handling fetch errors, updating the "LIVE" badge to "Stale" on failure, and properly separating mock data from live status.
 
 **Success Criteria:**
-1. Navigating to "Topology" displays an interactive SVG graph canvas with floating zoom controls (+, -, fit, 100%). (✓ Verified)
-2. Mouse drag pans the canvas smoothly, and mouse wheel adjusts zoom level with bounded limits (0.4x to 2.2x). (✓ Verified)
-3. Devices are clearly grouped into 3 horizontal tier lanes: Core at top, Distribution/Security in middle, Access Edge at bottom. (✓ Verified)
-4. Smooth bezier links connect Core routers to Distribution switches and Distribution to Access nodes, with color coding matching network link health. (✓ Verified)
-5. Operators can toggle between "Graph View" and "Card Grid View" with a single click. (✓ Verified)
+1. The `.content-area` scales fluidly below 1100px without shrinking to a sliver.
+2. The connection status explicitly displays "Offline" when the API is down and handles empty JSON correctly.
+3. The dashboard clearly demarcates mock data from live telemetry when in offline mode.
 
 ---
 
-## Phase 18: Health Nodes, Filter Sync & SRE Drawer
+## Phase 20: Data Visibility & Bounds
 
-**Goal:** Complete the interactive graph experience by rendering rich micro-cards for device nodes, animating health status pulses for critical incidents, connecting toolbar filters (Role, Health, Search) to reactive node dimming, and integrating node clicks with the slide-out SRE details drawer.
+**Goal:** Implement persistent scrollbars, table edge masks, and strict independent scroll bounds for the topology graph canvas.
 
-**Status:** Complete ✓
+**Status:** Not started
 
 **Requirements:**
-- **GRAPH-05**: Device nodes render as rich micro-cards with role icons, hostnames, management IPs, health status dots (including pulsing red for critical), and active alert count badges. (✓ Verified)
-- **GRAPH-06**: Clicking any device node on the graph canvas opens the 580px slide-out SRE details drawer for that device with glowing selection highlight. (✓ Verified)
-- **GRAPH-07**: Node rendering reactively adapts to active Role, Health, and search query filters by highlighting matches and dimming non-matches. (✓ Verified)
+- **UI-03**: Constrain the topology graph canvas to its own bounds with independent scroll and zoom containers to prevent overflowing the main window.
+- **UI-04**: Add permanently visible scrollbars to data tables, implement right-edge gradient masks on horizontally scrolling tables, and explicitly cap vertical lists.
 
 **Success Criteria:**
-1. Each device node renders as a modern, glassmorphic micro-card with device name, role icon, IP, and health indicator dot. (✓ Verified)
-2. Nodes with active critical alerts display an animated radar pulse indicator. (✓ Verified)
-3. Clicking any node selects it with a glowing accent ring and immediately opens the 580px SRE details drawer with full Alert Triage, Live Telemetry, Inventory, and Action Bar capabilities. (✓ Verified)
-4. Using Role, Health, or Search filters keeps matching nodes in full brightness while smoothly dimming non-matching nodes to 20% opacity. (✓ Verified)
-5. All automated contract tests pass and the production Vite bundle compiles cleanly with 0 errors. (✓ Verified)
+1. All scrollable regions have persistently visible scrollbars (not just on hover).
+2. Overflowing tables clearly show edge masking indicating more content.
+3. The topology graph is bounded to its container and does not create an inaccessible horizontal/vertical overflow on the entire window.
 
+---
 
+## Phase 21: Trust & Contrast Remediation
+
+**Goal:** Fix `text-tertiary` contrast ratios, route chart colours through CSS tokens for dark mode reliability, and ensure text contrast passes minimums.
+
+**Status:** Not started
+
+**Requirements:**
+- **UI-05**: Adjust `text-tertiary` to meet contrast minimums (`#64748b` in light mode, `#94a3b8` in dark mode) and darken blue pill text to pass AA contrast.
+- **UI-06**: Refactor charts to use CSS tokens from `index.css` via `getComputedStyle` or a theme palette object, ensuring chart legends, grids, and axes integrate with dark mode.
+
+**Success Criteria:**
+1. Secondary text throughout the application passes AA contrast limits.
+2. SVG charts dynamically pull their colors from the CSS variables to match active themes properly.
+3. Contrast errors highlighted in UI-05 and UI-06 are fully resolved.
+
+---
+
+## Phase 22: Accessibility & Hit Areas
+
+**Goal:** Increase interactive hit areas to 32px minimum, fix sidebar keyboard navigation, add `aria-current`, and ensure tables/forms have accessible names.
+
+**Status:** Not started
+
+**Requirements:**
+- **UI-07**: Increase all interactive element (buttons, pills, selects) minimum heights to 32px with 44px hit areas, and raise table/filter typography to 12-13px.
+- **UI-08**: Update the Ops Assistant chat panel to be non-modal (inset the content area) or properly manage focus and dim the backdrop.
+- **UI-16**: Update sidebar navigation to use real `<button>` elements, add `aria-current="page"`, add a `:focus-visible` ring, and trigger tooltips on focus.
+- **UI-17**: Ensure all form controls have visible labels, add `scope="col"` to table headers, and provide visually-hidden captions per table.
+
+**Success Criteria:**
+1. Interactive hit areas conform to WCAG limits.
+2. Sidebar navigation is accessible entirely via keyboard (Tab and Enter).
+3. The chat panel either shifts content seamlessly or implements strict modal focus trapping + backdrop dimming.
+4. Screen readers announce clear accessible names for forms and tables.
+
+---
+
+## Phase 23: Craft & Consistency Polish
+
+**Goal:** Standardize typography scale, KPI card designs, empty states, and eliminate demo scaffolding from the chrome.
+
+**Status:** Not started
+
+**Requirements:**
+- **UI-09-22**: Address medium-priority inconsistencies including scaling typography (12/13/15/18/24/34), standardizing KPI cards to the NOC card design, clarifying domain shorthand, unifying empty states, and removing demo simulation scaffolding.
+
+**Success Criteria:**
+1. App uses 6 strict typography font sizes.
+2. Unified KPI card design utilized universally across NOC and Metric views.
+3. Unneeded demo buttons removed.
+4. Empty states standardized across all tables and charts.
