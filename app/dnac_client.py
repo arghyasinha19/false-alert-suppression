@@ -1,9 +1,12 @@
 import json
+import re
 import requests
 from requests.auth import HTTPBasicAuth
 import urllib3
 import logging
 import os
+
+from app.exceptions import DeviceNotFoundError, DNACConnectionError
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 logger = logging.getLogger(__name__)
@@ -60,6 +63,28 @@ class DNACClient:
             "Content-Type": "application/json",
             "Accept": "application/json"
         }
+
+    def _request_with_retry(self, method: str, url: str, **kwargs) -> requests.Response:
+        """
+        Make an HTTP request with automatic one-shot 401 token retry.
+
+        On the first 401 response the cached token is cleared, a fresh token
+        is fetched via ``authenticate()``, and the request is retried once.
+        If the retry also returns 401 the response is returned as-is for the
+        caller to handle (raise_for_status or explicit check).
+
+        All requests are made with ``verify=self.verify_ssl`` and the
+        ``X-Auth-Token`` header provided by ``_get_headers()``.
+        """
+        kwargs.setdefault("verify", self.verify_ssl)
+        response = requests.request(method, url, headers=self._get_headers(), **kwargs)
+        if response.status_code == 401:
+            logger.warning(
+                f"DNAC returned 401 for {method} {url} — clearing token and re-authenticating."
+            )
+            self.token = None
+            response = requests.request(method, url, headers=self._get_headers(), **kwargs)
+        return response
 
     # -------------------------------------------------------------------------
     # Webhook Subscription Management
@@ -220,8 +245,8 @@ class DNACClient:
             f"  URL: {url}"
         )
         
-        response = requests.get(url, headers=self._get_headers(), verify=self.verify_ssl)
-        
+        response = self._request_with_retry("GET", url)
+
         # In DNAC, an issue that is no longer active may be deleted and return 404
         if response.status_code == 404:
             logger.info(
@@ -283,7 +308,7 @@ class DNACClient:
         )
 
         try:
-            response = requests.get(url, headers=self._get_headers(), params=params, verify=self.verify_ssl)
+            response = self._request_with_retry("GET", url, params=params)
             if response.status_code in (404, 204):
                 logger.info(f"DNAC Response: {response.status_code} (No issues found for device)")
                 return []
@@ -298,4 +323,241 @@ class DNACClient:
         except Exception as e:
             logger.error(f"Failed to fetch device issues from DNAC: {e}")
             return []
+
+    # -------------------------------------------------------------------------
+    # Device / Network Inventory
+    # -------------------------------------------------------------------------
+    def get_device_by_name_or_ip(self, device_name_or_ip: str) -> list:
+        """
+        Query DNAC for one or more network devices matching a hostname or
+        management IP address.
+
+        Parameters
+        ----------
+        device_name_or_ip : str
+            Either a plain hostname (e.g. ``"switch-core-01"``) or an IPv4
+            address (e.g. ``"10.48.200.100"``).  The method auto-detects
+            which DNAC query parameter to use.
+
+        Returns
+        -------
+        list[dict]
+            A list of device dicts.  Each dict contains curated snake_case
+            keys **and** a ``raw_response`` key holding the full DNAC object:
+
+            - ``device_id``     - DNAC UUID (str)
+            - ``device_name``   - hostname (str)
+            - ``ip_address``    - management IP (str)
+            - ``model``         - hardware model / platform ID (str)
+            - ``os_version``    - IOS / NX-OS / AireOS software version (str)
+            - ``serial``        - serial number (str)
+            - ``mac``           - MAC address (str)
+            - ``reachable``     - True if reachabilityStatus == "Reachable" (bool)
+            - ``raw_response``  - original DNAC device object (dict)
+
+        Raises
+        ------
+        DeviceNotFoundError
+            When DNAC returns zero matching devices.
+        DNACConnectionError
+            When the HTTP call fails (network error, non-2xx after retry,
+            except 401 which is auto-retried once).
+        """
+        url = f"{self.base_url}/dna/intent/api/v1/network-device"
+
+        # Smart IPv4 vs hostname routing (D-04)
+        if re.fullmatch(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}", device_name_or_ip):
+            params = {"managementIpAddress": device_name_or_ip}
+            logger.info("Detected IPv4 input — using managementIpAddress param.")
+        else:
+            params = {"hostname": device_name_or_ip}
+            logger.info("Detected hostname input — using hostname param.")
+
+        logger.info(
+            f"DNAC Request:\n"
+            f"  Method: GET\n"
+            f"  URL: {url}\n"
+            f"  Params: {json.dumps(params)}"
+        )
+
+        try:
+            response = self._request_with_retry("GET", url, params=params)
+        except Exception as exc:
+            raise DNACConnectionError(
+                f"Network error querying DNAC /network-device for '{device_name_or_ip}': {exc}"
+            ) from exc
+
+        logger.info(
+            f"DNAC Response:\n"
+            f"  Status Code: {response.status_code}\n"
+            f"  Body: {response.text[:500]}"
+        )
+
+        if not response.ok:
+            raise DNACConnectionError(
+                f"DNAC returned HTTP {response.status_code} for device lookup "
+                f"'{device_name_or_ip}': {response.text[:200]}"
+            )
+
+        data = response.json()
+        raw_list = data.get("response", data)
+
+        if isinstance(raw_list, dict):
+            raw_list = [raw_list]
+        if not isinstance(raw_list, list):
+            raw_list = []
+
+        # D-02: zero matches -> raise
+        if not raw_list:
+            logger.info(f"DNAC returned zero devices for '{device_name_or_ip}'.")
+            raise DeviceNotFoundError(device_name_or_ip)
+
+        # D-05: curate + preserve raw
+        devices = []
+        for raw in raw_list:
+            reachability = str(raw.get("reachabilityStatus", "")).lower()
+            devices.append({
+                "device_id":    raw.get("id", ""),
+                "device_name":  raw.get("hostname", ""),
+                "ip_address":   raw.get("managementIpAddress", ""),
+                "model":        raw.get("platformId", raw.get("type", "")),
+                "os_version":   raw.get("softwareVersion", ""),
+                "serial":       raw.get("serialNumber", ""),
+                "mac":          raw.get("macAddress", ""),
+                "reachable":    reachability == "reachable",
+                "raw_response": raw,
+            })
+
+        logger.info(
+            f"get_device_by_name_or_ip: found {len(devices)} device(s) "
+            f"for '{device_name_or_ip}'."
+        )
+        return devices
+
+    def get_device_health(self, device_id: str) -> dict:
+        """
+        Retrieve live assurance telemetry health metrics for a device UUID.
+
+        Parameters
+        ----------
+        device_id : str
+            The DNAC UUID of the device (``id`` field from the
+            ``/network-device`` response).  Use
+            ``get_device_by_name_or_ip()`` to resolve hostname to UUID first.
+
+        Returns
+        -------
+        dict
+            A normalized telemetry dict containing:
+
+            - ``cpu_utilization``       - CPU usage % (float | None)
+            - ``memory_utilization``    - Memory usage % (float | None)
+            - ``packet_drop``           - Interface packet drop % (float | None)
+            - ``health_score``          - DNAC 0-10 health score (int | None)
+            - ``interface_error_count`` - Count of errored interfaces (int | None)
+            - ``poe_status``            - PoE status string (str)
+            - ``uptime_seconds``        - Device uptime in seconds (int | None)
+            - ``reachable``             - Reachability boolean (bool)
+            - ``raw_response``          - Full DNAC device-health object (dict)
+
+        Raises
+        ------
+        DNACConnectionError
+            When DNAC returns HTTP 404 (unknown UUID), 5xx, network error,
+            or any non-2xx response after the 401 retry.
+        """
+        url = f"{self.base_url}/dna/intent/api/v1/device-health"
+        params = {"deviceId": device_id}
+
+        logger.info(
+            f"DNAC Request:\n"
+            f"  Method: GET\n"
+            f"  URL: {url}\n"
+            f"  Params: {json.dumps(params)}"
+        )
+
+        try:
+            response = self._request_with_retry("GET", url, params=params)
+        except Exception as exc:
+            raise DNACConnectionError(
+                f"Network error querying DNAC /device-health for UUID '{device_id}': {exc}"
+            ) from exc
+
+        logger.info(
+            f"DNAC Response:\n"
+            f"  Status Code: {response.status_code}\n"
+            f"  Body: {response.text[:500]}"
+        )
+
+        if response.status_code == 404:
+            raise DNACConnectionError(
+                f"DNAC returned 404 — device UUID '{device_id}' not found in /device-health."
+            )
+
+        if not response.ok:
+            raise DNACConnectionError(
+                f"DNAC returned HTTP {response.status_code} for /device-health "
+                f"UUID '{device_id}': {response.text[:200]}"
+            )
+
+        data = response.json()
+        raw_obj = data.get("response", data)
+
+        # /device-health may return a list or a dict depending on DNAC version
+        if isinstance(raw_obj, list):
+            if not raw_obj:
+                raise DNACConnectionError(
+                    f"DNAC /device-health returned empty list for UUID '{device_id}'."
+                )
+            raw_obj = raw_obj[0]
+
+        # Field extraction (D-10) — key names vary by DNAC version; use .get with fallbacks
+        def _float(val):
+            try:
+                return float(val) if val is not None else None
+            except (TypeError, ValueError):
+                return None
+
+        def _int(val):
+            try:
+                return int(val) if val is not None else None
+            except (TypeError, ValueError):
+                return None
+
+        reachability = str(
+            raw_obj.get("reachabilityStatus", raw_obj.get("reachability", ""))
+        ).lower()
+
+        overall = raw_obj.get("overallHealth")
+        if isinstance(overall, dict):
+            health_score_raw = overall.get("score")
+        else:
+            health_score_raw = overall or raw_obj.get("healthScore")
+
+        health = {
+            "cpu_utilization":       _float(raw_obj.get("cpuUtilization") or raw_obj.get("cpu")),
+            "memory_utilization":    _float(raw_obj.get("memoryUtilization") or raw_obj.get("memory")),
+            "packet_drop":           _float(
+                                         raw_obj.get("packetLossPercent")
+                                         or raw_obj.get("packetDropPercent")
+                                     ),
+            "health_score":          _int(health_score_raw),
+            "interface_error_count": _int(
+                                         raw_obj.get("interfaceIssueCount")
+                                         or raw_obj.get("errorCount")
+                                     ),
+            "poe_status":            str(raw_obj.get("poeStatus", raw_obj.get("poePower", "UNKNOWN"))),
+            "uptime_seconds":        _int(raw_obj.get("uptimeSeconds") or raw_obj.get("upTime")),
+            "reachable":             reachability in ("reachable", "true", "yes"),
+            "raw_response":          raw_obj,
+        }
+
+        logger.info(
+            f"get_device_health: UUID={device_id} "
+            f"health_score={health['health_score']} "
+            f"cpu={health['cpu_utilization']}% "
+            f"mem={health['memory_utilization']}% "
+            f"reachable={health['reachable']}"
+        )
+        return health
 
