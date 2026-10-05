@@ -2,39 +2,36 @@
 gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Interactive Network Topology Graph Diagram
-status: planning
-last_updated: "2026-10-05T11:20:00.000Z"
+status: executing
+last_updated: "2026-10-05T13:40:00.000Z"
 last_activity: 2026-10-05
 progress:
   total_phases: 2
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 0
-  percent: 0
+  completed_plans: 1
+  percent: 50
 ---
 
 # Project State
 
 ## Current Position
 
-Phase: Phase 17 — SVG Topology Canvas & Hierarchical Links
+Phase: Phase 18 — Health Nodes, Filter Sync & SRE Drawer
 Plan: Not planned yet
 Status: Ready to plan
-Last activity: 2026-10-05 — Milestone v1.8 roadmap created with 2 phases and 7 requirements
+Last activity: 2026-10-05 — Phase 17 executed and verified: SVG Topology Canvas & Hierarchical Links (GRAPH-01 - GRAPH-04 complete)
 
 ## Key Decisions Made
 
 - Upgraded slide-out detail drawer to 580px width with 4 dedicated SRE workspaces: Alert Triage, Assurance Telemetry, Device Inventory, and Raw Payloads.
-- Synthesized 5-stage chronological multi-agent decision pipeline (Ingest → Agent 1 Temporal → Agent 2 ML Transience → Agent 3 DLX Queue → Agent 4 ServiceNow Action) with latency tags, status badges, and expandable decision metrics.
-- Added live Cisco DNA Center Assurance telemetry vitals cards for CPU utilization, system RAM, packet drops/CRC errors, reachability latency, PoE delivery, and thermals.
-- Structured hardware specifications, management IP, MAC address, serial number, rack placement, and ServiceNow lifetime incident audit.
-- Built searchable formatted JSON payload viewer with live filtering and one-click clipboard copy.
-- Built sticky SRE Action Bar with Copy Incident, Poll DNAC Health, Simulate Alert, and Export Diagnostic Report (JSON), paired with floating animated toast notifications.
-- Phase 14: Unified `GET /api/devices/{name}/telemetry` and `POST /api/devices/{name}/live-poll` returning telemetry + device_info, dual route aliases (/devices and /device), MongoDB caching in `device_telemetry`, and non-blocking offline fallbacks with `source: 'offline'` / `cached_offline`.
-- Phase 15: Wire drawer to live telemetry endpoints with immediate fetch on open, seamless background upgrade, dual-placement provenance badges (header + tabs), real HTTP live-poll with onRefresh fleet sync, and honest null state rendering.
-- Milestone v1.6 finalized: Phase 16 (daemon supervisor bundling & standalone CLI diagnostic script) removed per user decision; existing independent `dnac_sync.py` and pytest integration test suites cover operational and testing needs.
-- Verified 100% zero linter errors/warnings and clean Vite production builds.
+- Built native React 19 SVG Topology Canvas (`TopologyGraphView.jsx`) with zero third-party graph dependencies (e.g. avoided legacy `reactflow` v11 React 18 peer-dep conflicts).
+- Implemented deterministic 3-tier coordinate mapping (Core: y=130, Distribution & Security: y=350, Campus & Access: y=570) with dynamic horizontal node spacing (260px pitch).
+- Implemented smooth cubic bezier link curves with status-aware color coding (teal/amber/red) and GPU-accelerated SVG `<animateMotion>` packet traffic pulses with zero JS event loop overhead.
+- Added floating glassmorphic navigation toolbar (Zoom In, Zoom Out, Fit to View, 1:1 Reset) with bounded zoom (0.4x - 2.2x) and pointer drag panning.
+- Added top toolbar sub-mode toggle between "Graph View" and "Card Grid View" in NetworkOperations, preserving operator choice.
+- Wired node clicks to open the SRE drawer with full live DNAC telemetry, inventory, timeline, and triage action bar.
 
 ## Blockers/Concerns
 
-- None. Milestone v1.6 Live DNAC Assurance Telemetry & Asset Integration is fully complete.
+- None. Phase 17 complete with all automated and browser subagent tests passing. Ready to plan Phase 18.

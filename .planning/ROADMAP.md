@@ -23,7 +23,7 @@
 | 14 | v1.6 | Backend Live Polling & Telemetry Endpoints | Add `/api/devices/{name}/telemetry` and `/api/devices/{name}/live-poll` endpoints | DNAC-03, DNAC-04 | Complete ✓ |
 | 15 | v1.6 | Frontend SRE Drawer Live Wire-Up | Connect drawer telemetry/inventory tabs and Poll DNAC button to live API with fallback | DNAC-05, DNAC-06 | Complete ✓ |
 | 16 | v1.7 | Details Drawer Scrollbar & Viewport Layout | Accessible, visible, theme-aware scrollbars and fixed-header flex layout for device details drawer | DRAWER-01 - DRAWER-03 | Complete ✓ |
-| 17 | v1.8 | SVG Topology Canvas & Hierarchical Links | Zoomable/pannable SVG graph canvas, hierarchical tier placement, and animated connection links | GRAPH-01 - GRAPH-04 | Planned |
+| 17 | v1.8 | SVG Topology Canvas & Hierarchical Links | Zoomable/pannable SVG graph canvas, hierarchical tier placement, and animated connection links | GRAPH-01 - GRAPH-04 | Complete ✓ |
 | 18 | v1.8 | Health Nodes, Filter Sync & SRE Drawer | Rich micro-cards, pulsing alert indicators, filter reactivity, and drawer integration | GRAPH-05 - GRAPH-07 | Planned |
 
 
@@ -132,20 +132,20 @@ Full archive: [.planning/milestones/v1.6-ROADMAP.md](milestones/v1.6-ROADMAP.md)
 
 **Goal:** Implement the interactive SVG network topology graph canvas with smooth pan/zoom controls, deterministic 3-tier coordinate calculation (Core, Distribution & Security, Access Edge), and animated connection links with traffic pulses and link health states.
 
-**Status:** Planned
+**Status:** Complete ✓
 
 **Requirements:**
-- **GRAPH-01**: User can view network devices in an interactive, zoomable and pannable SVG canvas graph diagram with smooth mouse wheel zooming, drag-to-pan, and fit-to-screen controls.
-- **GRAPH-02**: Canvas provides floating navigation controls (Zoom In, Zoom Out, Fit to View, Reset 100%) and a fast sub-mode toggle between Graph View and Card Grid View.
-- **GRAPH-03**: Devices are arranged into 3 distinct hierarchical network tiers (Core & WAN Backbone at top, Distribution & Security in middle, Campus & Access Edge at bottom) with subtle background tier lanes.
-- **GRAPH-04**: Interconnected network links (edges) connect upstream and downstream devices with health-aware styling (teal for nominal, amber for warning, red for critical) and subtle animated traffic pulses.
+- **GRAPH-01**: User can view network devices in an interactive, zoomable and pannable SVG canvas graph diagram with smooth mouse wheel zooming, drag-to-pan, and fit-to-screen controls. (✓ Verified)
+- **GRAPH-02**: Canvas provides floating navigation controls (Zoom In, Zoom Out, Fit to View, Reset 100%) and a fast sub-mode toggle between Graph View and Card Grid View. (✓ Verified)
+- **GRAPH-03**: Devices are arranged into 3 distinct hierarchical network tiers (Core & WAN Backbone at top, Distribution & Security in middle, Campus & Access Edge at bottom) with subtle background tier lanes. (✓ Verified)
+- **GRAPH-04**: Interconnected network links (edges) connect upstream and downstream devices with health-aware styling (teal for nominal, amber for warning, red for critical) and subtle animated traffic pulses. (✓ Verified)
 
 **Success Criteria:**
-1. Navigating to "Topology" displays an interactive SVG graph canvas with floating zoom controls (+, -, fit, 100%).
-2. Mouse drag pans the canvas smoothly, and mouse wheel adjusts zoom level with bounded limits (0.4x to 2.2x).
-3. Devices are clearly grouped into 3 horizontal tier lanes: Core at top, Distribution/Security in middle, Access Edge at bottom.
-4. Smooth bezier links connect Core routers to Distribution switches and Distribution to Access nodes, with color coding matching network link health.
-5. Operators can toggle between "Graph View" and "Card Grid View" with a single click.
+1. Navigating to "Topology" displays an interactive SVG graph canvas with floating zoom controls (+, -, fit, 100%). (✓ Verified)
+2. Mouse drag pans the canvas smoothly, and mouse wheel adjusts zoom level with bounded limits (0.4x to 2.2x). (✓ Verified)
+3. Devices are clearly grouped into 3 horizontal tier lanes: Core at top, Distribution/Security in middle, Access Edge at bottom. (✓ Verified)
+4. Smooth bezier links connect Core routers to Distribution switches and Distribution to Access nodes, with color coding matching network link health. (✓ Verified)
+5. Operators can toggle between "Graph View" and "Card Grid View" with a single click. (✓ Verified)
 
 ---
 

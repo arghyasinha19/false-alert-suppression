@@ -7,9 +7,10 @@ import {
   Activity, Ticket, PlusCircle, RotateCcw, MessageSquarePlus,
   ChevronDown, ChevronUp, RefreshCw, ShieldCheck, Zap, Flame, Timer, Radio,
   Layers, Table, Globe, ArrowUpDown, ChevronRight,
-  Cpu, HardDrive, Code, Copy, Download, Inbox, Info
+  Cpu, HardDrive, Code, Copy, Download, Inbox, Info, LayoutGrid
 } from 'lucide-react';
 import AnimatedCounter from './AnimatedCounter';
+import TopologyGraphView from './components/TopologyGraphView';
 
 const TIER_METADATA = {
   core: {
@@ -619,6 +620,7 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
       return 'topology';
     }
   });
+  const [topologySubMode, setTopologySubMode] = useState('graph');
   const [tableSortCol, setTableSortCol] = useState('health');
   const [tableSortDir, setTableSortDir] = useState('desc');
   const [roleFilter, setRoleFilter] = useState('all');
@@ -1391,6 +1393,30 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
           </button>
         </div>
 
+        {/* Topology Sub-Mode Switcher: Graph vs Cards */}
+        {viewMode === 'topology' && (
+          <div className="noc-submode-pill-group" role="radiogroup" aria-label="Topology presentation sub-mode">
+            <button
+              type="button"
+              className={`noc-submode-btn ${topologySubMode === 'graph' ? 'active' : ''}`}
+              onClick={() => setTopologySubMode('graph')}
+              title="Interactive SVG Graph Diagram"
+            >
+              <Layers size={11} />
+              <span>Graph</span>
+            </button>
+            <button
+              type="button"
+              className={`noc-submode-btn ${topologySubMode === 'cards' ? 'active' : ''}`}
+              onClick={() => setTopologySubMode('cards')}
+              title="Tiered Device Card Grid"
+            >
+              <LayoutGrid size={11} />
+              <span>Cards</span>
+            </button>
+          </div>
+        )}
+
         <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginLeft: '0.5rem', whiteSpace: 'nowrap' }}>
           {filteredDevices.length} device{filteredDevices.length !== 1 ? 's' : ''} shown
         </span>
@@ -1512,60 +1538,73 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
         </div>
       </div>
 
-      {/* ── View 1: Executive Topology View ── */}
+      {/* ── View 1: Executive Topology View (Interactive Graph or Card Grid) ── */}
       {viewMode === 'topology' && (
-        <div className="noc-topology-view">
-          {tierGroups.map(tier => {
-            const Meta = TIER_METADATA[tier.id];
-            const TierIcon = Meta.icon;
-            return (
-              <div key={tier.id} className={`noc-tier-section tier-${tier.id}`}>
-                <div className="noc-tier-header">
-                  <div className="noc-tier-title-wrap">
-                    <div className="noc-tier-icon-wrap" style={{ color: Meta.accent }}>
-                      <TierIcon size={18} />
-                    </div>
-                    <div>
-                      <div className="noc-tier-name-row">
-                        <span className="noc-tier-name">{Meta.name}</span>
-                        <span className="noc-tier-tag">{Meta.tag}</span>
+        topologySubMode === 'graph' ? (
+          <TopologyGraphView
+            devices={filteredDevices}
+            selectedDevice={selectedDevice}
+            onSelectDevice={openDevicePanel}
+            subMode={topologySubMode}
+            onToggleSubMode={() => setTopologySubMode(m => m === 'graph' ? 'cards' : 'graph')}
+            searchQuery={searchQuery}
+            roleFilter={roleFilter}
+            healthFilter={healthFilter}
+          />
+        ) : (
+          <div className="noc-topology-view">
+            {tierGroups.map(tier => {
+              const Meta = TIER_METADATA[tier.id];
+              const TierIcon = Meta.icon;
+              return (
+                <div key={tier.id} className={`noc-tier-section tier-${tier.id}`}>
+                  <div className="noc-tier-header">
+                    <div className="noc-tier-title-wrap">
+                      <div className="noc-tier-icon-wrap" style={{ color: Meta.accent }}>
+                        <TierIcon size={18} />
                       </div>
-                      <p className="noc-tier-subtitle">{Meta.subtitle}</p>
+                      <div>
+                        <div className="noc-tier-name-row">
+                          <span className="noc-tier-name">{Meta.name}</span>
+                          <span className="noc-tier-tag">{Meta.tag}</span>
+                        </div>
+                        <p className="noc-tier-subtitle">{Meta.subtitle}</p>
+                      </div>
+                    </div>
+                    <div className="noc-tier-summary">
+                      <span className="noc-tier-stat-badge">
+                        <strong>{tier.devices.length}</strong> devices
+                      </span>
+                      {tier.critical > 0 && (
+                        <span className="noc-tier-stat-pill critical">
+                          <AlertTriangle size={11} /> {tier.critical} Critical
+                        </span>
+                      )}
+                      {tier.warning > 0 && (
+                        <span className="noc-tier-stat-pill warning">
+                          <AlertTriangle size={11} /> {tier.warning} Warning
+                        </span>
+                      )}
+                      {tier.critical === 0 && tier.warning === 0 && tier.devices.length > 0 && (
+                        <span className="noc-tier-stat-pill healthy">
+                          <CheckCircle size={11} /> Nominal
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <div className="noc-tier-summary">
-                    <span className="noc-tier-stat-badge">
-                      <strong>{tier.devices.length}</strong> devices
-                    </span>
-                    {tier.critical > 0 && (
-                      <span className="noc-tier-stat-pill critical">
-                        <AlertTriangle size={11} /> {tier.critical} Critical
-                      </span>
-                    )}
-                    {tier.warning > 0 && (
-                      <span className="noc-tier-stat-pill warning">
-                        <AlertTriangle size={11} /> {tier.warning} Warning
-                      </span>
-                    )}
-                    {tier.critical === 0 && tier.warning === 0 && tier.devices.length > 0 && (
-                      <span className="noc-tier-stat-pill healthy">
-                        <CheckCircle size={11} /> Nominal
-                      </span>
-                    )}
-                  </div>
-                </div>
 
-                {tier.devices.length > 0 ? (
-                  <div className="device-grid">
-                    {tier.devices.map(device => renderDeviceTile(device))}
-                  </div>
-                ) : (
-                  <div className="noc-tier-empty">No devices in this architectural tier matching filter</div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                  {tier.devices.length > 0 ? (
+                    <div className="device-grid">
+                      {tier.devices.map(device => renderDeviceTile(device))}
+                    </div>
+                  ) : (
+                    <div className="noc-tier-empty">No devices in this architectural tier matching filter</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )
       )}
 
       {/* ── View 2: SRE High-Density Table View ── */}

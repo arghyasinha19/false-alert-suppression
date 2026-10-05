@@ -4034,3 +4034,252 @@
 .spin {
   animation: spin 1s linear infinite;
 }
+
+/* ==========================================================================
+   NOC Phase 17: Interactive SVG Network Topology Graph Diagram
+   ========================================================================== */
+
+.noc-topology-graph-container {
+  position: relative;
+  width: 100%;
+  height: 680px;
+  min-height: 520px;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+  border: 1px solid var(--card-border);
+  user-select: none;
+  cursor: grab;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: border-color var(--transition-fast);
+}
+
+.noc-topology-graph-container.is-panning {
+  cursor: grabbing;
+}
+
+.noc-topology-canvas {
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+/* ── Floating Controls Toolbar ── */
+.noc-graph-controls-toolbar {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  background: rgba(15, 23, 42, 0.78);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="light"] .noc-graph-controls-toolbar {
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.noc-graph-control-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 9px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.noc-graph-control-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  border-color: var(--card-border);
+}
+
+[data-theme="light"] .noc-graph-control-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.noc-graph-control-btn.active-pill {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--card-border);
+}
+
+.noc-graph-btn-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--card-border);
+  margin: 0 2px;
+}
+
+/* ── Filter Bar Sub-Mode Switcher ── */
+.noc-submode-pill-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  margin-left: 8px;
+}
+
+.noc-submode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.noc-submode-btn:hover {
+  color: var(--text-primary);
+}
+
+.noc-submode-btn.active {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+/* ── Floating Legend Badge ── */
+.noc-graph-legend-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  pointer-events: none;
+}
+
+[data-theme="light"] .noc-graph-legend-badge {
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--text-secondary);
+}
+
+.noc-legend-icon {
+  display: inline-flex;
+  color: var(--accent-blue);
+}
+
+/* ── SVG Tier Lanes ── */
+.noc-tier-lane-bg {
+  fill: rgba(255, 255, 255, 0.015);
+  stroke: var(--card-border);
+  stroke-dasharray: 4, 4;
+  stroke-width: 1;
+  transition: fill 0.3s;
+}
+
+[data-theme="light"] .noc-tier-lane-bg {
+  fill: rgba(0, 0, 0, 0.015);
+}
+
+.noc-tier-lane-title {
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  fill: var(--text-secondary);
+}
+
+.noc-tier-lane-sub {
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 500;
+  fill: var(--text-tertiary);
+}
+
+/* ── SVG Link Edges & Traffic Particles ── */
+.noc-link-path {
+  transition: stroke-width 0.2s ease, opacity 0.2s ease;
+}
+
+.noc-link-path.hovered {
+  filter: drop-shadow(0 0 5px var(--accent-teal));
+}
+
+.noc-traffic-pulse {
+  filter: drop-shadow(0 0 3px currentColor);
+}
+
+/* ── SVG Device Nodes ── */
+.noc-node-card-body {
+  fill: var(--bg-secondary);
+  transition: stroke 0.2s ease, fill 0.2s ease;
+}
+
+.noc-graph-node-card:hover .noc-node-card-body {
+  fill: var(--bg-tertiary);
+}
+
+.noc-graph-node-card.selected .noc-node-card-body {
+  fill: var(--bg-tertiary);
+}
+
+.noc-graph-node-card.dimmed {
+  opacity: 0.22;
+}
+
+.noc-node-title-text {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  fill: var(--text-primary);
+}
+
+.noc-node-subtitle-text {
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 500;
+  fill: var(--text-tertiary);
+}
+
+.noc-node-tier-pill {
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.noc-node-alert-pill-text {
+  font-family: inherit;
+  font-size: 9.5px;
+  font-weight: 700;
+}
+
+.noc-radar-pulse-ring {
+  animation: noc-radar-pulse 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+  transform-origin: center;
+}
+

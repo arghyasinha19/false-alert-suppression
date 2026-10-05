@@ -7,12 +7,12 @@
 ## Milestone v1.8 Requirements: Interactive Network Topology Graph Diagram
 
 ### Interactive Canvas & Viewport Navigation (GRAPH-CANVAS)
-- [ ] **GRAPH-01**: User can view network devices in an interactive, zoomable and pannable SVG canvas graph diagram with smooth mouse wheel zooming, drag-to-pan, and fit-to-screen controls.
-- [ ] **GRAPH-02**: Canvas provides floating navigation controls (Zoom In, Zoom Out, Fit to View, Reset 100%) and a fast sub-mode toggle between Graph View and Card Grid View.
+- [x] **GRAPH-01**: User can view network devices in an interactive, zoomable and pannable SVG canvas graph diagram with smooth mouse wheel zooming, drag-to-pan, and fit-to-screen controls.
+- [x] **GRAPH-02**: Canvas provides floating navigation controls (Zoom In, Zoom Out, Fit to View, Reset 100%) and a fast sub-mode toggle between Graph View and Card Grid View.
 
 ### Hierarchical Network Topology & Edge Links (GRAPH-LINKS)
-- [ ] **GRAPH-03**: Devices are arranged into 3 distinct hierarchical network tiers (Core & WAN Backbone at top, Distribution & Security in middle, Campus & Access Edge at bottom) with subtle background tier lanes.
-- [ ] **GRAPH-04**: Interconnected network links (edges) connect upstream and downstream devices with health-aware styling (teal for nominal, amber for warning, red for critical) and subtle animated traffic pulses.
+- [x] **GRAPH-03**: Devices are arranged into 3 distinct hierarchical network tiers (Core & WAN Backbone at top, Distribution & Security in middle, Campus & Access Edge at bottom) with subtle background tier lanes.
+- [x] **GRAPH-04**: Interconnected network links (edges) connect upstream and downstream devices with health-aware styling (teal for nominal, amber for warning, red for critical) and subtle animated traffic pulses.
 
 ### Health-Aware Node Cards & SRE Drawer Integration (GRAPH-NODES)
 - [ ] **GRAPH-05**: Device nodes render as rich micro-cards with role icons, hostnames, management IPs, health status dots (including pulsing red for critical), and active alert count badges.
@@ -38,10 +38,10 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| GRAPH-01 | Phase 17 | Pending |
-| GRAPH-02 | Phase 17 | Pending |
-| GRAPH-03 | Phase 17 | Pending |
-| GRAPH-04 | Phase 17 | Pending |
+| GRAPH-01 | Phase 17 | Complete ✓ |
+| GRAPH-02 | Phase 17 | Complete ✓ |
+| GRAPH-03 | Phase 17 | Complete ✓ |
+| GRAPH-04 | Phase 17 | Complete ✓ |
 | GRAPH-05 | Phase 18 | Pending |
 | GRAPH-06 | Phase 18 | Pending |
 | GRAPH-07 | Phase 18 | Pending |
