@@ -1109,6 +1109,17 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
     }, 300);
   };
 
+  // Close detail panel when Escape key is pressed
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && panelOpen) {
+        closePanel();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [panelOpen]);
+
   const renderDeviceTile = (device) => {
     const health = getDeviceHealth(device);
     const isAlerting = health === 'critical' || health === 'warning';
@@ -1542,7 +1553,7 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
       {viewMode === 'topology' && (
         topologySubMode === 'graph' ? (
           <TopologyGraphView
-            devices={filteredDevices}
+            devices={devices}
             selectedDevice={selectedDevice}
             onSelectDevice={openDevicePanel}
             subMode={topologySubMode}
@@ -1550,6 +1561,7 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
             searchQuery={searchQuery}
             roleFilter={roleFilter}
             healthFilter={healthFilter}
+            onResetFilters={resetAllFilters}
           />
         ) : (
           <div className="noc-topology-view">

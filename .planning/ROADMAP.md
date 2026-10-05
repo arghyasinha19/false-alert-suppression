@@ -24,7 +24,7 @@
 | 15 | v1.6 | Frontend SRE Drawer Live Wire-Up | Connect drawer telemetry/inventory tabs and Poll DNAC button to live API with fallback | DNAC-05, DNAC-06 | Complete ✓ |
 | 16 | v1.7 | Details Drawer Scrollbar & Viewport Layout | Accessible, visible, theme-aware scrollbars and fixed-header flex layout for device details drawer | DRAWER-01 - DRAWER-03 | Complete ✓ |
 | 17 | v1.8 | SVG Topology Canvas & Hierarchical Links | Zoomable/pannable SVG graph canvas, hierarchical tier placement, and animated connection links | GRAPH-01 - GRAPH-04 | Complete ✓ |
-| 18 | v1.8 | Health Nodes, Filter Sync & SRE Drawer | Rich micro-cards, pulsing alert indicators, filter reactivity, and drawer integration | GRAPH-05 - GRAPH-07 | Planned |
+| 18 | v1.8 | Health Nodes, Filter Sync & SRE Drawer | Rich micro-cards, pulsing alert indicators, filter reactivity, and drawer integration | GRAPH-05 - GRAPH-07 | Complete ✓ |
 
 
 
@@ -153,17 +153,18 @@ Full archive: [.planning/milestones/v1.6-ROADMAP.md](milestones/v1.6-ROADMAP.md)
 
 **Goal:** Complete the interactive graph experience by rendering rich micro-cards for device nodes, animating health status pulses for critical incidents, connecting toolbar filters (Role, Health, Search) to reactive node dimming, and integrating node clicks with the slide-out SRE details drawer.
 
-**Status:** Planned
+**Status:** Complete ✓
 
 **Requirements:**
-- **GRAPH-05**: Device nodes render as rich micro-cards with role icons, hostnames, management IPs, health status dots (including pulsing red for critical), and active alert count badges.
-- **GRAPH-06**: Clicking any device node on the graph canvas opens the 580px slide-out SRE details drawer for that device with glowing selection highlight.
-- **GRAPH-07**: Node rendering reactively adapts to active Role, Health, and search query filters by highlighting matches and dimming non-matches.
+- **GRAPH-05**: Device nodes render as rich micro-cards with role icons, hostnames, management IPs, health status dots (including pulsing red for critical), and active alert count badges. (✓ Verified)
+- **GRAPH-06**: Clicking any device node on the graph canvas opens the 580px slide-out SRE details drawer for that device with glowing selection highlight. (✓ Verified)
+- **GRAPH-07**: Node rendering reactively adapts to active Role, Health, and search query filters by highlighting matches and dimming non-matches. (✓ Verified)
 
 **Success Criteria:**
-1. Each device node renders as a modern, glassmorphic micro-card with device name, role icon, IP, and health indicator dot.
-2. Nodes with active critical alerts display an animated radar pulse indicator.
-3. Clicking any node selects it with a glowing accent ring and immediately opens the 580px SRE details drawer with full Alert Triage, Live Telemetry, Inventory, and Action Bar capabilities.
-4. Using Role, Health, or Search filters keeps matching nodes in full brightness while smoothly dimming non-matching nodes to 20% opacity.
-5. All automated contract tests pass and the production Vite bundle compiles cleanly with 0 errors.
+1. Each device node renders as a modern, glassmorphic micro-card with device name, role icon, IP, and health indicator dot. (✓ Verified)
+2. Nodes with active critical alerts display an animated radar pulse indicator. (✓ Verified)
+3. Clicking any node selects it with a glowing accent ring and immediately opens the 580px SRE details drawer with full Alert Triage, Live Telemetry, Inventory, and Action Bar capabilities. (✓ Verified)
+4. Using Role, Health, or Search filters keeps matching nodes in full brightness while smoothly dimming non-matching nodes to 20% opacity. (✓ Verified)
+5. All automated contract tests pass and the production Vite bundle compiles cleanly with 0 errors. (✓ Verified)
+
 

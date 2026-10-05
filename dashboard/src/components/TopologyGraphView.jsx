@@ -1,9 +1,8 @@
 import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import {
   ZoomIn, ZoomOut, Maximize2, RotateCcw,
-  Layers, LayoutGrid, Server, Shield, Wifi,
-  Activity, AlertTriangle, CheckCircle, Info,
-  MousePointer, Move
+  LayoutGrid, Server, Shield, Wifi,
+  Activity, Move
 } from 'lucide-react';
 
 const TIER_METADATA = {
@@ -64,8 +63,36 @@ function getNodeHealth(device) {
   return 'unknown';
 }
 
-const NODE_WIDTH = 210;
-const NODE_HEIGHT = 74;
+function renderRoleIcon(tierId, color) {
+  if (tierId === 'core') {
+    return (
+      <g className="noc-role-icon role-core" transform="translate(12, 13)">
+        <rect width="20" height="20" rx="5" fill="rgba(59, 130, 246, 0.15)" stroke="rgba(59, 130, 246, 0.35)" strokeWidth="1" />
+        <rect x="4" y="5" width="12" height="4" rx="1" fill="none" stroke={color} strokeWidth="1.2" />
+        <rect x="4" y="11" width="12" height="4" rx="1" fill="none" stroke={color} strokeWidth="1.2" />
+        <circle cx="6.5" cy="7" r="0.75" fill={color} />
+        <circle cx="6.5" cy="13" r="0.75" fill={color} />
+      </g>
+    );
+  }
+  if (tierId === 'dist_sec') {
+    return (
+      <g className="noc-role-icon role-dist" transform="translate(12, 13)">
+        <rect width="20" height="20" rx="5" fill="rgba(168, 85, 247, 0.15)" stroke="rgba(168, 85, 247, 0.35)" strokeWidth="1" />
+        <path d="M 10 4.5 L 15 6.5 V 11 C 15 14 10 16.5 10 16.5 C 10 16.5 5 14 5 11 V 6.5 Z" fill="none" stroke={color} strokeWidth="1.2" strokeLinejoin="round" />
+      </g>
+    );
+  }
+  return (
+    <g className="noc-role-icon role-access" transform="translate(12, 13)">
+      <rect width="20" height="20" rx="5" fill="rgba(6, 182, 212, 0.15)" stroke="rgba(6, 182, 212, 0.35)" strokeWidth="1" />
+      <path d="M 5 8 C 7.5 5.5 12.5 5.5 15 8 M 7 11 C 8.5 9.5 11.5 9.5 13 11 M 10 14.5 A 0.5 0.5 0 1 1 10 14" fill="none" stroke={color} strokeWidth="1.2" strokeLinecap="round" />
+    </g>
+  );
+}
+
+const NODE_WIDTH = 220;
+const NODE_HEIGHT = 76;
 
 export default function TopologyGraphView({
   devices = [],
@@ -75,13 +102,15 @@ export default function TopologyGraphView({
   onToggleSubMode = () => {},
   searchQuery = '',
   roleFilter = 'all',
-  healthFilter = 'all'
+  healthFilter = 'all',
+  onResetFilters = null
 }) {
   const containerRef = useRef(null);
   const [containerSize, setContainerSize] = useState({ width: 1100, height: 720 });
   const [transform, setTransform] = useState({ x: 30, y: 20, k: 0.95 });
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const [panDistance, setPanDistance] = useState(0);
   const [startTransform, setStartTransform] = useState({ x: 0, y: 0, k: 1 });
   const [hoveredNode, setHoveredNode] = useState(null);
   const [hoveredEdge, setHoveredEdge] = useState(null);
@@ -102,6 +131,8 @@ export default function TopologyGraphView({
     obs.observe(containerRef.current);
     return () => obs.disconnect();
   }, []);
+
+  const hasActiveFilter = Boolean(searchQuery || roleFilter !== 'all' || healthFilter !== 'all');
 
   // Compute node coordinates grouped by tier
   const { nodes, edges, tierStats, canvasDimensions } = useMemo(() => {
@@ -151,10 +182,12 @@ export default function TopologyGraphView({
         const nodeY = rowY;
         const health = getNodeHealth(device);
 
-        // Filter match check
-        const matchesQuery = !searchQuery || device.device_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (device.location && device.location.toLowerCase().includes(searchQuery.toLowerCase())) ||
-          (device.ip_address && device.ip_address.includes(searchQuery));
+        // Filter match check (role, health, search query)
+        const q = (searchQuery || '').toLowerCase().trim();
+        const matchesQuery = !q ||
+          (device.device_name && device.device_name.toLowerCase().includes(q)) ||
+          (device.location && device.location.toLowerCase().includes(q)) ||
+          (device.ip_address && device.ip_address.includes(q));
         const matchesRole = roleFilter === 'all' || tierId === roleFilter || (device.role && device.role === roleFilter);
         const matchesHealth = healthFilter === 'all' || health === healthFilter;
         const isDimmed = !(matchesQuery && matchesRole && matchesHealth);
@@ -186,6 +219,7 @@ export default function TopologyGraphView({
       const isWarn = src.health === 'warning' || tgt.health === 'warning';
       const status = isCrit ? 'critical' : isWarn ? 'warning' : 'nominal';
       const path = `M ${src.x + NODE_WIDTH / 2 - 10} ${src.y} C ${(src.x + tgt.x) / 2} ${src.y - 45}, ${(src.x + tgt.x) / 2} ${src.y - 45}, ${tgt.x - NODE_WIDTH / 2 + 10} ${tgt.y}`;
+      const isDimmed = hasActiveFilter && (src.isDimmed && tgt.isDimmed);
 
       computedEdges.push({
         id: `link-core-${src.id}-${tgt.id}`,
@@ -194,13 +228,13 @@ export default function TopologyGraphView({
         path,
         status,
         type: 'backbone',
-        label: '100G Backbone Mesh'
+        label: '100G Backbone Mesh',
+        isDimmed
       });
     }
 
     // 2. Core to Distribution uplinks (Core <-> Dist)
     distNodes.forEach((dist, idx) => {
-      // Connect each distribution switch to the primary core node
       const primaryCore = coreNodes[idx % Math.max(1, coreNodes.length)];
       if (primaryCore) {
         const isCrit = dist.health === 'critical' || primaryCore.health === 'critical';
@@ -208,6 +242,7 @@ export default function TopologyGraphView({
         const status = isCrit ? 'critical' : isWarn ? 'warning' : 'nominal';
         const yMid = (primaryCore.y + dist.y) / 2;
         const path = `M ${primaryCore.x} ${primaryCore.y + NODE_HEIGHT / 2} C ${primaryCore.x} ${yMid}, ${dist.x} ${yMid}, ${dist.x} ${dist.y - NODE_HEIGHT / 2}`;
+        const isDimmed = hasActiveFilter && (primaryCore.isDimmed && dist.isDimmed);
 
         computedEdges.push({
           id: `link-${primaryCore.id}-${dist.id}`,
@@ -216,7 +251,8 @@ export default function TopologyGraphView({
           path,
           status,
           type: 'uplink',
-          label: '40G Distribution Uplink'
+          label: '40G Distribution Uplink',
+          isDimmed
         });
       }
 
@@ -228,6 +264,7 @@ export default function TopologyGraphView({
         const status = isCrit ? 'critical' : isWarn ? 'warning' : 'nominal';
         const yMid = (secondaryCore.y + dist.y) / 2;
         const path = `M ${secondaryCore.x} ${secondaryCore.y + NODE_HEIGHT / 2} C ${secondaryCore.x} ${yMid}, ${dist.x} ${yMid}, ${dist.x} ${dist.y - NODE_HEIGHT / 2}`;
+        const isDimmed = hasActiveFilter && (secondaryCore.isDimmed && dist.isDimmed);
 
         computedEdges.push({
           id: `link-red-${secondaryCore.id}-${dist.id}`,
@@ -236,7 +273,8 @@ export default function TopologyGraphView({
           path,
           status,
           type: 'redundant',
-          label: '40G Redundant Path'
+          label: '40G Redundant Path',
+          isDimmed
         });
       }
     });
@@ -250,6 +288,7 @@ export default function TopologyGraphView({
         const status = isCrit ? 'critical' : isWarn ? 'warning' : 'nominal';
         const yMid = (parentDist.y + access.y) / 2;
         const path = `M ${parentDist.x} ${parentDist.y + NODE_HEIGHT / 2} C ${parentDist.x} ${yMid}, ${access.x} ${yMid}, ${access.x} ${access.y - NODE_HEIGHT / 2}`;
+        const isDimmed = hasActiveFilter && (parentDist.isDimmed && access.isDimmed);
 
         computedEdges.push({
           id: `link-${parentDist.id}-${access.id}`,
@@ -258,7 +297,8 @@ export default function TopologyGraphView({
           path,
           status,
           type: 'access',
-          label: '10G Campus Downlink'
+          label: '10G Campus Downlink',
+          isDimmed
         });
       }
     });
@@ -269,16 +309,25 @@ export default function TopologyGraphView({
       tierStats: tierStatsMap,
       canvasDimensions: { width: computedWidth, height: computedHeight }
     };
-  }, [devices, containerSize, searchQuery, roleFilter, healthFilter]);
+  }, [devices, containerSize, searchQuery, roleFilter, healthFilter, hasActiveFilter]);
+
+  const matchCount = useMemo(() => {
+    return nodes.filter(n => !n.isDimmed).length;
+  }, [nodes]);
 
   // Handle Drag / Pan Operations
   const handlePointerDown = (e) => {
     if (e.button !== 0) return; // Only primary mouse button
-    // Don't pan if clicking directly on a button or node
-    if (e.target.closest('.noc-graph-control-btn') || e.target.closest('.noc-graph-node-card')) {
+    // Don't pan if clicking directly on a button, node, or badge
+    if (
+      e.target.closest('.noc-graph-control-btn') ||
+      e.target.closest('.noc-graph-node-card') ||
+      e.target.closest('.noc-graph-filter-badge')
+    ) {
       return;
     }
     setIsPanning(true);
+    setPanDistance(0);
     setPanStart({ x: e.clientX, y: e.clientY });
     setStartTransform({ ...transform });
     if (containerRef.current) {
@@ -290,6 +339,7 @@ export default function TopologyGraphView({
     if (!isPanning) return;
     const dx = e.clientX - panStart.x;
     const dy = e.clientY - panStart.y;
+    setPanDistance(d => d + Math.abs(dx) + Math.abs(dy));
     setTransform({
       ...startTransform,
       x: startTransform.x + dx,
@@ -306,6 +356,12 @@ export default function TopologyGraphView({
         }
       } catch {
         // Safe ignore
+      }
+      // If user tapped empty canvas without panning, deselect device
+      if (panDistance < 6) {
+        if (e.target.tagName === 'svg' || e.target.id === 'noc-canvas-bg' || e.target.classList?.contains('noc-tier-lane-bg')) {
+          onSelectDevice(null);
+        }
       }
     }
   };
@@ -435,11 +491,33 @@ export default function TopologyGraphView({
         </button>
       </div>
 
-      {/* Floating Canvas Tier Quick Info (Top Left) */}
-      <div className="noc-graph-legend-badge">
-        <span className="noc-legend-icon"><Move size={12} /></span>
-        <span>Drag canvas to pan • Scroll to zoom • Click node to triage</span>
-      </div>
+      {/* Floating Canvas Legend or Active Filter Match Banner (Top Left) */}
+      {hasActiveFilter ? (
+        <div className="noc-graph-filter-badge">
+          <Activity size={13} style={{ color: 'var(--accent-blue)' }} />
+          <span>
+            Filtered: <strong>{matchCount}</strong> of {nodes.length} devices
+          </span>
+          {onResetFilters && (
+            <button
+              type="button"
+              className="noc-graph-filter-reset-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                onResetFilters();
+              }}
+              title="Clear all active filters"
+            >
+              Reset
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="noc-graph-legend-badge">
+          <span className="noc-legend-icon"><Move size={12} /></span>
+          <span>Drag canvas to pan • Scroll to zoom • Click node to triage</span>
+        </div>
+      )}
 
       {/* Main SVG Graph Surface */}
       <svg
@@ -459,6 +537,11 @@ export default function TopologyGraphView({
             <feGaussianBlur stdDeviation="3" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
+          <filter id="glow-blue" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="rgba(59, 130, 246, 0.75)" />
+            <feGaussianBlur stdDeviation="2" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
           <filter id="glow-red" x="-20%" y="-20%" width="140%" height="140%">
             <feGaussianBlur stdDeviation="4" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
@@ -469,7 +552,7 @@ export default function TopologyGraphView({
         </defs>
 
         {/* Dot Grid Background */}
-        <rect width="100%" height="100%" fill="url(#noc-grid-dots)" />
+        <rect id="noc-canvas-bg" width="100%" height="100%" fill="url(#noc-grid-dots)" />
 
         {/* Pan & Zoom Transform Group */}
         <g transform={`translate(${transform.x}, ${transform.y}) scale(${transform.k})`}>
@@ -546,8 +629,8 @@ export default function TopologyGraphView({
                     stroke={strokeColor}
                     strokeWidth={isHovered ? '2.5' : edge.type === 'backbone' ? '2.2' : '1.8'}
                     strokeDasharray={edge.type === 'redundant' ? '5,4' : isBroken ? '6,4' : 'none'}
-                    className={`noc-link-path ${isHovered ? 'hovered' : ''}`}
-                    opacity={isHovered ? 1 : edge.type === 'redundant' ? 0.45 : 0.75}
+                    className={`noc-link-path ${isHovered ? 'hovered' : ''} ${edge.isDimmed ? 'dimmed' : ''}`}
+                    opacity={edge.isDimmed ? 0.08 : isHovered ? 1 : edge.type === 'redundant' ? 0.45 : 0.75}
                   />
 
                   {/* Animated Traveling Traffic Pulse (SVG native animateMotion) */}
@@ -555,7 +638,7 @@ export default function TopologyGraphView({
                     r={isHovered ? '4' : '3'}
                     fill={strokeColor}
                     className="noc-traffic-pulse"
-                    opacity={edge.status === 'critical' ? 0.3 : 0.85}
+                    opacity={edge.isDimmed ? 0 : edge.status === 'critical' ? 0.3 : 0.85}
                   >
                     <animateMotion
                       path={edge.path}
@@ -566,7 +649,7 @@ export default function TopologyGraphView({
                   <circle
                     r="1.5"
                     fill="#ffffff"
-                    opacity="0.9"
+                    opacity={edge.isDimmed ? 0 : 0.9}
                   >
                     <animateMotion
                       path={edge.path}
@@ -585,7 +668,6 @@ export default function TopologyGraphView({
               const isSelected = selectedDevice && selectedDevice.device_name === node.id;
               const isHovered = hoveredNode === node.id;
               const tierMeta = TIER_METADATA[node.tier];
-              const TierIcon = tierMeta.icon;
               const healthColor = getStatusColor(node.health);
 
               return (
@@ -593,23 +675,27 @@ export default function TopologyGraphView({
                   key={node.id}
                   className={`noc-graph-node-card ${isSelected ? 'selected' : ''} ${node.isDimmed ? 'dimmed' : ''}`}
                   transform={`translate(${node.x - NODE_WIDTH / 2}, ${node.y - NODE_HEIGHT / 2})`}
-                  onClick={() => onSelectDevice(node.device)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectDevice(node.device);
+                  }}
                   onMouseEnter={() => setHoveredNode(node.id)}
                   onMouseLeave={() => setHoveredNode(null)}
-                  style={{ cursor: 'pointer', transition: 'opacity 0.25s ease' }}
+                  style={{ cursor: 'pointer' }}
                 >
-                  {/* Selection / Hover Glow Ring */}
+                  {/* Selection Glowing Highlight Ring */}
                   {isSelected && (
                     <rect
-                      x="-3"
-                      y="-3"
-                      width={NODE_WIDTH + 6}
-                      height={NODE_HEIGHT + 6}
-                      rx="12"
+                      x="-4"
+                      y="-4"
+                      width={NODE_WIDTH + 8}
+                      height={NODE_HEIGHT + 8}
+                      rx="14"
                       fill="none"
                       stroke="var(--accent-blue)"
                       strokeWidth="2.5"
-                      filter="url(#glow-teal)"
+                      filter="url(#glow-blue)"
+                      className="noc-node-selected-ring"
                     />
                   )}
 
@@ -636,19 +722,25 @@ export default function TopologyGraphView({
                     fill={tierMeta.color}
                   />
 
-                  {/* Device Hostname */}
+                  {/* Vector Role Icon */}
+                  {renderRoleIcon(node.tier, tierMeta.color)}
+
+                  {/* Device Hostname with Tooltip */}
                   <text
-                    x="16"
-                    y="22"
+                    x="38"
+                    y="23"
                     className="noc-node-title-text"
                   >
-                    {node.device.device_name}
+                    <title>{node.device.device_name}</title>
+                    {node.device.device_name.length > 20
+                      ? node.device.device_name.slice(0, 19) + '…'
+                      : node.device.device_name}
                   </text>
 
                   {/* Device IP & Location Subtitle */}
                   <text
-                    x="16"
-                    y="40"
+                    x="38"
+                    y="37"
                     className="noc-node-subtitle-text"
                   >
                     {node.device.ip_address || '10.x.x.x'} • {node.device.location || 'HQ'}
@@ -656,18 +748,18 @@ export default function TopologyGraphView({
 
                   {/* Tier Pill Badge */}
                   <rect
-                    x="16"
-                    y="50"
-                    width="56"
-                    height="16"
+                    x="12"
+                    y="48"
+                    width="54"
+                    height="18"
                     rx="4"
                     fill="var(--bg-tertiary)"
                     stroke="var(--card-border)"
                     strokeWidth="1"
                   />
                   <text
-                    x="44"
-                    y="62"
+                    x="39"
+                    y="60.5"
                     textAnchor="middle"
                     className="noc-node-tier-pill"
                     fill={tierMeta.color}
@@ -679,18 +771,18 @@ export default function TopologyGraphView({
                   {node.activeAlertCount > 0 ? (
                     <g>
                       <rect
-                        x="78"
-                        y="50"
-                        width="76"
-                        height="16"
+                        x="72"
+                        y="48"
+                        width="86"
+                        height="18"
                         rx="4"
                         fill="rgba(239, 68, 68, 0.14)"
                         stroke="rgba(239, 68, 68, 0.35)"
                         strokeWidth="1"
                       />
                       <text
-                        x="116"
-                        y="62"
+                        x="115"
+                        y="60.5"
                         textAnchor="middle"
                         className="noc-node-alert-pill-text"
                         fill="#ef4444"
@@ -701,23 +793,23 @@ export default function TopologyGraphView({
                   ) : (
                     <g>
                       <rect
-                        x="78"
-                        y="50"
-                        width="64"
-                        height="16"
+                        x="72"
+                        y="48"
+                        width="74"
+                        height="18"
                         rx="4"
                         fill="rgba(16, 185, 129, 0.1)"
                         stroke="rgba(16, 185, 129, 0.25)"
                         strokeWidth="1"
                       />
                       <text
-                        x="110"
-                        y="62"
+                        x="109"
+                        y="60.5"
                         textAnchor="middle"
                         className="noc-node-alert-pill-text"
                         fill="var(--health-healthy)"
                       >
-                        Nominal
+                        ✓ Nominal
                       </text>
                     </g>
                   )}
@@ -725,15 +817,15 @@ export default function TopologyGraphView({
                   {/* Health Status Dot & Radar Pulse */}
                   <circle
                     cx={NODE_WIDTH - 18}
-                    cy="18"
+                    cy="19"
                     r="4.5"
                     fill={healthColor}
                   />
                   {node.health === 'critical' && (
                     <circle
                       cx={NODE_WIDTH - 18}
-                      cy="18"
-                      r="9"
+                      cy="19"
+                      r="10"
                       fill="none"
                       stroke="#ef4444"
                       strokeWidth="1.5"

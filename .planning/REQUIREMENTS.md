@@ -15,9 +15,9 @@
 - [x] **GRAPH-04**: Interconnected network links (edges) connect upstream and downstream devices with health-aware styling (teal for nominal, amber for warning, red for critical) and subtle animated traffic pulses.
 
 ### Health-Aware Node Cards & SRE Drawer Integration (GRAPH-NODES)
-- [ ] **GRAPH-05**: Device nodes render as rich micro-cards with role icons, hostnames, management IPs, health status dots (including pulsing red for critical), and active alert count badges.
-- [ ] **GRAPH-06**: Clicking any device node on the graph canvas opens the 580px slide-out SRE details drawer for that device with glowing selection highlight.
-- [ ] **GRAPH-07**: Node rendering reactively adapts to active Role, Health, and search query filters by highlighting matches and dimming non-matches.
+- [x] **GRAPH-05**: Device nodes render as rich micro-cards with role icons, hostnames, management IPs, health status dots (including pulsing red for critical), and active alert count badges.
+- [x] **GRAPH-06**: Clicking any device node on the graph canvas opens the 580px slide-out SRE details drawer for that device with glowing selection highlight.
+- [x] **GRAPH-07**: Node rendering reactively adapts to active Role, Health, and search query filters by highlighting matches and dimming non-matches.
 
 ## Future Requirements
 
@@ -42,9 +42,9 @@
 | GRAPH-02 | Phase 17 | Complete ✓ |
 | GRAPH-03 | Phase 17 | Complete ✓ |
 | GRAPH-04 | Phase 17 | Complete ✓ |
-| GRAPH-05 | Phase 18 | Pending |
-| GRAPH-06 | Phase 18 | Pending |
-| GRAPH-07 | Phase 18 | Pending |
+| GRAPH-05 | Phase 18 | Complete ✓ |
+| GRAPH-06 | Phase 18 | Complete ✓ |
+| GRAPH-07 | Phase 18 | Complete ✓ |
 
 **Coverage:**
 - v1.8 requirements: 7 total

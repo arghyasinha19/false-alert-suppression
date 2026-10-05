@@ -4239,16 +4239,31 @@
   transition: stroke 0.2s ease, fill 0.2s ease;
 }
 
+.noc-graph-node-card {
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), filter 0.3s ease;
+}
+
 .noc-graph-node-card:hover .noc-node-card-body {
   fill: var(--bg-tertiary);
+  stroke: var(--card-border-hover);
 }
 
 .noc-graph-node-card.selected .noc-node-card-body {
   fill: var(--bg-tertiary);
+  stroke: var(--accent-blue);
 }
 
 .noc-graph-node-card.dimmed {
-  opacity: 0.22;
+  opacity: 0.18;
+  filter: grayscale(40%);
+}
+
+.noc-link-path {
+  transition: stroke-width 0.2s ease, opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.noc-link-path.dimmed {
+  opacity: 0.1 !important;
 }
 
 .noc-node-title-text {
@@ -4256,6 +4271,7 @@
   font-size: 12px;
   font-weight: 700;
   fill: var(--text-primary);
+  letter-spacing: -0.01em;
 }
 
 .noc-node-subtitle-text {
@@ -4278,8 +4294,68 @@
   font-weight: 700;
 }
 
+@keyframes noc-svg-radar-pulse {
+  0% {
+    r: 5px;
+    opacity: 0.95;
+    stroke-width: 2px;
+  }
+  50% {
+    opacity: 0.45;
+  }
+  100% {
+    r: 12px;
+    opacity: 0;
+    stroke-width: 0.5px;
+  }
+}
+
 .noc-radar-pulse-ring {
-  animation: noc-radar-pulse 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+  animation: noc-svg-radar-pulse 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
   transform-origin: center;
 }
+
+/* ── Filter Match Canvas Banner ── */
+.noc-graph-filter-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--accent-blue);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  animation: fadeIn 0.2s ease forwards;
+}
+
+[data-theme="light"] .noc-graph-filter-badge {
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.noc-graph-filter-reset-btn {
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  color: var(--accent-blue);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.noc-graph-filter-reset-btn:hover {
+  background: var(--accent-blue);
+  color: #ffffff;
+}
+
 
