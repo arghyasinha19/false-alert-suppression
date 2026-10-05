@@ -1,6 +1,6 @@
 # Roadmap: False Alert Suppression Pipeline
 
-**Milestone:** v1.7 NOC Details Drawer Scrollbar & Usability Polish  
+**Milestone:** v1.8 Interactive Network Topology Graph Diagram  
 **Status:** In Progress  
 
 ## Overview
@@ -23,6 +23,9 @@
 | 14 | v1.6 | Backend Live Polling & Telemetry Endpoints | Add `/api/devices/{name}/telemetry` and `/api/devices/{name}/live-poll` endpoints | DNAC-03, DNAC-04 | Complete ✓ |
 | 15 | v1.6 | Frontend SRE Drawer Live Wire-Up | Connect drawer telemetry/inventory tabs and Poll DNAC button to live API with fallback | DNAC-05, DNAC-06 | Complete ✓ |
 | 16 | v1.7 | Details Drawer Scrollbar & Viewport Layout | Accessible, visible, theme-aware scrollbars and fixed-header flex layout for device details drawer | DRAWER-01 - DRAWER-03 | Complete ✓ |
+| 17 | v1.8 | SVG Topology Canvas & Hierarchical Links | Zoomable/pannable SVG graph canvas, hierarchical tier placement, and animated connection links | GRAPH-01 - GRAPH-04 | Planned |
+| 18 | v1.8 | Health Nodes, Filter Sync & SRE Drawer | Rich micro-cards, pulsing alert indicators, filter reactivity, and drawer integration | GRAPH-05 - GRAPH-07 | Planned |
+
 
 
 ---
@@ -116,20 +119,51 @@ Full archive: [.planning/milestones/v1.6-ROADMAP.md](milestones/v1.6-ROADMAP.md)
 
 </details>
 
+<details>
+<summary>✅ v1.7 NOC Details Drawer Scrollbar & Usability Polish (Phase 16) — SHIPPED 2026-10-05</summary>
+
+- [x] **Phase 16: Details Drawer Scrollbar & Viewport Layout** (1/1 plan) — completed 2026-10-05
+
+</details>
+
 ---
 
-## Phase 16: Details Drawer Scrollbar & Viewport Layout
+## Phase 17: SVG Topology Canvas & Hierarchical Links
 
-**Goal:** Ensure the device details pane across Executive Topology (and other NOC views) features an accessible, clearly visible, theme-aware scrollbar with a cleanly separated fixed header/tabs, independently scrollable content container, and pinned action bar.
+**Goal:** Implement the interactive SVG network topology graph canvas with smooth pan/zoom controls, deterministic 3-tier coordinate calculation (Core, Distribution & Security, Access Edge), and animated connection links with traffic pulses and link health states.
 
-**Status:** Complete ✓
+**Status:** Planned
 
 **Requirements:**
-- **DRAWER-01**: Detail drawer body features dedicated, visible, theme-aware custom scrollbar styling in both dark and light modes, eliminating invisible/transparent scrollbars so users always see scroll position and affordance.
-- **DRAWER-02**: Detail drawer flex layout cleanly anchors the header and tab navigation at the top, pins the sticky SRE action bar at the bottom, and isolates scrolling strictly to `.detail-panel-body` (`flex: 1; overflow-y: auto; min-height: 0;`), preventing full-panel jitter.
-- **DRAWER-03**: All 4 drawer tabs (Alert Triage multi-agent timeline, Assurance Telemetry vitals grid, Device Inventory hardware table, and Raw Payloads JSON viewer) support smooth, unclipped vertical scrolling across varying viewport heights.
+- **GRAPH-01**: User can view network devices in an interactive, zoomable and pannable SVG canvas graph diagram with smooth mouse wheel zooming, drag-to-pan, and fit-to-screen controls.
+- **GRAPH-02**: Canvas provides floating navigation controls (Zoom In, Zoom Out, Fit to View, Reset 100%) and a fast sub-mode toggle between Graph View and Card Grid View.
+- **GRAPH-03**: Devices are arranged into 3 distinct hierarchical network tiers (Core & WAN Backbone at top, Distribution & Security in middle, Campus & Access Edge at bottom) with subtle background tier lanes.
+- **GRAPH-04**: Interconnected network links (edges) connect upstream and downstream devices with health-aware styling (teal for nominal, amber for warning, red for critical) and subtle animated traffic pulses.
 
 **Success Criteria:**
-1. Clicking any device in the topology view opens the details drawer with an immediately visible, styled scrollbar track and thumb in both light and dark themes.
-2. The drawer header and tab switcher remain fixed at the top while the sticky SRE action bar remains pinned at the bottom, with only the content body scrolling.
-3. Content in all 4 drawer tabs (Alert Triage, Assurance Telemetry, Device Inventory, Raw Payloads) can be scrolled to the very bottom without clipping or hiding action buttons.
+1. Navigating to "Topology" displays an interactive SVG graph canvas with floating zoom controls (+, -, fit, 100%).
+2. Mouse drag pans the canvas smoothly, and mouse wheel adjusts zoom level with bounded limits (0.4x to 2.2x).
+3. Devices are clearly grouped into 3 horizontal tier lanes: Core at top, Distribution/Security in middle, Access Edge at bottom.
+4. Smooth bezier links connect Core routers to Distribution switches and Distribution to Access nodes, with color coding matching network link health.
+5. Operators can toggle between "Graph View" and "Card Grid View" with a single click.
+
+---
+
+## Phase 18: Health Nodes, Filter Sync & SRE Drawer
+
+**Goal:** Complete the interactive graph experience by rendering rich micro-cards for device nodes, animating health status pulses for critical incidents, connecting toolbar filters (Role, Health, Search) to reactive node dimming, and integrating node clicks with the slide-out SRE details drawer.
+
+**Status:** Planned
+
+**Requirements:**
+- **GRAPH-05**: Device nodes render as rich micro-cards with role icons, hostnames, management IPs, health status dots (including pulsing red for critical), and active alert count badges.
+- **GRAPH-06**: Clicking any device node on the graph canvas opens the 580px slide-out SRE details drawer for that device with glowing selection highlight.
+- **GRAPH-07**: Node rendering reactively adapts to active Role, Health, and search query filters by highlighting matches and dimming non-matches.
+
+**Success Criteria:**
+1. Each device node renders as a modern, glassmorphic micro-card with device name, role icon, IP, and health indicator dot.
+2. Nodes with active critical alerts display an animated radar pulse indicator.
+3. Clicking any node selects it with a glowing accent ring and immediately opens the 580px SRE details drawer with full Alert Triage, Live Telemetry, Inventory, and Action Bar capabilities.
+4. Using Role, Health, or Search filters keeps matching nodes in full brightness while smoothly dimming non-matching nodes to 20% opacity.
+5. All automated contract tests pass and the production Vite bundle compiles cleanly with 0 errors.
+
