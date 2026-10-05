@@ -18,9 +18,9 @@ progress:
 ## Current Position
 
 Phase: Phase 16 — Details Drawer Scrollbar & Viewport Layout
-Plan: Not started (defining requirements)
-Status: Planning
-Last activity: 2026-10-05 — Milestone v1.7 started to fix details pane scrollbar visibility and layout
+Plan: 16-01
+Status: Ready to execute
+Last activity: 2026-10-05 — Plan 16-01 created for visible scrollbar styling and flex layout refactor
 
 ## Key Decisions Made
 
