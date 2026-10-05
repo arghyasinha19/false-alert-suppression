@@ -18,6 +18,23 @@ if dashboard_dir not in sys.path:
 
 from workflow.tools.mongodb_client import MongoDBClient
 
+try:
+    from dashboard.device_service import (
+        fetch_device_telemetry,
+        poll_device_live,
+        get_empty_telemetry_dict,
+        utc_now_iso,
+    )
+    from dashboard.dnac_monitor import _load_dnac_client
+except ImportError:
+    from device_service import (
+        fetch_device_telemetry,
+        poll_device_live,
+        get_empty_telemetry_dict,
+        utc_now_iso,
+    )
+    from dnac_monitor import _load_dnac_client
+
 # Set up logging to both console and file
 log_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs")
 os.makedirs(log_dir, exist_ok=True)
@@ -252,6 +269,77 @@ def get_device_history(device_name: str):
             safe_get(a, "alert_details", "device") == device_name)
     ]
     return {"device_name": device_name, "alerts": alerts}
+
+
+_dnac_client_instance = None
+
+
+def get_dnac_client():
+    global _dnac_client_instance
+    if _dnac_client_instance is None:
+        _dnac_client_instance = _load_dnac_client()
+    return _dnac_client_instance
+
+
+@app.get("/api/devices/{device_name}/telemetry")
+@app.get("/api/device/{device_name}/telemetry")
+def get_device_telemetry(device_name: str):
+    """
+    Fetch live Cisco DNA Center Assurance telemetry vitals (CPU, memory, packet drop,
+    health score, interface errors, PoE, uptime) and hardware specifications for a device.
+    Falls back gracefully to cached or offline records without throwing HTTP 500 errors.
+    """
+    try:
+        client = get_dnac_client()
+        return fetch_device_telemetry(device_name, mongo_client=mongo, dnac_client=client)
+    except Exception as e:
+        logger.error(f"Error handling telemetry endpoint for {device_name}: {e}")
+        return {
+            "device_name": device_name,
+            "device_id": None,
+            "source": "offline",
+            "timestamp": utc_now_iso(),
+            "telemetry": get_empty_telemetry_dict(),
+            "device_info": {
+                "model": "Unknown",
+                "serial": "Unknown",
+                "mac": "Unknown",
+                "os_version": "Unknown",
+                "ip_address": "Unknown",
+            },
+        }
+
+
+@app.post("/api/devices/{device_name}/live-poll")
+@app.post("/api/device/{device_name}/live-poll")
+def live_poll_device(device_name: str):
+    """
+    Trigger on-demand live polling for a device:
+    Synchronously re-checks active alerts in MongoDB against DNAC and refreshes
+    live Assurance telemetry vitals.
+    """
+    try:
+        client = get_dnac_client()
+        return poll_device_live(device_name, mongo_client=mongo, dnac_client=client)
+    except Exception as e:
+        logger.error(f"Error handling live-poll endpoint for {device_name}: {e}")
+        return {
+            "status": "warning",
+            "device_name": device_name,
+            "device_id": None,
+            "dnac_reachable": False,
+            "alerts_updated": 0,
+            "telemetry": get_empty_telemetry_dict(),
+            "device_info": {
+                "model": "Unknown",
+                "serial": "Unknown",
+                "mac": "Unknown",
+                "os_version": "Unknown",
+                "ip_address": "Unknown",
+            },
+            "source": "offline",
+            "timestamp": utc_now_iso(),
+        }
 
 
 @app.get("/api/kpi/summary")
