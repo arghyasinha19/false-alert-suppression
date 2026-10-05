@@ -1,7 +1,7 @@
 # Roadmap: False Alert Suppression Pipeline
 
 **Milestone:** v1.6 Live DNAC Assurance Telemetry & Asset Integration  
-**Status:** In Progress  
+**Status:** Complete ✓  
 
 ## Overview
 
@@ -21,8 +21,7 @@
 | 12 | v1.5 | Interactive SRE Drawer & Incident Timeline | Multi-agent decision timeline, Assurance telemetry tabs, and one-click quick triage actions | NOC-DRAWER-01 - NOC-DRAWER-03 | Complete ✓ |
 | 13 | v1.6 | DNAC Client Assurance & Device Extensions | Implement `/network-device` and `/device-health` query methods in `DNACClient` | DNAC-01, DNAC-02 | Complete ✓ |
 | 14 | v1.6 | Backend Live Polling & Telemetry Endpoints | Add `/api/devices/{name}/telemetry` and `/api/devices/{name}/live-poll` endpoints | DNAC-03, DNAC-04 | Complete ✓ |
-| 15 | v1.6 | Frontend SRE Drawer Live Wire-Up | Connect drawer telemetry/inventory tabs and Poll DNAC button to live API with fallback | DNAC-05, DNAC-06 | Pending |
-| 16 | v1.6 | Daemon Orchestration & End-to-End Diagnostics | Auto-start `dnac_sync.py` in launcher and build CLI test tool `test_dnac_integration.py` | DNAC-07, DNAC-08 | Pending |
+| 15 | v1.6 | Frontend SRE Drawer Live Wire-Up | Connect drawer telemetry/inventory tabs and Poll DNAC button to live API with fallback | DNAC-05, DNAC-06 | Complete ✓ |
 
 
 ---
@@ -154,20 +153,5 @@
 2. SRE Drawer Telemetry tab displays real fetched values instead of procedurally generated numbers. (✓ Verified)
 3. Source badge indicates whether telemetry is live from DNAC or cached from offline storage. (✓ Verified)
 
----
 
-## Phase 16: Daemon Orchestration & End-to-End Diagnostics
-
-**Goal:** Integrate the `dnac_sync.py` background service into `start_dashboard.py` and build a step-by-step diagnostic test CLI tool `test_dnac_integration.py`.
-
-**Status:** Pending
-
-**Requirements:**
-- **DNAC-07**: `start_dashboard.py` auto-starts `dashboard/dnac_sync.py` background daemon alongside FastAPI and Vite, handling unified process supervision and graceful SIGINT/SIGTERM termination.
-- **DNAC-08**: Provide standalone interactive CLI test tool `test_dnac_integration.py` with step-by-step verification of credentials, auth token, issue lookup, device inventory, and telemetry vitals (with `--mock` switch for offline verification).
-
-**Success Criteria:**
-1. Running `python start_dashboard.py` starts all 3 services (Backend, Frontend, and Sync daemon) and cleanly kills all 3 on Ctrl+C.
-2. Running `python test_dnac_integration.py` prints clean, step-by-step diagnostic output for authentication, issue lookup, and device telemetry.
-3. `python test_dnac_integration.py --mock` passes completely offline with zero network dependencies.
 
