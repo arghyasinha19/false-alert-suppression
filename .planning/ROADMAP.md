@@ -71,9 +71,9 @@ Refer to repository history for prior phase details.
 
 **Goal:** Implement persistent scrollbars, table edge masks, and strict independent scroll bounds for the topology graph canvas.
 
-**Status:** Planned (2 plans)
-- [ ] **Plan 20-01**: Topology Canvas Viewport Bounds, Wheel Zoom Guard & Fullscreen Mode (UI-03)
-- [ ] **Plan 20-02**: High-Contrast Scrollbars, Horizontal Edge Masks & Vertical List Capping (UI-04)
+**Status:** Complete ✓ (2/2 plans complete)
+- [x] **Plan 20-01**: Topology Canvas Viewport Bounds, Wheel Zoom Guard & Fullscreen Mode (UI-03)
+- [x] **Plan 20-02**: High-Contrast Scrollbars, Horizontal Edge Masks & Vertical List Capping (UI-04)
 
 **Requirements:**
 - **UI-03**: Constrain the topology graph canvas to its own bounds with independent scroll and zoom containers to prevent overflowing the main window.
