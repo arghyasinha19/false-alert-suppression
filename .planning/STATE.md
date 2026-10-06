@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: UI/UX Audit Remediation
-status: planning
-last_updated: "2026-10-05T17:38:35.883Z"
-last_activity: 2026-10-05
+status: Defining requirements
+last_updated: "2026-10-06T02:36:44.665Z"
+last_activity: 2026-10-05 — Milestone v1.9 started
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,24 +17,25 @@ progress:
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: Phase 19 - Critical Layout & Status Fixes
 Plan: —
-Status: Defining requirements
-Last activity: 2026-10-05 — Milestone v1.9 started
+Status: Ready for planning
+Last activity: 2026-10-06 — Phase 19 context gathered
 
 ## Key Decisions Made
 
-- Upgraded slide-out detail drawer to 580px width with 4 dedicated SRE workspaces: Alert Triage, Assurance Telemetry, Device Inventory, and Raw Payloads.
-- Built native React 19 SVG Topology Canvas (`TopologyGraphView.jsx`) with zero third-party graph dependencies (e.g. avoided legacy `reactflow` v11 React 18 peer-dep conflicts).
-- Implemented deterministic 3-tier coordinate mapping (Core: y=130, Distribution & Security: y=350, Campus & Access: y=570) with dynamic horizontal node spacing (260px pitch).
-- Implemented smooth cubic bezier link curves with status-aware color coding (teal/amber/red) and GPU-accelerated SVG `<animateMotion>` packet traffic pulses with zero JS event loop overhead.
-- Added floating glassmorphic navigation toolbar (Zoom In, Zoom Out, Fit to View, 1:1 Reset) with bounded zoom (0.4x - 2.2x) and pointer drag panning.
-- Added top toolbar sub-mode toggle between "Graph View" and "Card Grid View" in NetworkOperations, preserving operator choice.
-- Wired node clicks to open the SRE drawer with full live DNAC telemetry, inventory, timeline, and triage action bar.
-- Phase 18 Architecture: Pass full `devices` fleet to `TopologyGraphView` to preserve topological structure during filtering, while smoothly dimming non-matching nodes to 18% opacity and non-participating edges to 10%.
-- Vector Role Icons: Integrated crisp inline SVG paths for Core (Server/Router), Distribution & Security (Shield/Firewall), and Campus & Access (Switch/Wifi AP).
-- Active Filter Badge: Canvas renders a floating match count banner (`Filtered: X of Y devices [Reset]`) for immediate operator feedback.
+- Auto-collapse sidebar to 72px icon rail below 1100px while keeping manual toggle available.
+- Enforce flexbox sizing with min-width: 0, max-width: 100% on .content-area, isolating wide tables/cards to prevent viewport overflow.
+- Introduce an explicit @media (max-width: 1100px) responsive block in App.css for compact header padding and grid reflow.
+- Tri-state connection status model: Live (green pulse), Stale (amber dot, 1-2 poll failures after being live), and Offline (red dot, on initial failure or 3+ failures).
+- Freeze lastSuccessfulSync timestamp on fetch failure; display "Last sync: Xm ago (Failed)" rather than false positive refresh times.
+- Pass connectionStatus and lastSync as props to views, synchronizing sub-view indicators like .noc-refresh-bar.
+- Strict payload schema validation: require Array.isArray(alertsRes?.alerts) and devices to prevent corrupted/empty JSON masquerading as Live.
+- Dedicated amber badge in the header ("Mock / Seed Data") plus a subtle dismissible info banner across the content body in offline mode.
+- Align SRE Drawer provenance: display "Simulated Profile" banner and disable "Poll DNAC" button with tooltip when backend is unreachable.
+- Dynamic hot-swap from mock to live data upon reconnect, re-matching selectedDevice by name and preserving active filters.
+- Progressive backoff retry on polling failure (10s -> 20s -> 60s cap) with manual retry buttons in header and sidebar, plus reconnect check on window focus.
 
 ## Blockers/Concerns
 
-- None. Milestone v1.8 is 100% complete and fully verified. Ready for `/gsd-complete-milestone`.
+- None. Phase 19 context gathered and ready for planning.
