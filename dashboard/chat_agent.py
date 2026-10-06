@@ -12,6 +12,7 @@ import os
 import sys
 import json
 import logging
+import re
 import time
 from typing import Any, Callable, Dict, List, Optional
 from datetime import datetime, timezone, timedelta
@@ -46,7 +47,9 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
 GEMINI_CA_BUNDLE = os.getenv("GEMINI_CA_BUNDLE", "")  # Path to root CA .pem file
 
 # Option to suppress CA bundle and rely on SSL verify=False
-SUPPRESS_CA_BUNDLE = os.getenv("SUPPRESS_CA_BUNDLE", "true").lower() in ("true", "1", "yes")
+# Default OFF: popping REQUESTS_CA_BUNDLE affects every HTTPS call in this
+# process (DNAC, ServiceNow), not just the LLM gateway.
+SUPPRESS_CA_BUNDLE = os.getenv("SUPPRESS_CA_BUNDLE", "false").lower() in ("true", "1", "yes")
 
 if SUPPRESS_CA_BUNDLE:
     # Completely suppress CA bundle environment variables
@@ -92,17 +95,17 @@ def tool_query_alerts(args: dict) -> dict:
     query = {}
     if args.get("device_name"):
         query["$or"] = [
-            {"alert_details.device_name": {"$regex": args["device_name"], "$options": "i"}},
-            {"alert_details.device": {"$regex": args["device_name"], "$options": "i"}},
+            {"alert_details.device_name": {"$regex": re.escape(str(args["device_name"])), "$options": "i"}},
+            {"alert_details.device": {"$regex": re.escape(str(args["device_name"])), "$options": "i"}},
         ]
     if args.get("severity"):
         query["alert_details.severity"] = args["severity"]
     if args.get("category"):
-        query["alert_details.category"] = {"$regex": args["category"], "$options": "i"}
+        query["alert_details.category"] = {"$regex": re.escape(str(args["category"])), "$options": "i"}
     if args.get("event_id"):
         query["alert_details.event_id"] = args["event_id"]
     if args.get("status"):
-        query["alert_details.status"] = {"$regex": args["status"], "$options": "i"}
+        query["alert_details.status"] = {"$regex": re.escape(str(args["status"])), "$options": "i"}
 
     limit = min(int(args.get("limit", 20)), 100)
 
@@ -124,8 +127,8 @@ def tool_get_device_status(args: dict) -> dict:
     device_name = args.get("device_name", "")
     query = {
         "$or": [
-            {"alert_details.device_name": {"$regex": device_name, "$options": "i"}},
-            {"alert_details.device": {"$regex": device_name, "$options": "i"}},
+            {"alert_details.device_name": {"$regex": re.escape(str(device_name)), "$options": "i"}},
+            {"alert_details.device": {"$regex": re.escape(str(device_name)), "$options": "i"}},
         ]
     }
     alerts = list(collection.find(query, {"_id": 0}))
@@ -196,8 +199,8 @@ def tool_get_device_history(args: dict) -> dict:
 
     query = {
         "$or": [
-            {"alert_details.device_name": {"$regex": device_name, "$options": "i"}},
-            {"alert_details.device": {"$regex": device_name, "$options": "i"}},
+            {"alert_details.device_name": {"$regex": re.escape(str(device_name)), "$options": "i"}},
+            {"alert_details.device": {"$regex": re.escape(str(device_name)), "$options": "i"}},
         ]
     }
     alerts = list(collection.find(query, {"_id": 0}).sort("alert_details.timestamp", -1).limit(limit))
@@ -295,22 +298,22 @@ def tool_get_kpi_summary(args: dict) -> dict:
 
 
 def tool_query_dnac_issue(args: dict) -> dict:
-    """Live query DNAC for issue status by instanceId."""
-    instance_id = args.get("instance_id", "")
-    if not instance_id:
-        return {"error": "instance_id is required"}
+    """Live query DNAC for issue status by Assurance issueId."""
+    issue_id = args.get("issue_id") or args.get("instance_id") or ""
+    if not issue_id:
+        return {"error": "issue_id is required"}
 
     try:
         client = _get_dnac()
-        status = client.get_issue_status(instance_id)
+        status = client.get_issue_status(issue_id)
         return {
-            "instance_id": instance_id,
+            "issue_id": issue_id,
             "status": status,
             "source": "dnac_live_api",
-            "endpoint": f"{client.base_url}/dna/intent/api/v1/issues/{instance_id}",
+            "endpoint": f"{client.base_url}/dna/data/api/v1/assuranceIssues/{issue_id}",
         }
     except Exception as e:
-        return {"instance_id": instance_id, "error": str(e)}
+        return {"issue_id": issue_id, "error": str(e)}
 
 
 def tool_query_dnac_device_health(args: dict) -> dict:
@@ -334,8 +337,8 @@ def tool_query_dnac_device_health(args: dict) -> dict:
                 if collection is not None:
                     alert = collection.find_one({
                         "$or": [
-                            {"alert_details.device_name": {"$regex": device_name, "$options": "i"}},
-                            {"alert_details.device": {"$regex": device_name, "$options": "i"}}
+                            {"alert_details.device_name": {"$regex": re.escape(str(device_name)), "$options": "i"}},
+                            {"alert_details.device": {"$regex": re.escape(str(device_name)), "$options": "i"}}
                         ]
                     })
                     if alert:
@@ -379,43 +382,16 @@ def tool_query_dnac_device_health(args: dict) -> dict:
                         # Successfully resolved to UUID
                         device_id = nd_data[0].get("id", "")
 
-        # Step 2: Fetch health data using exact UUID if available
-        url = f"{client.base_url}/dna/intent/api/v1/device-health"
-        params = {}
-        if device_id:
-            params["deviceUuid"] = device_id
-        elif device_name:
-            # Fallback if UUID resolution failed
-            params["deviceName"] = device_name
-
-        logger.info(f"DNAC Request:\n  Method: GET\n  URL: {url}\n  Params: {json.dumps(params)}")
-        response = requests.get(
-            url, 
-            headers=client._get_headers(), 
-            params=params, 
-            verify=client.verify_ssl,
-            timeout=15
-        )
-        logger.info(f"DNAC Response:\n  Status Code: {response.status_code}\n  Body: {response.text[:2000]}")
-
-        if not response.ok:
-            return {"error": f"DNAC returned {response.status_code}: {response.text[:500]}"}
-
-        data = response.json()
-        resp_data = data.get("response", data)
-        
-        # Local filter as a last resort if DNAC returned multiple devices
-        if isinstance(resp_data, list) and device_name and not device_id:
-            filtered = [d for d in resp_data if isinstance(d, dict) and device_name.lower() in str(d.get("name", "")).lower()]
-            resp_data = filtered
-            
-            # Limit to top 2 to prevent token overflow
-            resp_data = resp_data[:2]
-
+        # Step 3: Fetch health for exactly this device UUID.
+        # (/device-health cannot filter by device; DNACClient.get_device_health
+        # uses the device-specific /device-detail API.)
+        if not device_id:
+            return {"error": f"Could not resolve a DNAC device UUID for '{device_name}'."}
+        health = client.get_device_health(device_id)
         return {
             "source": "dnac_live_api",
-            "endpoint": url,
-            "device_health": resp_data,
+            "device_id": device_id,
+            "device_health": {k: v for k, v in health.items() if k != "raw_response"},
         }
     except requests.exceptions.RequestException as re:
         logger.error(f"Network error querying DNAC: {re}")
@@ -425,20 +401,35 @@ def tool_query_dnac_device_health(args: dict) -> dict:
         return {"error": f"Failed to query DNAC device health: {str(e)}"}
 
 
+# The LLM may only READ from DNAC. Alert text (which comes from the network and
+# lands in the model's context) must never be able to steer it into changing
+# DNAC configuration, so only GET is allowed and only under these prefixes.
+DNAC_READ_ONLY_PREFIXES = tuple(
+    p.strip() for p in os.getenv(
+        "CHAT_DNAC_ALLOWED_PREFIXES",
+        "/dna/intent/api/v1/,/dna/data/api/v1/",
+    ).split(",") if p.strip()
+)
+DNAC_BLOCKED_SUBSTRINGS = ("command-runner", "/auth/", "credential", "template-programmer", "..")
+
+
 def tool_call_dnac_rest_api(args: dict) -> dict:
-    """Generic tool for the LLM to call any DNAC REST API endpoint."""
+    """Read-only (GET) access to allow-listed DNAC REST API paths for the LLM."""
     endpoint = args.get("endpoint", "")
-    method = args.get("method", "GET").upper()
-    params = args.get("params", {})
-    body = args.get("body", {})
+    method = str(args.get("method", "GET")).upper()
+    params = args.get("params", {}) or {}
 
     if not endpoint:
         return {"error": "endpoint is required"}
-    
-    # Ensure endpoint starts with /
+    if method != "GET":
+        return {"error": "Only GET requests are permitted from the chat assistant."}
     if not endpoint.startswith("/"):
         endpoint = "/" + endpoint
-        
+    if "://" in endpoint or not endpoint.startswith(DNAC_READ_ONLY_PREFIXES) \
+            or any(b in endpoint.lower() for b in DNAC_BLOCKED_SUBSTRINGS):
+        return {"error": f"Endpoint not permitted: {endpoint}"}
+    body = {}
+
     try:
         client = _get_dnac()
         url = f"{client.base_url}{endpoint}"
@@ -449,8 +440,6 @@ def tool_call_dnac_rest_api(args: dict) -> dict:
         
         if method == "GET":
             response = requests.get(url, headers=headers, params=params, verify=client.verify_ssl, timeout=20)
-        elif method == "POST":
-            response = requests.post(url, headers=headers, params=params, json=body, verify=client.verify_ssl, timeout=20)
         else:
             return {"error": f"Unsupported HTTP method: {method}"}
             
@@ -559,13 +548,13 @@ GEMINI_TOOL_DECLARATIONS = [
     },
     {
         "name": "query_dnac_issue",
-        "description": "Query DNAC live API for the current status of a specific issue by its instanceId. Use ONLY when MongoDB does not have the answer or the user explicitly asks to check DNAC.",
+        "description": "Query DNAC live API for the current status of a specific Assurance issue by its issueId (stored as alert_details.issue_id). Use ONLY when MongoDB does not have the answer or the user explicitly asks to check DNAC.",
         "parameters": {
             "type": "object",
             "properties": {
-                "instance_id": {"type": "string", "description": "The DNAC issue instanceId (UUID)"},
+                "issue_id": {"type": "string", "description": "The DNAC Assurance issueId"},
             },
-            "required": ["instance_id"],
+            "required": ["issue_id"],
         },
     },
     {
@@ -586,9 +575,8 @@ GEMINI_TOOL_DECLARATIONS = [
             "type": "object",
             "properties": {
                 "endpoint": {"type": "string", "description": "The DNAC API path (e.g. /dna/intent/api/v1/site-health)"},
-                "method": {"type": "string", "description": "HTTP method (GET or POST)", "enum": ["GET", "POST"]},
+                "method": {"type": "string", "description": "HTTP method (read-only: GET)", "enum": ["GET"]},
                 "params": {"type": "object", "description": "Query parameters as key-value pairs"},
-                "body": {"type": "object", "description": "JSON body (for POST requests)"},
             },
             "required": ["endpoint", "method"],
         },
@@ -653,7 +641,7 @@ You may use other official Cisco DNAC REST API endpoints if you know them. Do no
 - **Devices**: `/network-device` (GET, query by `hostname` or `macAddress` to get device Id)
 - **Device Health**: `/device-health` (GET)
 - **Device Details/Trends**: `/device-detail` (GET, requires `searchBy=macAddress` or `searchBy=identifier` and `identifier=...`)
-- **Issues**: `/issues` (GET, query by `macAddress`, `siteId`, `deviceUuid`)
+- **Issues**: `/issues` (GET, query by `deviceId`, `siteId`, `macAddress`, `issueStatus`)
 
 ## RULES
 1. **Never guess ticket/alert stats**. Use the MongoDB tools.
@@ -741,7 +729,9 @@ class ChatAgent:
             base_url=base_url,
             temperature=0.2,
             max_tokens=4096,
-            http_client=httpx.Client(verify=False)
+            http_client=httpx.Client(
+                verify=False if SUPPRESS_CA_BUNDLE else (GEMINI_CA_BUNDLE if GEMINI_CA_BUNDLE and os.path.exists(GEMINI_CA_BUNDLE) else True)
+            )
         )
 
         self.tools_schema = _build_langchain_tools()
@@ -1171,7 +1161,7 @@ class ChatAgent:
         elif tool_name == "get_kpi_summary":
             return f"KPI summary: {result.get('total_alerts', 0)} total alerts, {result.get('suppression_rate', 0)}% suppression rate"
         elif tool_name == "query_dnac_issue":
-            return f"DNAC issue {result.get('instance_id', '?')}: status={result.get('status', '?')}"
+            return f"DNAC issue {result.get('issue_id', '?')}: status={result.get('status', '?')}"
         elif tool_name == "query_dnac_device_health":
             return f"DNAC device health data retrieved"
         elif tool_name == "generate_visualization":

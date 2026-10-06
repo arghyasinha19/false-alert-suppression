@@ -123,6 +123,8 @@ def main() -> int:
     parser.add_argument("--source", required=False, help="Alert source")
     parser.add_argument("--issue_name", required=False, help="Alert issue name")
     parser.add_argument("--issue_details", required=False, help="Alert details")
+    parser.add_argument("--issue_id", required=False, help="DNAC Assurance issueId")
+    parser.add_argument("--received_at", required=False, help="Webhook receive time (ISO-8601)")
     
     # Jenkins outputs
     parser.add_argument("--status-file", default="status.json", help="write summary JSON to this file")
@@ -159,8 +161,13 @@ def main() -> int:
             "correlation_id": args.correlation_id,
             "source": args.source,
             "issue_name": args.issue_name,
-            "issue_details": args.issue_details
-        }
+            "issue_details": args.issue_details,
+            "issue_id": args.issue_id,
+            "received_at": args.received_at,
+        },
+        "results": {},
+        "errors": [],
+        "remarks": {},
     }
     
     # Run graph with ALL internal outputs redirected to run.log

@@ -255,5 +255,14 @@ yarl==1.22.0
 zstandard==0.25.0
     # via langsmith
 
+# --- Added for production deploy (were imported but missing from this lock file).
+# --- Versions verified compatible with the pins above (langchain-core 1.2.22,
+# --- transformers 4.57.x). Re-run `pip-compile requirements.in` to refresh
+# --- transitive pins (openai, tiktoken, ...).
+uvicorn==0.54.0
+langchain-openai==1.1.12
+sentence-transformers==5.7.0
+hdbscan==0.8.44
+
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

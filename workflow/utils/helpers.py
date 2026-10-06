@@ -1,10 +1,26 @@
-from datetime import datetime
+from datetime import datetime, timezone
+import logging
 import traceback
 from typing import Callable, Any, Dict
 from workflow.state import GraphState
 
+logger = logging.getLogger(__name__)
+
+
 def _now() -> str:
-    return datetime.utcnow().isoformat()
+    return datetime.now(timezone.utc).isoformat()
+
+
+def result_data(state: GraphState, agent_name: str) -> Dict[str, Any]:
+    """
+    Safe accessor for an agent's ``data`` dict.
+
+    ``results[agent]["data"]`` is explicitly None when an agent fails, so
+    ``.get("data", {})`` returns None and the next ``.get`` raises. Always use
+    this helper instead.
+    """
+    data = ((state.get("results") or {}).get(agent_name) or {}).get("data")
+    return data if isinstance(data, dict) else {}
 
 def safe_node(agent_name: str, fn: Callable[[GraphState], Any]) -> Callable[[GraphState], GraphState]:
     """
@@ -13,6 +29,7 @@ def safe_node(agent_name: str, fn: Callable[[GraphState], Any]) -> Callable[[Gra
     def _wrapped(state: GraphState) -> GraphState:
         state.setdefault("results", {})
         state.setdefault("remarks", {})
+        state.setdefault("errors", [])
         
         # Mark running
         state["results"].setdefault(agent_name, {})
@@ -32,8 +49,9 @@ def safe_node(agent_name: str, fn: Callable[[GraphState], Any]) -> Callable[[Gra
                 })
             elif isinstance(out, dict) and "ok" in out:
                 ok = bool(out.get("ok"))
+                status = out.get("status") or ("success" if ok else "failed")
                 state["results"][agent_name].update({
-                    "status": "success" if ok else "failed",
+                    "status": status,
                     "ok": ok,
                     "data": out.get("data"),
                     "error": out.get("remarks"),
@@ -49,6 +67,7 @@ def safe_node(agent_name: str, fn: Callable[[GraphState], Any]) -> Callable[[Gra
                 })
                 
         except Exception as e:
+            logger.exception(f"Node {agent_name} raised: {e}")
             state["results"][agent_name].update({
                 "status": "failed",
                 "ok": False,

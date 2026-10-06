@@ -286,9 +286,12 @@ def poll_device_live(
                         issue_name=issue_name,
                         issue_details=issue_details,
                         event_id=event_id,
+                        issue_id=details.get("issue_id"),
                     )
 
-                    update_filter = {"alert_details.event_id": event_id} if event_id else {"_id": a["_id"]}
+                    # eventId is an event TYPE (e.g. NETWORK-DEVICES-3-506) shared by many
+                    # alerts on many devices - update only this document.
+                    update_filter = {"_id": a["_id"]}
                     alerts_coll.update_one(
                         update_filter,
                         {

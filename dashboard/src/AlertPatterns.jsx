@@ -21,14 +21,7 @@ const CATEGORY_COLORS = {
   'Uncertain': '#d97706',
 };
 
-const TOOLTIP_STYLE = {
-  backgroundColor: 'var(--bg-secondary)',
-  border: '1px solid var(--card-border)',
-  borderRadius: '10px',
-  boxShadow: 'var(--shadow-md)',
-  fontSize: 'var(--font-xs)',
-  color: 'var(--text-primary)',
-};
+
 
 /* ── Mini Sparkline (SVG) ── */
 function Sparkline({ data, width = 120, height = 32, color = '#2563eb' }) {

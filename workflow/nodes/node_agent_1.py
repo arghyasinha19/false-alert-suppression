@@ -3,6 +3,7 @@ import os, sys
 from workflow.state import GraphState
 from workflow.tools.backdate_detector import BackdateDetector
 from typing import Dict, Any
+from datetime import datetime
 import logging
 logger = logging.getLogger(__name__)
 
@@ -24,12 +25,24 @@ def agent_1_logic(state: GraphState) -> Dict[str, Any]:
         logger=logger
     )
 
-    decision = detector.evaluate(alerts)
+    # Measure age against when the webhook RECEIVED the alert, not when this
+    # job happens to run (a queue backlog would otherwise make fresh alerts
+    # look backdated).
+    ingestion_time = None
+    received_at = alerts.get("received_at")
+    if received_at:
+        try:
+            ingestion_time = datetime.fromisoformat(str(received_at).replace("Z", "+00:00"))
+        except ValueError:
+            logger.warning(f"[{event_id}] Unparseable received_at={received_at!r}; using current time.")
+
+    decision = detector.evaluate(alerts, ingestion_time=ingestion_time)
     data = {
         "instanceId": decision.instance_id, 
         "device": decision.device_id, 
         "devicename": decision.device_name,
-        "is_backdated": decision.is_backdated
+        "is_backdated": decision.is_backdated,
+        "backdate_reason": decision.reason,
     }
     
     # We return ok=True since the agent successfully evaluated the alert

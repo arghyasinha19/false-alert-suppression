@@ -53,9 +53,15 @@ logger = logging.getLogger("DashboardAPI")
 app = FastAPI(title="False Alert Suppression API")
 
 # Allow Vite React app to call this API
+# Allowed browser origins (comma-separated). Default: local Vite dev server only.
+CORS_ORIGINS = [o.strip() for o in os.getenv("DASHBOARD_CORS_ORIGINS", "http://localhost:5173").split(",") if o.strip()]
+
+# Simulated/demo data must never be shown in production by accident.
+ALLOW_SIMULATED_DATA = os.getenv("DASHBOARD_ALLOW_SIMULATED", "false").lower() in ("1", "true", "yes")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -80,6 +86,8 @@ SIMULATED_FILE = os.path.join(project_root, "data", "simulated_alerts.json")
 
 
 def load_simulated_alerts():
+    if not ALLOW_SIMULATED_DATA:
+        return []
     if os.path.exists(SIMULATED_FILE):
         try:
             with open(SIMULATED_FILE, "r", encoding="utf-8") as f:
@@ -135,12 +143,18 @@ def get_alerts():
     except Exception as e:
         logger.warning(f"ServiceNow enrichment failed (alerts still returned): {e}")
 
-    return {"alerts": alerts, "source": "mongodb" if mongo.get_collection("alert_results") is not None else "simulated"}
+    if mongo.get_collection("alert_results") is not None:
+        source = "mongodb"
+    else:
+        source = "simulated" if ALLOW_SIMULATED_DATA else "unavailable"
+    return {"alerts": alerts, "source": source}
 
 
 @app.post("/api/alerts/simulate")
 def simulate_alert(count: int = 1, reset: bool = False):
-    """Generate and inject new simulated alert(s) into the system."""
+    """Generate and inject new simulated alert(s) into the system (disabled unless DASHBOARD_ALLOW_SIMULATED=true)."""
+    if not ALLOW_SIMULATED_DATA:
+        return {"status": "disabled", "message": "Simulation is disabled in this environment."}
     try:
         from simulate_data import generate_simulated_alerts, save_simulated_alerts
         new_alerts = generate_simulated_alerts(count)

@@ -1,32 +1,46 @@
 dnac:
   base_url: "https://10.48.200.53"   # Replace with your DNAC IP/Hostname
+  # PROD: set DNAC_CA_BUNDLE=/path/to/corp-ca.pem (env overrides this) or verify_ssl: true.
   verify_ssl: false
+  timeout_seconds: 30                # read timeout for every DNAC API call
 
   # Webhook registration settings
   webhook_registration:
     enabled: true
     name: "FalseAlertDetection"
     description: "Webhook receiver for false alert ML pipeline"
-    receiver_url: "http://10.64.1.189:8000/api/v1/webhook"
+    receiver_url: "http://10.64.1.189:8000/api/v1/webhook"   # PROD: use https://
     event_categories: []
+    # DNAC sends this header with every event; value = WEBHOOK_AUTH_TOKEN env var.
+    # Re-register the subscription after setting the token.
+    auth_header_name: "X-Webhook-Token"
 rabbitmq:
   host: "10.208.130.50"
   port: 5672
   vhost: "/noops_automation"
   queue: "dnac.alerts.q"
   exchange: "dnac.exchange"
+  # Routing key used by the webhook service to publish to `exchange`. MUST match
+  # the binding of `queue` on `exchange` (check: RabbitMQ UI > Queues > dnac.alerts.q
+  # > Bindings). The consumer config mentions "router" - verify before go-live.
+  # Unroutable messages now FAIL the webhook (503) instead of being silently dropped.
+  routing_key: "dnac.alerts.q"
   delayed:
     wait_queue: "dnac.alerts.wait.q"
     target_exchange: "dnac.exchange"
     target_routing_key: "dnac.alerts.delayed"
     delay_ms: 900000  # 15 minutes in milliseconds
+    consumer_queue: "dnac.alerts.delayed.q"
+    declare_topology: true   # set false if the service account lacks 'configure' permission
 
 server:
   port: 8000
   host: "0.0.0.0"
 
 classifier:
-  model_path: "models/checkpoints/checkpoint-651"  # Trained DistilBERT checkpoint
+  # Optional DistilBERT fallback. Not in the repo - deploy it or leave it missing
+  # (the TF-IDF model models/ml_model.joblib is the primary and is REQUIRED).
+  model_path: "models/checkpoints/checkpoint-651"
   confidence_threshold: 0.6         # Below this confidence, label as "uncertain"
   enabled: true                     # Master switch to enable/disable classification
 
@@ -39,3 +53,4 @@ email_notifications:
   notify_on_backdated_suppressed: true
   notify_on_autoresolve_resolved: true
   notify_on_genuine_servicenow: true
+  notify_on_escalation_failure: true   # email the DL when a ticket could not be raised

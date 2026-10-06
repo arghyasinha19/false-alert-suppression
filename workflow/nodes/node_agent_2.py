@@ -3,13 +3,21 @@ import logging
 import yaml
 
 from workflow.state import GraphState
+from workflow.utils.helpers import result_data
 from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 
 class MockClassifier:
+    """Test-only stand-in. NEVER used unless ALLOW_MOCK_CLASSIFIER=true."""
     def predict(self, text):
-        return {"category": "Auto resolving", "confidence": 0.92, "label_id": 1}
+        return {"category": "Auto resolving", "confidence": 0.92, "label_id": 0}
+
+
+def _mock_allowed() -> bool:
+    # A silent mock fallback used to label EVERY alert "Auto resolving" in
+    # production when the model file was missing. Opt-in for local testing only.
+    return os.getenv("ALLOW_MOCK_CLASSIFIER", "false").strip().lower() in ("1", "true", "yes")
 
 # Module-level classifier singletons
 _ml_classifier = None
@@ -43,8 +51,8 @@ def _get_classifiers():
         _ml_classifier = MLAlertClassifier.load(ml_model_path)
         logger.info(f"Agent 2: ML Classifier loaded from {ml_model_path}")
     except Exception as e:
-        logger.warning(f"Agent 2: Failed to load ML Classifier: {e}")
-        _ml_classifier = MockClassifier()
+        logger.error(f"Agent 2: Failed to load ML Classifier from {ml_model_path}: {e}")
+        _ml_classifier = MockClassifier() if _mock_allowed() else None
         
     # 2. Load DL Classifier (Option C - DistilBERT)
     dl_model_path = config.get("classifier", {}).get("model_path", "models")
@@ -56,8 +64,8 @@ def _get_classifiers():
         _dl_classifier = AlertClassifier.load(dl_model_path)
         logger.info(f"Agent 2: DL Classifier loaded from {dl_model_path}")
     except Exception as e:
-        logger.warning(f"Agent 2: Failed to load DL Classifier: {e}")
-        _dl_classifier = MockClassifier()
+        logger.warning(f"Agent 2: DL Classifier unavailable ({dl_model_path}): {e}")
+        _dl_classifier = None
         
     return _ml_classifier, _dl_classifier
 
@@ -69,7 +77,7 @@ def agent_2_logic(state: GraphState) -> Dict[str, Any]:
     event_id = alert.get("event_id", "UNKNOWN")
     logger.info(f"[{event_id}] Entering Agent 2. Input payload: {alert}")
     
-    agent1_data = state.get("results", {}).get("agent_1", {}).get("data", {})
+    agent1_data = result_data(state, "agent_1")
     
     # Extract description
     description = (
@@ -77,9 +85,9 @@ def agent_2_logic(state: GraphState) -> Dict[str, Any]:
         or alert.get("issue_details", "")
         or alert.get("issue_name", "")
         or alert.get("description", "")
-        or alert.get("details", {}).get("description", "")
-        or alert.get("details", {}).get("Assurance Issue Details", "")
-        or alert.get("details", {}).get("Assurance Issue Name", "")
+        or (alert.get("details") or {}).get("description", "")
+        or (alert.get("details") or {}).get("Assurance Issue Details", "")
+        or (alert.get("details") or {}).get("Assurance Issue Name", "")
         or alert.get("name", "")
     )
     
@@ -97,7 +105,7 @@ def agent_2_logic(state: GraphState) -> Dict[str, Any]:
         return {
             "ok": False,
             "data": None,
-            "remarks": "skipped: classifiers not loaded"
+            "remarks": "error: no classifier model could be loaded - alert will be escalated"
         }
         
     try:
@@ -111,12 +119,16 @@ def agent_2_logic(state: GraphState) -> Dict[str, Any]:
         threshold = config.get("classifier", {}).get("confidence_threshold", 0.6)
         ml_threshold = 0.85 # High confidence threshold for ML fallback
         
-        # 1. Primary: ML Classifier
-        result = ml_clf.predict(description)
-        used_model = "ML_TFIDF"
-        
+        # 1. Primary: ML Classifier (or DL if ML is unavailable)
+        if ml_clf is not None:
+            result = ml_clf.predict(description)
+            used_model = "MOCK" if isinstance(ml_clf, MockClassifier) else "ML_TFIDF"
+        else:
+            result = dl_clf.predict(description)
+            used_model = "DL_DISTILBERT"
+
         # 2. Fallback: DL Classifier if ML confidence is low
-        if result["confidence"] < ml_threshold and not isinstance(dl_clf, MockClassifier):
+        if ml_clf is not None and dl_clf is not None and result["confidence"] < ml_threshold:
             logger.info(f"[{event_id}] ML confidence {result['confidence']:.4f} < {ml_threshold}. Falling back to DL model.")
             try:
                 dl_result = dl_clf.predict(description)

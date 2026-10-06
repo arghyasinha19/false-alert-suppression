@@ -37,7 +37,7 @@ def email_notifier(state: GraphState) -> Dict[str, Any]:
         # Condition 1: Backdated alert is suppressed
         # Checked via agent_2 reason when skipped
         agent_2 = results.get("agent_2", {})
-        if agent_2.get("status") == "skipped" and "backdated alert" in agent_2.get("reason", "").lower():
+        if agent_2.get("status") == "skipped" and "backdated alert" in str(agent_2.get("reason") or "").lower():
             if email_config.get("notify_on_backdated_suppressed"):
                 subject = f"[Suppressed] Backdated Alert: {event_id}"
                 body = f"Alert {event_id} was suppressed because it is a backdated alert.\n\nDetails:\n{json.dumps(alert, indent=2)}"
@@ -46,8 +46,9 @@ def email_notifier(state: GraphState) -> Dict[str, Any]:
                 
         # Condition 2: Auto-resolving alert is suppressed & resolved
         # Handled dynamically if the state itself flags it as resolved via run_delayed.py
-        delayed_check = results.get("delayed_check", {})
-        if delayed_check.get("status") == "resolved":
+        delayed_check = results.get("delayed_check") or {}
+        delayed_outcome = (delayed_check.get("data") or {}).get("outcome") or delayed_check.get("status")
+        if delayed_outcome == "resolved":
             if email_config.get("notify_on_autoresolve_resolved"):
                 subject = f"[Resolved] Auto-resolving Alert Suppressed & Resolved: {event_id}"
                 body = f"Alert {event_id} was classified as auto-resolving, suppressed, and verified resolved in DNAC.\n\nDetails:\n{json.dumps(alert, indent=2)}"
@@ -67,6 +68,19 @@ def email_notifier(state: GraphState) -> Dict[str, Any]:
                 client.send_email(subject, body)
                 logger.info(f"[{event_id}] Sent ServiceNow push email.")
                 
+        # Condition 4: escalation FAILED - a genuine alert has no ticket. Always
+        # worth a human look (on by default).
+        if agent_4.get("ok") is False or action == "servicenow_failed":
+            if email_config.get("notify_on_escalation_failure", True):
+                subject = f"[FAILED] Alert could not be pushed to ServiceNow: {event_id}"
+                body = (
+                    f"Alert {event_id} needed a ServiceNow incident but the integration failed.\n"
+                    f"Error: {agent_4.get('error') or agent_4.get('remarks')}\n\n"
+                    f"Please raise the incident manually.\n\nDetails:\n{json.dumps(alert, indent=2, default=str)}"
+                )
+                client.send_email(subject, body)
+                logger.warning(f"[{event_id}] Sent escalation-failure email.")
+
         return {"ok": True, "data": None, "remarks": "Email notifier completed successfully."}
     except Exception as e:
         logger.error(f"[{event_id}] Failed in Email Notifier node: {e}", exc_info=True)

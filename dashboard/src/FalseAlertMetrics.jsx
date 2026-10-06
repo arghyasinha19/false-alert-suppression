@@ -16,24 +16,7 @@ import TableScrollWrapper from './components/TableScrollWrapper';
 import EmptyState from './components/EmptyState';
 import useChartTheme from './hooks/useChartTheme';
 
-const COLORS = ['#2563eb', '#059669', '#dc2626', '#d97706', '#7c3aed', '#0891b2'];
-const CATEGORY_COLORS = {
-  'Backdated': '#2563eb',
-  'Auto Resolving': '#059669',
-  'Non-Auto Resolving': '#dc2626',
-  'Uncertain': '#d97706',
-};
 
-const TOOLTIP_STYLE = {
-  backgroundColor: 'var(--bg-secondary)',
-  border: '1px solid var(--card-border)',
-  borderRadius: '10px',
-  boxShadow: 'var(--shadow-md)',
-  fontSize: '0.78rem',
-  color: 'var(--text-primary)',
-};
-
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8004';
 
 function parseTimestamp(ts) {
   if (ts === null || ts === undefined || ts === '') return null;
@@ -303,7 +286,7 @@ function EventDetailModal({ alert, onClose }) {
   );
 }
 
-export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
+export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh: _onRefresh }) {
   const chartTheme = useChartTheme();
 
   const dynamicCategoryColors = useMemo(() => ({

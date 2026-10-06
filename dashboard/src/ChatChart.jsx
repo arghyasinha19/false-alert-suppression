@@ -7,20 +7,7 @@ import {
 import { ZoomIn, RotateCcw, Maximize2 } from 'lucide-react';
 import useChartTheme from './hooks/useChartTheme';
 
-const DEFAULT_COLORS = [
-  '#2563eb', '#059669', '#dc2626', '#d97706',
-  '#7c3aed', '#0891b2', '#ea580c', '#4f46e5',
-  '#0d9488', '#be185d',
-];
 
-const CHART_TOOLTIP_STYLE = {
-  backgroundColor: 'var(--card-bg, #fff)',
-  border: '1px solid var(--card-border, #e2e8f0)',
-  borderRadius: '8px',
-  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-  fontSize: '0.82rem',
-  padding: '8px 12px',
-};
 
 /* ---- Helper: format a label key into a human-readable string ---- */
 function humanizeKey(key) {
@@ -174,6 +161,17 @@ function ZoomableChart({ data, x_key, renderInner, chartType: ChartType, margin 
    ==================================================================== */
 function ChatChart({ spec }) {
   const [expanded, setExpanded] = useState(false);
+  const chartTheme = useChartTheme();
+  const defaultPalette = useMemo(() => [
+    chartTheme.colors.primary,
+    chartTheme.colors.success,
+    chartTheme.colors.danger,
+    chartTheme.colors.warning,
+    chartTheme.colors.purple,
+    chartTheme.colors.cyan,
+    chartTheme.colors.orange,
+    chartTheme.colors.indigo,
+  ], [chartTheme]);
 
   if (!spec || !spec.data || spec.data.length === 0) {
     return (
@@ -192,18 +190,6 @@ function ChatChart({ spec }) {
     colors = [],
     multi_series_keys = [],
   } = spec;
-
-  const chartTheme = useChartTheme();
-  const defaultPalette = useMemo(() => [
-    chartTheme.colors.primary,
-    chartTheme.colors.success,
-    chartTheme.colors.danger,
-    chartTheme.colors.warning,
-    chartTheme.colors.purple,
-    chartTheme.colors.cyan,
-    chartTheme.colors.orange,
-    chartTheme.colors.indigo,
-  ], [chartTheme]);
 
   const palette = colors.length > 0 ? colors : defaultPalette;
 

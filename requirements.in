@@ -17,3 +17,5 @@ transformers
 urllib3
 sentence-transformers
 hdbscan
+uvicorn
+langchain-openai

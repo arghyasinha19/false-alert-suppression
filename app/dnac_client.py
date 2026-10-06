@@ -1,15 +1,63 @@
 import json
 import re
-import requests
-from requests.auth import HTTPBasicAuth
-import urllib3
 import logging
 import os
+from typing import Optional
+from urllib.parse import urlparse, parse_qs
+
+import requests
+from requests.auth import HTTPBasicAuth
 
 from app.exceptions import DeviceNotFoundError, DNACConnectionError
 
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 logger = logging.getLogger(__name__)
+
+# Default (connect, read) timeout for every DNAC call. Without a timeout a
+# hung DNAC blocks Jenkins jobs / API workers indefinitely.
+DEFAULT_TIMEOUT = (10, 30)
+
+# Issue status values that mean "no longer needs attention".
+CLOSED_ISSUE_STATUSES = {"RESOLVED", "IGNORED", "CLEARED", "DELETED", "INACTIVE"}
+
+_ISSUE_ID_RE = re.compile(r"[?&]issueId=([^&#\s]+)", re.IGNORECASE)
+
+
+def extract_issue_id(event: dict) -> Optional[str]:
+    """
+    Pull the Assurance issueId out of a DNAC webhook event.
+
+    The webhook ``instanceId`` identifies the *notification instance*, not the
+    Assurance issue. The issue ID is carried in ``ciscoDnaEventLink``
+    (``.../dna/assurance/issueDetails?issueId=<id>``) and, on some releases,
+    directly in the payload / details block.
+    """
+    if not isinstance(event, dict):
+        return None
+
+    for key in ("issueId", "issue_id"):
+        if event.get(key):
+            return str(event[key])
+
+    details = event.get("details") or {}
+    if isinstance(details, dict):
+        for key in ("Assurance Issue ID", "Assurance Issue Id", "issueId", "Issue ID"):
+            if details.get(key):
+                return str(details[key])
+
+    link = event.get("ciscoDnaEventLink") or event.get("cisco_dna_event_link") or ""
+    if isinstance(link, str) and link:
+        # issueId may be in the query string or in a hash-route query string
+        m = _ISSUE_ID_RE.search(link)
+        if m:
+            return m.group(1)
+        try:
+            qs = parse_qs(urlparse(link).query)
+            if qs.get("issueId"):
+                return qs["issueId"][0]
+        except Exception:
+            pass
+    return None
+
 
 class DNACClient:
     def __init__(self, config: dict):
@@ -17,11 +65,29 @@ class DNACClient:
         # Read credentials from env vars first, fall back to config dict
         self.username = os.environ.get('DNAC_USERNAME') or config.get('username')
         self.password = os.environ.get('DNAC_PASSWORD') or config.get('password')
-        self.verify_ssl = config.get('verify_ssl', False)
+
+        # TLS: verify_ssl may be true/false or a path to a CA bundle.
+        # DNAC_CA_BUNDLE env var overrides config so prod can supply the corporate CA.
+        ca_bundle = os.environ.get('DNAC_CA_BUNDLE')
+        self.verify_ssl = ca_bundle if ca_bundle else config.get('verify_ssl', True)
+        if self.verify_ssl is False:
+            logger.warning(
+                "DNAC TLS certificate verification is DISABLED. "
+                "Set dnac.verify_ssl / DNAC_CA_BUNDLE for production."
+            )
+
+        timeout_cfg = config.get('timeout_seconds')
+        if isinstance(timeout_cfg, (list, tuple)) and len(timeout_cfg) == 2:
+            self.timeout = tuple(timeout_cfg)
+        elif isinstance(timeout_cfg, (int, float)):
+            self.timeout = (min(10, timeout_cfg), timeout_cfg)
+        else:
+            self.timeout = DEFAULT_TIMEOUT
+
         self.webhook_config = config.get('webhook_registration', {})
         self.token = None
         self.subscription_id = None
-        
+
         if not self.username or not self.password:
             raise ValueError(
                 "DNAC credentials missing. Set DNAC_USERNAME and DNAC_PASSWORD in your .env file."
@@ -33,23 +99,14 @@ class DNACClient:
     def authenticate(self) -> str:
         """Fetch and cache a DNAC auth token."""
         url = f"{self.base_url}/dna/system/api/v1/auth/token"
-        logger.info("Authenticating with DNAC...")
-        logger.info(
-            f"DNAC Request:\n"
-            f"  Method: POST\n"
-            f"  URL: {url}\n"
-            f"  Payload: (basic-auth credentials, not logged)"
-        )
+        logger.info(f"Authenticating with DNAC: POST {url}")
         response = requests.post(
             url,
             auth=HTTPBasicAuth(self.username, self.password),
-            verify=self.verify_ssl
+            verify=self.verify_ssl,
+            timeout=self.timeout,
         )
-        logger.info(
-            f"DNAC Response:\n"
-            f"  Status Code: {response.status_code}\n"
-            f"  Body: [REDACTED AUTH TOKEN]"
-        )
+        logger.info(f"DNAC auth response: {response.status_code}")
         response.raise_for_status()
         self.token = response.json()['Token']
         logger.info("DNAC authentication successful.")
@@ -68,23 +125,30 @@ class DNACClient:
         """
         Make an HTTP request with automatic one-shot 401 token retry.
 
-        On the first 401 response the cached token is cleared, a fresh token
-        is fetched via ``authenticate()``, and the request is retried once.
-        If the retry also returns 401 the response is returned as-is for the
-        caller to handle (raise_for_status or explicit check).
-
-        All requests are made with ``verify=self.verify_ssl`` and the
-        ``X-Auth-Token`` header provided by ``_get_headers()``.
+        Every request gets ``verify`` and ``timeout`` defaults. On the first 401
+        the cached token is cleared, a fresh token is fetched and the request is
+        retried once.
         """
         kwargs.setdefault("verify", self.verify_ssl)
-        response = requests.request(method, url, headers=self._get_headers(), **kwargs)
+        kwargs.setdefault("timeout", self.timeout)
+        extra_headers = kwargs.pop("headers", None) or {}
+        headers = {**self._get_headers(), **extra_headers}
+        response = requests.request(method, url, headers=headers, **kwargs)
         if response.status_code == 401:
             logger.warning(
                 f"DNAC returned 401 for {method} {url} — clearing token and re-authenticating."
             )
             self.token = None
-            response = requests.request(method, url, headers=self._get_headers(), **kwargs)
+            headers = {**self._get_headers(), **extra_headers}
+            response = requests.request(method, url, headers=headers, **kwargs)
         return response
+
+    @staticmethod
+    def _safe_json(response: requests.Response):
+        try:
+            return response.json()
+        except ValueError:
+            return None
 
     # -------------------------------------------------------------------------
     # Webhook Subscription Management
@@ -92,33 +156,26 @@ class DNACClient:
     def list_event_subscriptions(self) -> list:
         """
         List all current webhook subscriptions registered in DNAC.
-        Returns an empty list if DNAC responds with 204 No Content
-        (which means no subscriptions exist yet).
+        Returns an empty list if DNAC responds with 204 No Content.
         """
         url = f"{self.base_url}/dna/intent/api/v1/event/subscription"
-        logger.info(
-            f"DNAC Request:\n"
-            f"  Method: GET\n"
-            f"  URL: {url}"
-        )
-        response = requests.get(url, headers=self._get_headers(), verify=self.verify_ssl)
+        logger.info(f"DNAC Request: GET {url}")
+        response = self._request_with_retry("GET", url)
 
-        # 204 No Content = no subscriptions registered yet - not an error
         if response.status_code == 204:
-            logger.info(
-                f"DNAC Response:\n"
-                f"  Status Code: 204 (No Content)\n"
-                f"  Body: (empty — no webhook subscriptions registered yet)"
-            )
+            logger.info("DNAC Response: 204 (no webhook subscriptions registered yet)")
             return []
 
-        logger.info(
-            f"DNAC Response:\n"
-            f"  Status Code: {response.status_code}\n"
-            f"  Body: {json.dumps(response.json(), indent=2)}"
-        )
-        response.raise_for_status()
-        return response.json()
+        if not response.ok:
+            logger.error(f"DNAC list subscriptions failed: {response.status_code} {response.text[:500]}")
+            response.raise_for_status()
+
+        data = self._safe_json(response)
+        if isinstance(data, dict):
+            data = data.get("response", [])
+        data = data or []
+        logger.info(f"DNAC Response: {response.status_code}, {len(data)} subscription(s)")
+        return data
 
     def register_webhook(self) -> dict:
         """
@@ -130,14 +187,26 @@ class DNACClient:
         name = self.webhook_config.get('name', 'FalseAlertDetection')
         description = self.webhook_config.get('description', '')
         event_categories = self.webhook_config.get('event_categories', [])
-        
-        # Build filter - only include fields DNAC actually supports
-        # Leave eventIds empty to match all events in the chosen categories
+
+        if receiver_url.lower().startswith("http://"):
+            logger.warning(
+                "Webhook receiver_url uses plain HTTP. Use HTTPS in production so the "
+                "shared-secret header and alert payloads are not sent in clear text."
+            )
+
         subscription_filter = {}
         if event_categories:
             subscription_filter["categories"] = event_categories
-            
-        # The /rest endpoint expects a list of objects exactly in this schema
+
+        headers = [{"string": "Content-Type: application/json"}]
+        # Shared secret DNAC sends with every event; validated by app/main.py.
+        webhook_token = os.environ.get("WEBHOOK_AUTH_TOKEN")
+        token_header = self.webhook_config.get("auth_header_name", "X-Webhook-Token")
+        if webhook_token:
+            headers.append({"string": f"{token_header}: {webhook_token}"})
+        else:
+            logger.warning("WEBHOOK_AUTH_TOKEN not set - subscription will be registered without an auth header.")
+
         payload = [
             {
                 "name": name,
@@ -147,19 +216,14 @@ class DNACClient:
                     "connectorType": "REST",
                     "method": "POST",
                     "url": receiver_url,
-                    "headers": [
-                        {"string": "Content-Type: application/json"}
-                    ]
+                    "headers": headers,
                 }
             }
         ]
-        
-        # Use the REST-specific endpoint
+
         register_url = f"{self.base_url}/dna/intent/api/v1/event/subscription/rest"
-        
         logger.info(f"Registering webhook with DNAC. Receiver URL: {receiver_url}")
-        
-        # Check if already registered to avoid duplicates
+
         existing = self.list_event_subscriptions()
         for sub in existing:
             if sub.get('name') == name:
@@ -167,117 +231,84 @@ class DNACClient:
                 logger.info(f"Webhook '{name}' already registered (ID: {self.subscription_id}). Skipping.")
                 return sub
 
-        logger.info(
-            f"DNAC Request:\n"
-            f"  Method: POST\n"
-            f"  URL: {register_url}\n"
-            f"  Payload: {json.dumps(payload, indent=2)}"
-        )
-        response = requests.post(
-            register_url,
-            headers=self._get_headers(),
-            json=payload,
-            verify=self.verify_ssl
-        )
-        logger.info(
-            f"DNAC Response:\n"
-            f"  Status Code: {response.status_code}\n"
-            f"  Body: {response.text}"
-        )
-        
-        # Log full DNAC error body for easy debugging
+        logger.info(f"DNAC Request: POST {register_url} (subscription '{name}')")
+        response = self._request_with_retry("POST", register_url, json=payload)
+        logger.info(f"DNAC Response: {response.status_code} {response.text[:500]}")
+
         if not response.ok:
-            logger.error(
-                f"DNAC rejected registration: {response.status_code} - {response.text}"
-            )
+            logger.error(f"DNAC rejected registration: {response.status_code} - {response.text[:1000]}")
         response.raise_for_status()
-        
-        result = response.json()
-        self.subscription_id = (
-            result[0].get('subscriptionId') if isinstance(result, list) 
-            else result.get('subscriptionId')
-        )
+
+        result = self._safe_json(response) or {}
+        if isinstance(result, list) and result:
+            self.subscription_id = result[0].get('subscriptionId')
+        elif isinstance(result, dict):
+            self.subscription_id = result.get('subscriptionId')
         logger.info(f"Webhook registered successfully. Subscription ID: {self.subscription_id}")
         return result
-        
+
     def deregister_webhook(self) -> None:
-        """Remove the webhook subscription from DNAC on service shutdown."""
+        """Remove the webhook subscription from DNAC."""
         if not self.subscription_id:
             return
-            
+
         url = f"{self.base_url}/dna/intent/api/v1/event/subscription"
         params = {"subscriptionIds": self.subscription_id}
-        logger.info(f"De-registering webhook (ID: {self.subscription_id})...")
-        logger.info(
-            f"DNAC Request:\n"
-            f"  Method: DELETE\n"
-            f"  URL: {url}\n"
-            f"  Params: {json.dumps(params, indent=2)}"
-        )
-        response = requests.delete(url, headers=self._get_headers(), params=params, verify=self.verify_ssl)
-        logger.info(
-            f"DNAC Response:\n"
-            f"  Status Code: {response.status_code}\n"
-            f"  Body: {response.text}"
-        )
+        logger.info(f"De-registering webhook (ID: {self.subscription_id}): DELETE {url}")
+        response = self._request_with_retry("DELETE", url, params=params)
+        logger.info(f"DNAC Response: {response.status_code} {response.text[:500]}")
         if response.ok:
             logger.info("Webhook de-registered successfully.")
         else:
-            logger.warning(f"Failed to de-register webhook: {response.status_code} {response.text}")
+            logger.warning(f"Failed to de-register webhook: {response.status_code} {response.text[:500]}")
 
     # -------------------------------------------------------------------------
     # Issue / Event Status Checks
     # -------------------------------------------------------------------------
     def get_issue_status(self, issue_id: str) -> str:
         """
-        Fetch the current status of an issue from DNAC.
-        Returns the issue status string (e.g., 'ACTIVE', 'RESOLVED').
-        If the issue is not found (404), it is assumed to be resolved.
+        Fetch the current status of an Assurance issue by its **issueId**
+        (NOT the webhook instanceId - see ``extract_issue_id``).
+
+        Uses ``GET /dna/data/api/v1/assuranceIssues/{id}`` (Catalyst Center
+        2.3.7.x+). Returns:
+          - the upper-cased status (ACTIVE / RESOLVED / IGNORED)
+          - ``"NOT_FOUND"`` when DNAC says the issue does not exist
+          - ``"UNSUPPORTED"`` when this DNAC release does not expose the
+            endpoint (caller should fall back to ``get_device_issues``)
+        Raises DNACConnectionError on other errors.
         """
         if not issue_id:
             logger.warning("No issue_id provided. Cannot check DNAC status.")
             return "UNKNOWN"
-            
-        url = f"{self.base_url}/dna/intent/api/v1/issues/{issue_id}"
-        logger.info(
-            f"DNAC Request:\n"
-            f"  Method: GET\n"
-            f"  URL: {url}"
-        )
-        
-        response = self._request_with_retry("GET", url)
 
-        # In DNAC, an issue that is no longer active may be deleted and return 404
+        url = f"{self.base_url}/dna/data/api/v1/assuranceIssues/{issue_id}"
+        logger.info(f"DNAC Request: GET {url}")
+        try:
+            response = self._request_with_retry("GET", url)
+        except requests.RequestException as exc:
+            raise DNACConnectionError(f"Network error querying DNAC issue {issue_id}: {exc}") from exc
+
+        logger.info(f"DNAC Response: {response.status_code} {response.text[:500]}")
+
         if response.status_code == 404:
-            logger.info(
-                f"DNAC Response:\n"
-                f"  Status Code: 404 (Not Found)\n"
-                f"  Body: {response.text}\n"
-                f"  -> Issue {issue_id} not found."
-            )
-            return "NOT_FOUND"
-            
+            # A JSON 404 body means "issue not found"; a non-JSON 404 means the
+            # API path does not exist on this release.
+            return "NOT_FOUND" if isinstance(self._safe_json(response), dict) else "UNSUPPORTED"
+        if response.status_code in (400, 405, 501):
+            return "UNSUPPORTED"
         if not response.ok:
-            logger.error(
-                f"DNAC Response (Error):\n"
-                f"  Status Code: {response.status_code}\n"
-                f"  Body: {response.text}"
+            raise DNACConnectionError(
+                f"DNAC returned HTTP {response.status_code} for issue {issue_id}: {response.text[:200]}"
             )
-            response.raise_for_status()
-            
-        data = response.json()
-        
-        logger.info(
-            f"DNAC Response:\n"
-            f"  Status Code: {response.status_code}\n"
-            f"  Body: {json.dumps(data, indent=2)}"
-        )
-        
-        # The structure is usually: { "response": { "issueStatus": "ACTIVE", ... } }
-        # or flat { "issueStatus": "ACTIVE" }
-        resp_obj = data.get("response", data)
-        status = resp_obj.get("issueStatus", "UNKNOWN")
-        
+
+        data = self._safe_json(response) or {}
+        resp_obj = data.get("response", data) if isinstance(data, dict) else {}
+        if isinstance(resp_obj, list):
+            resp_obj = resp_obj[0] if resp_obj else {}
+        if not resp_obj:
+            return "NOT_FOUND"
+        status = str(resp_obj.get("status") or resp_obj.get("issueStatus") or "UNKNOWN").upper()
         logger.info(f"DNAC issue {issue_id} status is: {status}")
         return status
 
@@ -285,44 +316,64 @@ class DNACClient:
         self,
         device_id: str = None,
         device_name: str = None,
-        issue_status: str = None
+        issue_status: str = None,
+        start_time_ms: int = None,
+        end_time_ms: int = None,
     ) -> list:
         """
-        Query DNAC for issues associated with a device (and optionally filtered by issueStatus).
-        Returns a list of issue objects (dicts).
+        Query ``GET /dna/intent/api/v1/issues`` for ONE device.
+
+        The API filters by ``deviceId`` (Assurance device UUID) and has no
+        hostname filter. Unknown parameters are silently ignored by DNAC, which
+        previously caused a network-wide query. Without a device_id we refuse to
+        query and return [].
+
+        Raises DNACConnectionError on transport/HTTP errors so callers can
+        distinguish "no issues" from "could not check".
         """
+        if not device_id:
+            logger.warning(
+                f"get_device_issues called without device_id (device_name={device_name}); "
+                f"refusing to run an unfiltered network-wide query."
+            )
+            return []
+
         url = f"{self.base_url}/dna/intent/api/v1/issues"
-        params = {}
-        if device_id:
-            params["deviceUuid"] = device_id
-        if device_name:
-            params["deviceName"] = device_name
+        params = {"deviceId": device_id}
         if issue_status:
-            params["issueStatus"] = issue_status
+            params["issueStatus"] = issue_status.upper()
+        if start_time_ms:
+            params["startTime"] = int(start_time_ms)
+        if end_time_ms:
+            params["endTime"] = int(end_time_ms)
 
-        logger.info(
-            f"DNAC Request:\n"
-            f"  Method: GET\n"
-            f"  URL: {url}\n"
-            f"  Params: {json.dumps(params)}"
-        )
-
+        logger.info(f"DNAC Request: GET {url} params={json.dumps(params)}")
         try:
             response = self._request_with_retry("GET", url, params=params)
-            if response.status_code in (404, 204):
-                logger.info(f"DNAC Response: {response.status_code} (No issues found for device)")
-                return []
-            response.raise_for_status()
-            data = response.json()
-            resp_obj = data.get("response", data)
-            if isinstance(resp_obj, list):
-                return resp_obj
-            elif isinstance(resp_obj, dict):
-                return [resp_obj]
+        except requests.RequestException as exc:
+            raise DNACConnectionError(f"Network error querying DNAC issues for {device_id}: {exc}") from exc
+
+        if response.status_code in (404, 204):
+            logger.info(f"DNAC Response: {response.status_code} (no issues found for device)")
             return []
-        except Exception as e:
-            logger.error(f"Failed to fetch device issues from DNAC: {e}")
-            return []
+        if not response.ok:
+            raise DNACConnectionError(
+                f"DNAC returned HTTP {response.status_code} for issues of device {device_id}: "
+                f"{response.text[:200]}"
+            )
+
+        data = self._safe_json(response) or {}
+        resp_obj = data.get("response", data) if isinstance(data, dict) else data
+        if isinstance(resp_obj, list):
+            issues = resp_obj
+        elif isinstance(resp_obj, dict):
+            issues = [resp_obj]
+        else:
+            issues = []
+        # Defensive: keep only issues for this device in case the filter is ignored.
+        issues = [i for i in issues if isinstance(i, dict) and (not i.get("deviceId") or i.get("deviceId") == device_id)]
+        logger.info(f"DNAC Response: {response.status_code}, {len(issues)} issue(s) for device {device_id}")
+        return issues
 
     # -------------------------------------------------------------------------
     # Device / Network Inventory
@@ -332,53 +383,21 @@ class DNACClient:
         Query DNAC for one or more network devices matching a hostname or
         management IP address.
 
-        Parameters
-        ----------
-        device_name_or_ip : str
-            Either a plain hostname (e.g. ``"switch-core-01"``) or an IPv4
-            address (e.g. ``"10.48.200.100"``).  The method auto-detects
-            which DNAC query parameter to use.
+        Returns a list of device dicts with curated snake_case keys
+        (device_id, device_name, ip_address, model, os_version, serial, mac,
+        reachable) plus ``raw_response``.
 
-        Returns
-        -------
-        list[dict]
-            A list of device dicts.  Each dict contains curated snake_case
-            keys **and** a ``raw_response`` key holding the full DNAC object:
-
-            - ``device_id``     - DNAC UUID (str)
-            - ``device_name``   - hostname (str)
-            - ``ip_address``    - management IP (str)
-            - ``model``         - hardware model / platform ID (str)
-            - ``os_version``    - IOS / NX-OS / AireOS software version (str)
-            - ``serial``        - serial number (str)
-            - ``mac``           - MAC address (str)
-            - ``reachable``     - True if reachabilityStatus == "Reachable" (bool)
-            - ``raw_response``  - original DNAC device object (dict)
-
-        Raises
-        ------
-        DeviceNotFoundError
-            When DNAC returns zero matching devices.
-        DNACConnectionError
-            When the HTTP call fails (network error, non-2xx after retry,
-            except 401 which is auto-retried once).
+        Raises DeviceNotFoundError when zero devices match, DNACConnectionError
+        on transport / HTTP errors.
         """
         url = f"{self.base_url}/dna/intent/api/v1/network-device"
 
-        # Smart IPv4 vs hostname routing (D-04)
         if re.fullmatch(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}", device_name_or_ip):
             params = {"managementIpAddress": device_name_or_ip}
-            logger.info("Detected IPv4 input — using managementIpAddress param.")
         else:
             params = {"hostname": device_name_or_ip}
-            logger.info("Detected hostname input — using hostname param.")
 
-        logger.info(
-            f"DNAC Request:\n"
-            f"  Method: GET\n"
-            f"  URL: {url}\n"
-            f"  Params: {json.dumps(params)}"
-        )
+        logger.info(f"DNAC Request: GET {url} params={json.dumps(params)}")
 
         try:
             response = self._request_with_retry("GET", url, params=params)
@@ -387,11 +406,7 @@ class DNACClient:
                 f"Network error querying DNAC /network-device for '{device_name_or_ip}': {exc}"
             ) from exc
 
-        logger.info(
-            f"DNAC Response:\n"
-            f"  Status Code: {response.status_code}\n"
-            f"  Body: {response.text[:500]}"
-        )
+        logger.info(f"DNAC Response: {response.status_code} {response.text[:500]}")
 
         if not response.ok:
             raise DNACConnectionError(
@@ -399,20 +414,18 @@ class DNACClient:
                 f"'{device_name_or_ip}': {response.text[:200]}"
             )
 
-        data = response.json()
-        raw_list = data.get("response", data)
+        data = self._safe_json(response) or {}
+        raw_list = data.get("response", data) if isinstance(data, dict) else data
 
         if isinstance(raw_list, dict):
             raw_list = [raw_list]
         if not isinstance(raw_list, list):
             raw_list = []
 
-        # D-02: zero matches -> raise
         if not raw_list:
             logger.info(f"DNAC returned zero devices for '{device_name_or_ip}'.")
             raise DeviceNotFoundError(device_name_or_ip)
 
-        # D-05: curate + preserve raw
         devices = []
         for raw in raw_list:
             reachability = str(raw.get("reachabilityStatus", "")).lower()
@@ -428,136 +441,113 @@ class DNACClient:
                 "raw_response": raw,
             })
 
-        logger.info(
-            f"get_device_by_name_or_ip: found {len(devices)} device(s) "
-            f"for '{device_name_or_ip}'."
-        )
+        logger.info(f"get_device_by_name_or_ip: found {len(devices)} device(s) for '{device_name_or_ip}'.")
         return devices
 
     def get_device_health(self, device_id: str) -> dict:
         """
-        Retrieve live assurance telemetry health metrics for a device UUID.
+        Retrieve assurance health metrics for ONE device UUID.
 
-        Parameters
-        ----------
-        device_id : str
-            The DNAC UUID of the device (``id`` field from the
-            ``/network-device`` response).  Use
-            ``get_device_by_name_or_ip()`` to resolve hostname to UUID first.
+        ``/dna/intent/api/v1/device-health`` cannot filter by device (it only
+        accepts deviceRole/siteId/health/time/paging), so the previous
+        implementation returned whichever device DNAC listed first. We now use
+        ``GET /dna/intent/api/v1/device-detail?identifier=uuid&searchBy=<uuid>``
+        which is device-specific, and enrich with ``/network-device/{id}`` for
+        reachability and uptime.
 
-        Returns
-        -------
-        dict
-            A normalized telemetry dict containing:
+        Returned keys: cpu_utilization, memory_utilization, cpu, memory (aliases
+        used by dashboard/device_service.py), packet_drop, health_score,
+        interface_error_count, poe_status, uptime_seconds, reachable,
+        raw_response. Metrics DNAC does not report are None.
 
-            - ``cpu_utilization``       - CPU usage % (float | None)
-            - ``memory_utilization``    - Memory usage % (float | None)
-            - ``packet_drop``           - Interface packet drop % (float | None)
-            - ``health_score``          - DNAC 0-10 health score (int | None)
-            - ``interface_error_count`` - Count of errored interfaces (int | None)
-            - ``poe_status``            - PoE status string (str)
-            - ``uptime_seconds``        - Device uptime in seconds (int | None)
-            - ``reachable``             - Reachability boolean (bool)
-            - ``raw_response``          - Full DNAC device-health object (dict)
-
-        Raises
-        ------
-        DNACConnectionError
-            When DNAC returns HTTP 404 (unknown UUID), 5xx, network error,
-            or any non-2xx response after the 401 retry.
+        Raises DNACConnectionError on 404 (unknown UUID), 5xx, network error.
         """
-        url = f"{self.base_url}/dna/intent/api/v1/device-health"
-        params = {"deviceId": device_id}
-
-        logger.info(
-            f"DNAC Request:\n"
-            f"  Method: GET\n"
-            f"  URL: {url}\n"
-            f"  Params: {json.dumps(params)}"
-        )
-
-        try:
-            response = self._request_with_retry("GET", url, params=params)
-        except Exception as exc:
-            raise DNACConnectionError(
-                f"Network error querying DNAC /device-health for UUID '{device_id}': {exc}"
-            ) from exc
-
-        logger.info(
-            f"DNAC Response:\n"
-            f"  Status Code: {response.status_code}\n"
-            f"  Body: {response.text[:500]}"
-        )
-
-        if response.status_code == 404:
-            raise DNACConnectionError(
-                f"DNAC returned 404 — device UUID '{device_id}' not found in /device-health."
-            )
-
-        if not response.ok:
-            raise DNACConnectionError(
-                f"DNAC returned HTTP {response.status_code} for /device-health "
-                f"UUID '{device_id}': {response.text[:200]}"
-            )
-
-        data = response.json()
-        raw_obj = data.get("response", data)
-
-        # /device-health may return a list or a dict depending on DNAC version
-        if isinstance(raw_obj, list):
-            if not raw_obj:
-                raise DNACConnectionError(
-                    f"DNAC /device-health returned empty list for UUID '{device_id}'."
-                )
-            raw_obj = raw_obj[0]
-
-        # Field extraction (D-10) — key names vary by DNAC version; use .get with fallbacks
         def _float(val):
             try:
-                return float(val) if val is not None else None
+                return float(val) if val not in (None, "") else None
             except (TypeError, ValueError):
                 return None
 
         def _int(val):
             try:
-                return int(val) if val is not None else None
+                return int(float(val)) if val not in (None, "") else None
             except (TypeError, ValueError):
                 return None
 
-        reachability = str(
-            raw_obj.get("reachabilityStatus", raw_obj.get("reachability", ""))
-        ).lower()
+        def _first(d: dict, *keys):
+            for k in keys:
+                if d.get(k) not in (None, ""):
+                    return d.get(k)
+            return None
 
-        overall = raw_obj.get("overallHealth")
+        # 1. Device detail (assurance) - device-specific
+        url = f"{self.base_url}/dna/intent/api/v1/device-detail"
+        params = {"identifier": "uuid", "searchBy": device_id}
+        logger.info(f"DNAC Request: GET {url} params={json.dumps(params)}")
+        try:
+            response = self._request_with_retry("GET", url, params=params)
+        except Exception as exc:
+            raise DNACConnectionError(
+                f"Network error querying DNAC /device-detail for UUID '{device_id}': {exc}"
+            ) from exc
+
+        logger.info(f"DNAC Response: {response.status_code} {response.text[:500]}")
+        if response.status_code == 404:
+            raise DNACConnectionError(f"DNAC returned 404 — device UUID '{device_id}' not found.")
+        if not response.ok:
+            raise DNACConnectionError(
+                f"DNAC returned HTTP {response.status_code} for /device-detail "
+                f"UUID '{device_id}': {response.text[:200]}"
+            )
+        data = self._safe_json(response) or {}
+        detail = data.get("response", data) if isinstance(data, dict) else {}
+        if isinstance(detail, list):
+            detail = detail[0] if detail else {}
+        if not detail:
+            raise DNACConnectionError(f"DNAC /device-detail returned no data for UUID '{device_id}'.")
+
+        # 2. Inventory record (reachability / uptime) - best effort
+        inventory = {}
+        try:
+            inv_resp = self._request_with_retry(
+                "GET", f"{self.base_url}/dna/intent/api/v1/network-device/{device_id}"
+            )
+            if inv_resp.ok:
+                inv_data = self._safe_json(inv_resp) or {}
+                inventory = inv_data.get("response", {}) if isinstance(inv_data, dict) else {}
+        except Exception as exc:
+            logger.warning(f"Inventory lookup for {device_id} failed: {exc}")
+
+        reach_raw = str(
+            _first(inventory, "reachabilityStatus")
+            or _first(detail, "communicationState", "reachabilityHealth", "reachabilityStatus")
+            or ""
+        ).lower()
+        reachable = reach_raw in ("reachable", "true", "yes", "up")
+
+        overall = _first(detail, "overallHealth", "healthScore")
         if isinstance(overall, dict):
-            health_score_raw = overall.get("score")
-        else:
-            health_score_raw = overall or raw_obj.get("healthScore")
+            overall = overall.get("score")
+
+        cpu = _float(_first(detail, "cpu", "cpuUtilization", "cpuUlitilization"))
+        mem = _float(_first(detail, "memory", "memoryUtilization"))
 
         health = {
-            "cpu_utilization":       _float(raw_obj.get("cpuUtilization") or raw_obj.get("cpu")),
-            "memory_utilization":    _float(raw_obj.get("memoryUtilization") or raw_obj.get("memory")),
-            "packet_drop":           _float(
-                                         raw_obj.get("packetLossPercent")
-                                         or raw_obj.get("packetDropPercent")
-                                     ),
-            "health_score":          _int(health_score_raw),
-            "interface_error_count": _int(
-                                         raw_obj.get("interfaceIssueCount")
-                                         or raw_obj.get("errorCount")
-                                     ),
-            "poe_status":            str(raw_obj.get("poeStatus", raw_obj.get("poePower", "UNKNOWN"))),
-            "uptime_seconds":        _int(raw_obj.get("uptimeSeconds") or raw_obj.get("upTime")),
-            "reachable":             reachability in ("reachable", "true", "yes"),
-            "raw_response":          raw_obj,
+            "cpu_utilization":       cpu,
+            "memory_utilization":    mem,
+            "cpu":                   cpu,
+            "memory":                mem,
+            "packet_drop":           _float(_first(detail, "packetLossPercent", "packetDropPercent")),
+            "health_score":          _int(overall),
+            "interface_error_count": _int(_first(detail, "interfaceIssueCount", "errorCount")),
+            "poe_status":            str(_first(detail, "poeStatus", "poePower") or "UNKNOWN"),
+            "uptime_seconds":        _int(_first(inventory, "uptimeSeconds")),
+            "reachable":             reachable,
+            "raw_response":          {"device_detail": detail, "network_device": inventory},
         }
 
         logger.info(
-            f"get_device_health: UUID={device_id} "
-            f"health_score={health['health_score']} "
-            f"cpu={health['cpu_utilization']}% "
-            f"mem={health['memory_utilization']}% "
-            f"reachable={health['reachable']}"
+            f"get_device_health: UUID={device_id} health_score={health['health_score']} "
+            f"cpu={health['cpu_utilization']} mem={health['memory_utilization']} reachable={health['reachable']}"
         )
         return health
-

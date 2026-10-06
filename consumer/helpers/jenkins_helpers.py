@@ -1,3 +1,4 @@
+import os
 import time
 import logging
 from dataclasses import dataclass
@@ -11,7 +12,7 @@ class JenkinsConfig:
     base_url: str                 # e.g. "https://jenkins.company.com/"
     username: str                 # e.g. "svc-jenkins"
     api_token: str                # API token for the user
-    verify_tls: bool = False      # set False only if you must (not recommended)
+    verify_tls: Any = True        # True, False, or path to CA bundle
     timeout_sec: int = 30         # request timeout
 
 
@@ -254,4 +255,18 @@ def map_dnac_to_jenkins_params(flat: Dict[str, Any]) -> Dict[str, Any]:
         "SOURCE": flat.get("_source") or flat.get("source") or "",
         "ISSUE_NAME": flat.get("details.Assurance_Issue_Name") or flat.get("details_Assurance_Issue_Name") or flat.get("issue_name") or "",
         "ISSUE_DETAILS": flat.get("details.Assurance_Issue_Details") or flat.get("details_Assurance_Issue_Details") or flat.get("issue_details") or flat.get("description") or "",
+        # Assurance issueId (extracted from ciscoDnaEventLink by the webhook) - used by the delayed DNAC check
+        "ISSUE_ID": flat.get("issueId") or flat.get("issue_id") or "",
+        # Time the webhook received the event - used for backdate detection
+        "RECEIVED_AT": flat.get("_received_at") or flat.get("received_at") or "",
     }
+
+
+def jenkins_verify_tls():
+    """JENKINS_VERIFY_TLS: 'true' (default), 'false', or a path to a CA bundle."""
+    val = os.getenv("JENKINS_VERIFY_TLS", "true").strip()
+    if val.lower() in ("false", "0", "no"):
+        return False
+    if val.lower() in ("true", "1", "yes", ""):
+        return True
+    return val

@@ -43,6 +43,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger("DNACSync")
 
+THROTTLE_SECONDS = float(os.getenv("DNAC_SYNC_THROTTLE_SECONDS", "3"))
+
 
 def utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -71,6 +73,7 @@ def run_sync_cycle(collection) -> dict:
         alerts = list(collection.find(query, {
             "_id": 1,
             "alert_details.instance_id": 1,
+            "alert_details.issue_id": 1,
             "alert_details.device_id": 1,
             "alert_details.device_name": 1,
             "alert_details.device": 1,
@@ -90,7 +93,7 @@ def run_sync_cycle(collection) -> dict:
     instance_groups = defaultdict(list)
     for a in alerts:
         details = a.get("alert_details", {})
-        instance_id = details.get("instance_id") or ""
+        instance_id = details.get("issue_id") or details.get("instance_id") or ""
         device_name = details.get("device_name") or details.get("device") or ""
         issue_name = details.get("issue_name") or ""
         # Create a grouping key
@@ -115,6 +118,12 @@ def run_sync_cycle(collection) -> dict:
         event_id = rep.get("event_id")
         issue_name = rep.get("issue_name")
         issue_details = rep.get("issue_details")
+        issue_id = rep.get("issue_id")
+
+        # DNAC Issues API is rate limited (~20 req/min); each check can make
+        # several calls, so pace the loop.
+        if checked:
+            time.sleep(THROTTLE_SECONDS)
 
         try:
             dnac_status = check_dashboard_dnac_status(
@@ -124,6 +133,7 @@ def run_sync_cycle(collection) -> dict:
                 issue_name=issue_name,
                 issue_details=issue_details,
                 event_id=event_id,
+                issue_id=issue_id,
             )
             checked += 1
 

@@ -50,6 +50,21 @@ def supervisor(state: GraphState) -> GraphState:
         logger.info(f"[{event_id}] Supervisor decided: Route to reporter (Agent 1 failed).")
         return state
 
+    # Rule 0: DNAC also sends a webhook when an issue CLEARS
+    # ("Assurance Issue Status": "resolved"). That is not a new alert and must
+    # never create / reopen / comment on an incident.
+    alert_status = str(state.get("alert", {}).get("status") or "").strip().lower()
+    if alert_status in ("resolved", "cleared", "ignored", "inactive"):
+        state["results"].setdefault("agent_2", {})
+        state["results"]["agent_2"].update({
+            "status": "skipped",
+            "ok": True,
+            "reason": f"resolution_notification: DNAC issue status '{alert_status}'",
+        })
+        state["next_node"] = "reporter"
+        logger.info(f"[{event_id}] Supervisor decided: Route to reporter (resolution notification, status={alert_status}).")
+        return state
+
     # Rule 1: Backdated gate
     is_backdated = agent1_data.get("is_backdated", False)
     if is_backdated:

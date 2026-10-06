@@ -32,3 +32,6 @@ sample_payload.json
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Local backup of files changed by the production-readiness fixes (contains the old RabbitMQ password - delete after review)
+_backup_before_prod_fixes/

@@ -41,6 +41,15 @@ jenkins_username=os.getenv("JENKINS_USERNAME")
 jenkins_api_token=os.getenv("JENKINS_TOKEN")
 jenkins_job_path = os.getenv("JENKINS_JOB_PATH")
 
+WAIT_FOR_BUILD = os.getenv("JENKINS_WAIT_FOR_BUILD", "false").lower() in ("1", "true", "yes")
+WAIT_FOR_BUILD_TIMEOUT = int(os.getenv("JENKINS_WAIT_FOR_BUILD_TIMEOUT", "20"))
+LOG_FULL_PAYLOADS = os.getenv("LOG_FULL_PAYLOADS", "false").lower() in ("1", "true", "yes")
+
+for _var, _val in (("JENKINS_URL", jenkins_base_url), ("JENKINS_USERNAME", jenkins_username),
+                   ("JENKINS_TOKEN", jenkins_api_token), ("JENKINS_JOB_PATH", jenkins_job_path)):
+    if not _val:
+        raise RuntimeError(f"{_var} is not set; the consumer cannot trigger Jenkins.")
+
 def normalize_json_payload(
     payload: Union[Dict[str, Any], list],
     *,
@@ -170,18 +179,17 @@ def run():
                     payload = parse_json(body)
                     # event_type, ticket, meta = normalize_incoming(payload)
                     
-                    logger.info(
-                        "DNAC Payload from RabbitMQ:\n  Body: %s",
-                        json.dumps(payload, indent=2) if isinstance(payload, (dict, list)) else str(payload)
-                    )
-                    
                     # Get meta data from the payload in a dictionary
                     normalized_payload = normalize_json_payload(payload)
-                    
-                    logger.info(
-                        "DNAC Normalized Payload:\n  Body: %s",
-                        json.dumps(normalized_payload, indent=2)
-                    )
+
+                    if LOG_FULL_PAYLOADS:
+                        logger.info("DNAC Normalized Payload: %s", json.dumps(normalized_payload))
+                    else:
+                        logger.info(
+                            "DNAC payload received: eventId=%s instanceId=%s issueId=%s",
+                            normalized_payload.get("eventId"), normalized_payload.get("instanceId"),
+                            normalized_payload.get("issueId"),
+                        )
                     
                     retry_count = get_retry_count(properties) if properties else 0
                     logger.info("Received payload, retries=%s", retry_count)
@@ -206,7 +214,7 @@ def run():
                         base_url=jenkins_base_url,
                         username=jenkins_username,
                         api_token=jenkins_api_token,
-                        verify_tls=False,
+                        verify_tls=jenkins_verify_tls(),
                     )
                     
                     jh = JenkinsHelper(cfg)
@@ -219,9 +227,20 @@ def run():
                         retries=3
                     )
                     
-                    if trigger_result.get("queue_url"):
-                        build_info = jh.wait_for_build_number(trigger_result["queue_url"], timeout_sec=120)
-                        logger.info("Created build %s successfully", build_info)
+                    logger.info("Jenkins job queued: %s", trigger_result.get("queue_url"))
+                    # Waiting for the build number used to block this callback for up
+                    # to 120s. With a 60s heartbeat the broker could drop the
+                    # connection, redeliver the message and trigger a DUPLICATE build.
+                    # Only wait if explicitly enabled, and keep it short.
+                    if WAIT_FOR_BUILD and trigger_result.get("queue_url"):
+                        try:
+                            build_info = jh.wait_for_build_number(
+                                trigger_result["queue_url"], timeout_sec=WAIT_FOR_BUILD_TIMEOUT
+                            )
+                            logger.info("Created build %s successfully", build_info)
+                        except Exception as wait_err:
+                            # The job IS queued; don't nack (that would trigger it again).
+                            logger.warning("Build queued but build number not yet available: %s", wait_err)
                         
                     # Success -> ACK message
                     ch.basic_ack(delivery_tag=method.delivery_tag)

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Activity, BarChart3, Monitor, Database, MessageSquare, Layers,
-  ChevronRight, PanelLeftClose, PanelLeftOpen, Sun, Moon, RefreshCw, X, AlertTriangle,
+  ChevronRight, PanelLeftClose, PanelLeftOpen, Sun, Moon, RefreshCw, X,
 } from 'lucide-react';
 import FalseAlertMetrics from './FalseAlertMetrics';
 import AlertPatterns from './AlertPatterns';

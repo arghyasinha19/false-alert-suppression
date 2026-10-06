@@ -18,7 +18,14 @@ class GraphState(TypedDict, total=False):
     results: Dict[str, AgentResult]
     
     # Optional global error store
-    remarks: List[Dict[str, Any]]
+    remarks: Dict[str, Any]
     
+    # Structured exceptions captured by safe_node
+    errors: List[Dict[str, Any]]
+
+    # Final status computed by the reporter (must be declared or LangGraph drops it)
+    overall_status: Optional[str]
+    runtime_error: Optional[str]
+
     # Flow control
     next_node: Optional[str]

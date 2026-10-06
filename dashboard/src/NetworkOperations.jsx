@@ -8,7 +8,7 @@ import {
   Activity, Ticket, PlusCircle, RotateCcw, MessageSquarePlus,
   ChevronDown, ChevronUp, RefreshCw, ShieldCheck, Zap, Flame, Timer, Radio,
   Layers, Table, Globe, ArrowUpDown, ChevronRight,
-  Cpu, HardDrive, Code, Copy, Download, Inbox, Info, LayoutGrid
+  Cpu, HardDrive, Code, Copy, Download, Inbox, Info, LayoutGrid, Database
 } from 'lucide-react';
 import AnimatedCounter from './AnimatedCounter';
 import TopologyGraphView from './components/TopologyGraphView';
@@ -1642,8 +1642,6 @@ export default function NetworkOperations({
             sites={siteMatrix}
             selectedDevice={selectedDevice}
             onSelectDevice={openDevicePanel}
-            subMode={topologySubMode}
-            onToggleSubMode={() => setTopologySubMode(m => m === 'graph' ? 'cards' : 'graph')}
             searchQuery={searchQuery}
             roleFilter={roleFilter}
             healthFilter={healthFilter}

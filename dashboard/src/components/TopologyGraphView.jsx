@@ -1,185 +1,163 @@
 import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import {
-  ZoomIn, ZoomOut, Maximize2, Minimize2, RotateCcw,
-  LayoutGrid, Server, Shield, Wifi,
-  Activity, Move, Layers, Globe, ArrowLeft, Zap,
-  AlertTriangle, CheckCircle, ExternalLink, ShieldAlert,
-  ChevronRight
+  forceSimulation, forceLink, forceManyBody, forceCenter, forceCollide, forceX, forceY
+} from 'd3-force';
+import {
+  ZoomIn, ZoomOut, Maximize2, Minimize2, Shuffle, Scan, Pin, PinOff,
+  ArrowLeft, Globe, Server, Shield, Wifi, Network, AlertTriangle, ChevronRight,
+  Activity, Ticket, X, Play, Pause, CornerDownRight, Search
 } from 'lucide-react';
+import './TopologyGraphView.css';
+
+/* ────────────────────────────────────────────────────────────────────────────
+   Static metadata
+   ──────────────────────────────────────────────────────────────────────────── */
 
 const SITE_METADATA = {
-  'UK-LON': { flag: '🇬🇧', name: 'United Kingdom — London', shortName: 'London Core DC' },
-  'UK-MAL': { flag: '🇬🇧', name: 'United Kingdom — Malmesbury', shortName: 'Malmesbury Campus' },
-  'DE-FRA': { flag: '🇩🇪', name: 'Germany — Frankfurt', shortName: 'Frankfurt Transit DC' },
-  'US-NY':  { flag: '🇺🇸', name: 'United States — New York', shortName: 'New York Metro DC' },
-  'US-CHI': { flag: '🇺🇸', name: 'United States — Chicago', shortName: 'Chicago Regional DC' },
-  'SG-SIN': { flag: '🇸🇬', name: 'Singapore', shortName: 'Singapore APAC Hub' },
-  'JP-TKY': { flag: '🇯🇵', name: 'Japan — Tokyo', shortName: 'Tokyo Regional Hub' },
-  'IN-MUM': { flag: '🇮🇳', name: 'India — Mumbai', shortName: 'Mumbai West DC' },
-  'AU-SYD': { flag: '🇦🇺', name: 'Australia — Sydney', shortName: 'Sydney Oceanic DC' },
-  'INFRA-CORE': { flag: '🏢', name: 'Core Infrastructure', shortName: 'Global Core Fabric' },
-  'INFRA-ACCESS': { flag: '⚡', name: 'Access Infrastructure', shortName: 'Edge Access Fabric' }
+  'UK-LON': { flag: '🇬🇧', name: 'London', region: 'EMEA', shortName: 'London Core DC' },
+  'UK-MAL': { flag: '🇬🇧', name: 'Malmesbury', region: 'EMEA', shortName: 'Malmesbury Campus' },
+  'DE-FRA': { flag: '🇩🇪', name: 'Frankfurt', region: 'EMEA', shortName: 'Frankfurt Transit DC' },
+  'US-NY': { flag: '🇺🇸', name: 'New York', region: 'Americas', shortName: 'New York Metro DC' },
+  'US-CHI': { flag: '🇺🇸', name: 'Chicago', region: 'Americas', shortName: 'Chicago Regional DC' },
+  'SG-SIN': { flag: '🇸🇬', name: 'Singapore', region: 'APAC', shortName: 'Singapore APAC Hub' },
+  'JP-TKY': { flag: '🇯🇵', name: 'Tokyo', region: 'APAC', shortName: 'Tokyo Regional Hub' },
+  'IN-MUM': { flag: '🇮🇳', name: 'Mumbai', region: 'APAC', shortName: 'Mumbai West DC' },
+  'AU-SYD': { flag: '🇦🇺', name: 'Sydney', region: 'APAC', shortName: 'Sydney Oceanic DC' },
+  'INFRA-CORE': { flag: '🏢', name: 'Core Fabric', region: 'Global', shortName: 'Global Core Fabric' },
+  'INFRA-ACCESS': { flag: '⚡', name: 'Access Fabric', region: 'Global', shortName: 'Edge Access Fabric' },
 };
 
 const TIER_METADATA = {
-  core: {
-    id: 'core',
-    name: 'Core & WAN Backbone',
-    subtitle: 'High-capacity backbone routing, DC gateways & transit',
-    icon: Server,
-    color: '#3b82f6',
-    accentVar: 'var(--accent-blue)',
-    tag: 'CORE',
-    y: 130
-  },
-  dist_sec: {
-    id: 'dist_sec',
-    name: 'Distribution & Security Perimeter',
-    subtitle: 'Traffic aggregation, policy enforcement & firewalls',
-    icon: Shield,
-    color: '#a855f7',
-    accentVar: 'var(--accent-purple)',
-    tag: 'DIST / SEC',
-    y: 350
-  },
-  access: {
-    id: 'access',
-    name: 'Campus & Access Edge',
-    subtitle: 'Campus access switches, wireless APs & client edge',
-    icon: Wifi,
-    color: '#06b6d4',
-    accentVar: 'var(--accent-teal)',
-    tag: 'ACCESS',
-    y: 570
-  }
+  site: { id: 'site', label: 'Site', color: '#6366f1', icon: Globe },
+  core: { id: 'core', label: 'Core / WAN', color: '#3b82f6', icon: Server },
+  dist_sec: { id: 'dist_sec', label: 'Distribution / Security', color: '#a855f7', icon: Shield },
+  access: { id: 'access', label: 'Access switch', color: '#14b8a6', icon: Network },
+  wireless: { id: 'wireless', label: 'Wireless AP', color: '#06b6d4', icon: Wifi },
 };
 
-function deriveTier(name) {
-  if (!name || name === 'Unknown') return 'core';
-  const lower = name.toLowerCase();
-  if (lower.includes('core') || lower.includes('router') || lower.includes('rt') || lower.includes('gw') || lower.includes('backbone') || lower.includes('dc')) {
-    return 'core';
-  }
-  if (lower.includes('fw') || lower.includes('firewall') || lower.includes('dist') || lower.includes('security') || lower.includes('sw01')) {
-    return 'dist_sec';
-  }
+const ROLE_TO_TIER = { core: 'core', distribution: 'dist_sec', security: 'dist_sec', access: 'access', wireless: 'wireless' };
+
+const HEALTH_COLOR = {
+  critical: '#ef4444',
+  warning: '#f59e0b',
+  healthy: '#10b981',
+  degraded: '#f59e0b',
+  nominal: '#10b981',
+  unknown: '#94a3b8',
+};
+
+const WAN_INTERCONNECTS = [
+  { source: 'US-NY', target: 'US-CHI', latency: '18ms', type: 'metro', bandwidth: '40G', loss: '0.00%', label: 'Inter-city metro' },
+  { source: 'US-NY', target: 'UK-LON', latency: '115ms', type: 'subsea', bandwidth: '100G', loss: '0.01%', label: 'Transatlantic subsea' },
+  { source: 'UK-LON', target: 'UK-MAL', latency: '6ms', type: 'metro', bandwidth: '10G', loss: '0.00%', label: 'Regional metro' },
+  { source: 'UK-LON', target: 'DE-FRA', latency: '24ms', type: 'backbone', bandwidth: '100G', loss: '0.00%', label: 'European core' },
+  { source: 'DE-FRA', target: 'SG-SIN', latency: '128ms', type: 'terrestrial', bandwidth: '100G', loss: '0.02%', label: 'Eurasia transit' },
+  { source: 'SG-SIN', target: 'JP-TKY', latency: '68ms', type: 'subsea', bandwidth: '40G', loss: '0.00%', label: 'East Asia subsea' },
+  { source: 'SG-SIN', target: 'IN-MUM', latency: '42ms', type: 'subsea', bandwidth: '40G', loss: '0.01%', label: 'Bay of Bengal cable' },
+  { source: 'SG-SIN', target: 'AU-SYD', latency: '92ms', type: 'subsea', bandwidth: '40G', loss: '0.02%', label: 'Indo-Pacific subsea' },
+  { source: 'INFRA-CORE', target: 'UK-LON', latency: '2ms', type: 'fabric', bandwidth: '400G', loss: '0.00%', label: 'Core fabric' },
+  { source: 'INFRA-CORE', target: 'US-NY', latency: '2ms', type: 'fabric', bandwidth: '400G', loss: '0.00%', label: 'Core fabric' },
+  { source: 'INFRA-ACCESS', target: 'INFRA-CORE', latency: '1ms', type: 'fabric', bandwidth: '400G', loss: '0.00%', label: 'Fabric uplink' },
+];
+
+const SITE_R_MIN = 30;
+const SITE_R_MAX = 44;
+const DEVICE_R = 22;
+const HUB_R = 38;
+
+/* ────────────────────────────────────────────────────────────────────────────
+   Helpers
+   ──────────────────────────────────────────────────────────────────────────── */
+
+// Mirrors deriveDeviceRole() in NetworkOperations so the role filter chips line up.
+function deriveRole(device) {
+  const name = (device.device_name || '').toLowerCase();
+  const cat = (device.category || '').toLowerCase();
+  if (name.includes('fw') || name.includes('firewall') || cat.includes('firewall') || cat.includes('security')) return 'security';
+  if (name.includes('ap') || name.includes('wlc') || name.includes('wifi') || cat.includes('wireless') || cat.includes('access point')) return 'wireless';
+  if (name.includes('core') || (name.includes('router') && !name.includes('dist')) || name.includes('rt') || name.includes('gw') || name.includes('dc') || cat.includes('router')) return 'core';
+  if (name.includes('dist') || name.includes('sw01')) return 'distribution';
   return 'access';
 }
 
 function getNodeHealth(device) {
-  const activeAlerts = (device.active_alerts || []).filter(
-    a => a.dnac_live_status !== 'RESOLVED'
-  );
-  const hasCritical = activeAlerts.some(a => a.severity <= 1);
-  const hasWarning = activeAlerts.some(a => a.severity === 2);
-  if (hasCritical) return 'critical';
-  if (hasWarning || device.non_auto_resolving > 0) return 'warning';
-  if (activeAlerts.length > 0 && device.auto_resolving > 0 && device.non_auto_resolving === 0) return 'healthy';
-  if (activeAlerts.length === 0) return 'healthy';
-  return 'unknown';
+  const active = (device.active_alerts || []).filter(a => a.dnac_live_status !== 'RESOLVED');
+  if (active.some(a => a.severity <= 1)) return 'critical';
+  if (active.some(a => a.severity === 2) || device.non_auto_resolving > 0) return 'warning';
+  return 'healthy';
 }
 
-function renderRoleIcon(tierId, color) {
-  if (tierId === 'core') {
-    return (
-      <g className="noc-role-icon role-core" transform="translate(12, 13)">
-        <rect width="20" height="20" rx="5" fill="rgba(59, 130, 246, 0.15)" stroke="rgba(59, 130, 246, 0.35)" strokeWidth="1" />
-        <rect x="4" y="5" width="12" height="4" rx="1" fill="none" stroke={color} strokeWidth="1.2" />
-        <rect x="4" y="11" width="12" height="4" rx="1" fill="none" stroke={color} strokeWidth="1.2" />
-        <circle cx="6.5" cy="7" r="0.75" fill={color} />
-        <circle cx="6.5" cy="13" r="0.75" fill={color} />
-      </g>
-    );
-  }
-  if (tierId === 'dist_sec') {
-    return (
-      <g className="noc-role-icon role-dist" transform="translate(12, 13)">
-        <rect width="20" height="20" rx="5" fill="rgba(168, 85, 247, 0.15)" stroke="rgba(168, 85, 247, 0.35)" strokeWidth="1" />
-        <path d="M 10 4.5 L 15 6.5 V 11 C 15 14 10 16.5 10 16.5 C 10 16.5 5 14 5 11 V 6.5 Z" fill="none" stroke={color} strokeWidth="1.2" strokeLinejoin="round" />
-      </g>
-    );
-  }
-  return (
-    <g className="noc-role-icon role-access" transform="translate(12, 13)">
-      <rect width="20" height="20" rx="5" fill="rgba(6, 182, 212, 0.15)" stroke="rgba(6, 182, 212, 0.35)" strokeWidth="1" />
-      <path d="M 5 8 C 7.5 5.5 12.5 5.5 15 8 M 7 11 C 8.5 9.5 11.5 9.5 13 11 M 10 14.5 A 0.5 0.5 0 1 1 10 14" fill="none" stroke={color} strokeWidth="1.2" strokeLinecap="round" />
-    </g>
-  );
+function shortDeviceName(name = '') {
+  if (name.length <= 16) return name;
+  const parts = name.split('-');
+  return parts.length > 2 ? parts.slice(-2).join('-') : name;
 }
 
-const NODE_WIDTH = 220;
-const NODE_HEIGHT = 76;
+function siteStatusLabel(status) {
+  if (status === 'critical') return 'Critical';
+  if (status === 'degraded') return 'Degraded';
+  return 'Nominal';
+}
 
-const WAN_NODE_WIDTH = 240;
-const WAN_NODE_HEIGHT = 110;
+function healthLabel(h) {
+  if (h === 'critical') return 'Critical';
+  if (h === 'warning') return 'Warning';
+  return 'Healthy';
+}
 
-const WAN_SITE_COORDINATES = {
-  'US-NY': { x: 230, y: 200, region: 'Americas' },
-  'US-CHI': { x: 230, y: 460, region: 'Americas' },
-  'UK-LON': { x: 590, y: 170, region: 'EMEA' },
-  'UK-MAL': { x: 590, y: 400, region: 'EMEA' },
-  'DE-FRA': { x: 590, y: 620, region: 'EMEA' },
-  'SG-SIN': { x: 970, y: 240, region: 'APAC' },
-  'JP-TKY': { x: 970, y: 470, region: 'APAC' },
-  'IN-MUM': { x: 880, y: 680, region: 'APAC' },
-  'AU-SYD': { x: 1060, y: 680, region: 'APAC' },
-  'INFRA-CORE': { x: 590, y: 280, region: 'Core Infrastructure' },
-  'INFRA-ACCESS': { x: 970, y: 350, region: 'Access Infrastructure' }
-};
+function statusToHealth(status) {
+  if (status === 'critical') return 'critical';
+  if (status === 'degraded') return 'warning';
+  return 'healthy';
+}
 
-const WAN_INTERCONNECT_DEFINITIONS = [
-  { source: 'US-NY', target: 'US-CHI', latency: '18ms', type: 'metro', loss: '0.00%', bandwidth: '40 Gbps', label: 'Inter-City Metro' },
-  { source: 'US-NY', target: 'UK-LON', latency: '115ms', type: 'subsea', loss: '0.01%', bandwidth: '100 Gbps', label: 'Transatlantic Subsea' },
-  { source: 'UK-LON', target: 'UK-MAL', latency: '6ms', type: 'metro', loss: '0.00%', bandwidth: '10 Gbps', label: 'Regional Metro' },
-  { source: 'UK-LON', target: 'DE-FRA', latency: '24ms', type: 'backbone', loss: '0.00%', bandwidth: '100 Gbps', label: '100G European Core' },
-  { source: 'DE-FRA', target: 'SG-SIN', latency: '128ms', type: 'terrestrial', loss: '0.02%', bandwidth: '100 Gbps', label: 'Eurasia Terrestrial Transit' },
-  { source: 'SG-SIN', target: 'JP-TKY', latency: '68ms', type: 'subsea', loss: '0.00%', bandwidth: '40 Gbps', label: 'East Asia Subsea Cable' },
-  { source: 'SG-SIN', target: 'IN-MUM', latency: '42ms', type: 'subsea', loss: '0.01%', bandwidth: '40 Gbps', label: 'Bay of Bengal Cable' },
-  { source: 'SG-SIN', target: 'AU-SYD', latency: '92ms', type: 'subsea', loss: '0.02%', bandwidth: '40 Gbps', label: 'Indo-Pacific Subsea' }
-];
+/* ────────────────────────────────────────────────────────────────────────────
+   Component
+   ──────────────────────────────────────────────────────────────────────────── */
 
 export default function TopologyGraphView({
   devices = [],
   sites = [],
   selectedDevice = null,
   onSelectDevice = () => {},
-  subMode = 'graph',
-  onToggleSubMode = () => {},
   searchQuery = '',
   roleFilter = 'all',
   healthFilter = 'all',
   onResetFilters = null,
-  // Milestone v2.0 Multi-Site Props:
   topologyLevel = 'wan',
   selectedSite = null,
   onSelectSite = () => {},
-  onReturnToWan = () => {}
+  onReturnToWan = () => {},
 }) {
   const containerRef = useRef(null);
-  const [containerSize, setContainerSize] = useState({ width: 1100, height: 720 });
-  const [transform, setTransform] = useState({ x: 30, y: 20, k: 0.95 });
-  const [zoomTransition, setZoomTransition] = useState(false);
-  const [isPanning, setIsPanning] = useState(false);
-  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
-  const [panDistance, setPanDistance] = useState(0);
-  const [startTransform, setStartTransform] = useState({ x: 0, y: 0, k: 1 });
-  const [hoveredNode, setHoveredNode] = useState(null);
+  const svgRef = useRef(null);
+  const simRef = useRef(null);
+  const rafRef = useRef(null);
+  const [size, setSize] = useState({ width: 1100, height: 640 });
+  const [view, setView] = useState({ x: 0, y: 0, k: 1 });
+  const [positions, setPositions] = useState({});
+  const [hovered, setHovered] = useState(null);
   const [hoveredEdge, setHoveredEdge] = useState(null);
-  const [hoveredWanEdge, setHoveredWanEdge] = useState(null);
-  const [showWheelHint, setShowWheelHint] = useState(false);
+  const [pointer, setPointer] = useState({ x: 0, y: 0 });
+  const [inspected, setInspected] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const wheelHintTimerRef = useRef(null);
+  const [physicsOn, setPhysicsOn] = useState(true);
+  const [showLabels, setShowLabels] = useState(true);
+  const [layoutSeed, setLayoutSeed] = useState(0);
+  const dragRef = useRef(null);
+  const panRef = useRef(null);
+  const didFitRef = useRef(false);
+  const reducedMotion = typeof window !== 'undefined'
+    && window.matchMedia
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // ResizeObserver to track container bounds
+  /* ── Track container size ─────────────────────────────────────────────── */
   useEffect(() => {
     if (!containerRef.current) return;
     const obs = new ResizeObserver(entries => {
-      for (const entry of entries) {
-        if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
-          setContainerSize({
-            width: entry.contentRect.width,
-            height: Math.max(680, entry.contentRect.height)
-          });
+      for (const e of entries) {
+        if (e.contentRect.width > 0 && e.contentRect.height > 0) {
+          setSize({ width: e.contentRect.width, height: e.contentRect.height });
         }
       }
     });
@@ -187,1217 +165,771 @@ export default function TopologyGraphView({
     return () => obs.disconnect();
   }, []);
 
-  const hasActiveFilter = Boolean(searchQuery || roleFilter !== 'all' || healthFilter !== 'all');
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // Multi-Site Metadata & Resolved Sites Collection
-  // ─────────────────────────────────────────────────────────────────────────────
-  const resolvedSiteList = useMemo(() => {
+  /* ── Resolve sites (prop or derived) ──────────────────────────────────── */
+  const siteList = useMemo(() => {
     if (sites && sites.length > 0) return sites;
-    if (devices && devices.length > 0) {
-      const siteMap = {};
-      devices.forEach(d => {
-        const loc = d.location || 'INFRA-CORE';
-        if (!siteMap[loc]) {
-          siteMap[loc] = {
-            code: loc,
-            label: loc,
-            devices: [],
-            critical: 0,
-            warning: 0,
-            healthy: 0,
-            totalAlerts: 0,
-            avoidedTickets: 0
-          };
-        }
-        siteMap[loc].devices.push(d);
-        const h = getNodeHealth(d);
-        if (h === 'critical') siteMap[loc].critical++;
-        else if (h === 'warning') siteMap[loc].warning++;
-        else siteMap[loc].healthy++;
-        siteMap[loc].totalAlerts += (d.active_alerts || []).length;
-        siteMap[loc].avoidedTickets += (d.auto_resolving || 0) + (d.backdated || 0);
-      });
-      return Object.values(siteMap).map(s => {
-        let status = 'nominal';
-        if (s.critical > 0) status = 'critical';
-        else if (s.warning > 0) status = 'degraded';
-        return { ...s, status };
-      });
-    }
-    return [];
+    const map = {};
+    devices.forEach(d => {
+      const loc = d.location || 'INFRA-CORE';
+      if (!map[loc]) map[loc] = { code: loc, label: loc, devices: [], critical: 0, warning: 0, healthy: 0, totalAlerts: 0, avoidedTickets: 0 };
+      map[loc].devices.push(d);
+      const h = getNodeHealth(d);
+      map[loc][h]++;
+      map[loc].totalAlerts += (d.active_alerts || []).length;
+      map[loc].avoidedTickets += (d.auto_resolving || 0) + (d.backdated || 0);
+    });
+    return Object.values(map).map(s => ({
+      ...s,
+      status: s.critical > 0 ? 'critical' : s.warning > 0 ? 'degraded' : 'nominal',
+    }));
   }, [sites, devices]);
 
-  const activeSiteMeta = useMemo(() => {
-    const found = resolvedSiteList.find(s => s.code === selectedSite);
-    const meta = SITE_METADATA[selectedSite] || {};
-    return {
-      code: selectedSite,
-      label: found?.label || meta.name || selectedSite || 'Local Site',
-      flag: meta.flag || (found?.label || '').split(' ')[0] || '🏢',
-      shortName: meta.shortName || found?.label || selectedSite,
-      deviceCount: found?.devices?.length || 0,
-      status: found?.status || 'nominal'
-    };
-  }, [resolvedSiteList, selectedSite]);
+  const hasActiveFilter = Boolean(searchQuery || roleFilter !== 'all' || healthFilter !== 'all');
+  const q = (searchQuery || '').toLowerCase().trim();
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // LEVEL 1: Global Multi-Site WAN Topology Computation
-  // ─────────────────────────────────────────────────────────────────────────────
-  const { wanNodes, wanEdges, wanResilienceScore, wanDimensions } = useMemo(() => {
-    const resolvedSites = resolvedSiteList;
-    const computedWanWidth = Math.max(containerSize.width, 1280);
-    const computedWanHeight = Math.max(containerSize.height, 820);
+  /* ── Build graph model for current level ─────────────────────────────── */
+  const graph = useMemo(() => {
+    const nodes = [];
+    const edges = [];
 
-    let totalSites = resolvedSites.length;
-    let nominalCount = 0;
-    let criticalCount = 0;
-
-    const computedNodes = resolvedSites.map((site, idx) => {
-      const defaultCoord = WAN_SITE_COORDINATES[site.code] || {
-        x: 250 + (idx % 3) * 360,
-        y: 200 + Math.floor(idx / 3) * 240,
-        region: 'Regional Network'
-      };
-
-      if (site.status === 'nominal') nominalCount++;
-      else if (site.status === 'critical') criticalCount++;
-
-      const flag = (site.label || '').split(' ')[0] || '🌐';
-      let name = site.label || site.code;
-      if (name.includes('—')) {
-        name = name.split('—')[1].trim();
-      }
-
-      const totalDevs = (site.devices || []).length;
-      const degradedDevs = (site.critical || 0) + (site.warning || 0);
-      const blastRadius = totalDevs > 0 ? Math.round((degradedDevs / totalDevs) * 100) : 0;
-
-      // Filter matching check
-      const q = (searchQuery || '').toLowerCase().trim();
-      const matchesQuery = !q ||
-        site.code.toLowerCase().includes(q) ||
-        (site.label && site.label.toLowerCase().includes(q));
-      const matchesHealth = healthFilter === 'all' || site.status === healthFilter;
-      const isDimmed = !(matchesQuery && matchesHealth);
-
-      return {
-        id: site.code,
-        code: site.code,
-        label: site.label,
-        name,
-        flag,
-        region: defaultCoord.region,
-        status: site.status || 'nominal',
-        x: defaultCoord.x,
-        y: defaultCoord.y,
-        devicesCount: totalDevs,
-        activeAlerts: site.totalAlerts || 0,
-        avoidedTickets: site.avoidedTickets || 0,
-        critical: site.critical || 0,
-        warning: site.warning || 0,
-        healthy: site.healthy || 0,
-        blastRadius,
-        hasBlastRadius: blastRadius > 0 || site.status !== 'nominal',
-        isDimmed,
-        rawSite: site
-      };
-    });
-
-    const resilience = totalSites > 0
-      ? Math.max(0, Math.min(100, Math.round(((nominalCount + (totalSites - criticalCount) * 0.5) / (totalSites * 1.5)) * 100)))
-      : 100;
-
-    // Generate WAN Interconnect Edges
-    const computedWanEdges = [];
-    WAN_INTERCONNECT_DEFINITIONS.forEach(def => {
-      const srcNode = computedNodes.find(n => n.id === def.source);
-      const tgtNode = computedNodes.find(n => n.id === def.target);
-      if (srcNode && tgtNode) {
-        const dx = tgtNode.x - srcNode.x;
-        const dy = tgtNode.y - srcNode.y;
-        const midX = (srcNode.x + tgtNode.x) / 2;
-        const midY = (srcNode.y + tgtNode.y) / 2;
-        const curvature = Math.abs(dx) > Math.abs(dy) ? -38 : 38;
-        const path = `M ${srcNode.x} ${srcNode.y} Q ${midX} ${midY + curvature} ${tgtNode.x} ${tgtNode.y}`;
-
-        let status = 'nominal';
-        if (srcNode.status === 'critical' || tgtNode.status === 'critical') status = 'critical';
-        else if (srcNode.status === 'degraded' || tgtNode.status === 'degraded') status = 'warning';
-
-        const isDimmed = hasActiveFilter && (srcNode.isDimmed && tgtNode.isDimmed);
-
-        computedWanEdges.push({
-          id: `wan-${srcNode.id}-${tgtNode.id}`,
-          source: srcNode,
-          target: tgtNode,
-          path,
-          midX,
-          midY: midY + curvature / 2,
-          latency: def.latency,
-          loss: def.loss,
-          bandwidth: def.bandwidth,
-          type: def.type,
-          label: def.label,
-          status,
-          isDimmed
-        });
-      }
-    });
-
-    return {
-      wanNodes: computedNodes,
-      wanEdges: computedWanEdges,
-      wanResilienceScore: resilience,
-      wanDimensions: { width: computedWanWidth, height: computedWanHeight }
-    };
-  }, [resolvedSiteList, containerSize, searchQuery, healthFilter, hasActiveFilter]);
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // LEVEL 2: Site LAN Tier Topology Computation
-  // ─────────────────────────────────────────────────────────────────────────────
-  const { nodes, edges, tierStats, canvasDimensions } = useMemo(() => {
-    const scopedDevices = (topologyLevel === 'lan' && selectedSite)
-      ? devices.filter(d => (d.location === selectedSite || (d.device_name && d.device_name.startsWith(selectedSite))))
-      : devices;
-    const activeDeviceList = scopedDevices.length > 0 ? scopedDevices : devices;
-
-    const buckets = { core: [], dist_sec: [], access: [] };
-    activeDeviceList.forEach(d => {
-      const tier = deriveTier(d.device_name);
-      if (buckets[tier]) buckets[tier].push(d);
-      else buckets.core.push(d);
-    });
-
-    const maxCountInTier = Math.max(
-      buckets.core.length,
-      buckets.dist_sec.length,
-      buckets.access.length,
-      1
-    );
-
-    const minGap = 50;
-    const stepX = NODE_WIDTH + minGap;
-    const computedWidth = Math.max(containerSize.width, (maxCountInTier + 1) * stepX + 100);
-    const computedHeight = 740;
-
-    const computedNodes = [];
-    const tierStatsMap = {};
-
-    ['core', 'dist_sec', 'access'].forEach(tierId => {
-      const list = buckets[tierId];
-      const tierMeta = TIER_METADATA[tierId];
-      const count = list.length;
-      const rowY = tierMeta.y;
-
-      let crit = 0, warn = 0, nom = 0;
-      list.forEach(d => {
-        const h = getNodeHealth(d);
-        if (h === 'critical') crit++;
-        else if (h === 'warning') warn++;
-        else nom++;
-      });
-      tierStatsMap[tierId] = { count, critical: crit, warning: warn, healthy: nom };
-
-      // Center the nodes horizontally within the tier
-      const tierTotalWidth = count * stepX - minGap;
-      const startX = Math.max(60, (computedWidth - tierTotalWidth) / 2);
-
-      list.forEach((device, index) => {
-        const nodeX = startX + index * stepX + NODE_WIDTH / 2;
-        const nodeY = rowY;
-        const health = getNodeHealth(device);
-
-        // Filter match check (role, health, search query)
-        const q = (searchQuery || '').toLowerCase().trim();
-        const matchesQuery = !q ||
-          (device.device_name && device.device_name.toLowerCase().includes(q)) ||
-          (device.location && device.location.toLowerCase().includes(q)) ||
-          (device.ip_address && device.ip_address.includes(q));
-        const matchesRole = roleFilter === 'all' || tierId === roleFilter || (device.role && device.role === roleFilter);
-        const matchesHealth = healthFilter === 'all' || health === healthFilter;
-        const isDimmed = !(matchesQuery && matchesRole && matchesHealth);
-
-        computedNodes.push({
-          id: device.device_name,
-          device,
-          tier: tierId,
-          x: nodeX,
-          y: nodeY,
-          health,
-          isDimmed,
-          activeAlertCount: (device.active_alerts || []).length
+    if (topologyLevel === 'wan' || !selectedSite) {
+      const maxDev = Math.max(1, ...siteList.map(s => (s.devices || []).length));
+      siteList.forEach(s => {
+        const meta = SITE_METADATA[s.code] || {};
+        const devCount = (s.devices || []).length;
+        const r = SITE_R_MIN + (SITE_R_MAX - SITE_R_MIN) * (devCount / maxDev);
+        const matchesQuery = !q || s.code.toLowerCase().includes(q) || (s.label || '').toLowerCase().includes(q) || (meta.name || '').toLowerCase().includes(q);
+        const matchesHealth = healthFilter === 'all' || statusToHealth(s.status) === healthFilter;
+        nodes.push({
+          id: s.code,
+          kind: 'site',
+          tier: 'site',
+          r,
+          caption: s.code,
+          title: meta.name || s.label || s.code,
+          subtitle: meta.shortName || '',
+          region: meta.region || 'Regional',
+          flag: meta.flag || '🌐',
+          status: s.status,
+          health: statusToHealth(s.status),
+          devices: devCount,
+          critical: s.critical || 0,
+          warning: s.warning || 0,
+          healthy: s.healthy || 0,
+          alerts: s.totalAlerts || 0,
+          avoided: s.avoidedTickets || 0,
+          dimmed: !(matchesQuery && matchesHealth),
+          raw: s,
         });
       });
-    });
-
-    // Generate topological interconnects (links)
-    const computedEdges = [];
-    const coreNodes = computedNodes.filter(n => n.tier === 'core');
-    const distNodes = computedNodes.filter(n => n.tier === 'dist_sec');
-    const accessNodes = computedNodes.filter(n => n.tier === 'access');
-
-    // 1. Core backbone mesh links (Core <-> Core)
-    for (let i = 0; i < coreNodes.length - 1; i++) {
-      const src = coreNodes[i];
-      const tgt = coreNodes[i + 1];
-      const isCrit = src.health === 'critical' || tgt.health === 'critical';
-      const isWarn = src.health === 'warning' || tgt.health === 'warning';
-      const status = isCrit ? 'critical' : isWarn ? 'warning' : 'nominal';
-      const path = `M ${src.x + NODE_WIDTH / 2 - 10} ${src.y} C ${(src.x + tgt.x) / 2} ${src.y - 45}, ${(src.x + tgt.x) / 2} ${src.y - 45}, ${tgt.x - NODE_WIDTH / 2 + 10} ${tgt.y}`;
-      const isDimmed = hasActiveFilter && (src.isDimmed && tgt.isDimmed);
-
-      computedEdges.push({
-        id: `link-core-${src.id}-${tgt.id}`,
-        source: src,
-        target: tgt,
-        path,
-        status,
-        type: 'backbone',
-        label: '100G Backbone Mesh',
-        isDimmed
-      });
-    }
-
-    // 2. Core to Distribution uplinks (Core <-> Dist)
-    distNodes.forEach((dist, idx) => {
-      const primaryCore = coreNodes[idx % Math.max(1, coreNodes.length)];
-      if (primaryCore) {
-        const isCrit = dist.health === 'critical' || primaryCore.health === 'critical';
-        const isWarn = dist.health === 'warning' || primaryCore.health === 'warning';
-        const status = isCrit ? 'critical' : isWarn ? 'warning' : 'nominal';
-        const yMid = (primaryCore.y + dist.y) / 2;
-        const path = `M ${primaryCore.x} ${primaryCore.y + NODE_HEIGHT / 2} C ${primaryCore.x} ${yMid}, ${dist.x} ${yMid}, ${dist.x} ${dist.y - NODE_HEIGHT / 2}`;
-        const isDimmed = hasActiveFilter && (primaryCore.isDimmed && dist.isDimmed);
-
-        computedEdges.push({
-          id: `link-${primaryCore.id}-${dist.id}`,
-          source: primaryCore,
-          target: dist,
-          path,
-          status,
-          type: 'uplink',
-          label: '40G Distribution Uplink',
-          isDimmed
-        });
-      }
-
-      // Redundant link to second core if multiple exist
-      if (coreNodes.length > 1) {
-        const secondaryCore = coreNodes[(idx + 1) % coreNodes.length];
-        const isCrit = dist.health === 'critical' || secondaryCore.health === 'critical';
-        const isWarn = dist.health === 'warning' || secondaryCore.health === 'warning';
-        const status = isCrit ? 'critical' : isWarn ? 'warning' : 'nominal';
-        const yMid = (secondaryCore.y + dist.y) / 2;
-        const path = `M ${secondaryCore.x} ${secondaryCore.y + NODE_HEIGHT / 2} C ${secondaryCore.x} ${yMid}, ${dist.x} ${yMid}, ${dist.x} ${dist.y - NODE_HEIGHT / 2}`;
-        const isDimmed = hasActiveFilter && (secondaryCore.isDimmed && dist.isDimmed);
-
-        computedEdges.push({
-          id: `link-red-${secondaryCore.id}-${dist.id}`,
-          source: secondaryCore,
-          target: dist,
-          path,
-          status,
-          type: 'redundant',
-          label: '40G Redundant Path',
-          isDimmed
-        });
-      }
-    });
-
-    // 3. Distribution to Access downlinks (Dist <-> Access)
-    accessNodes.forEach((access, idx) => {
-      const parentDist = distNodes[idx % Math.max(1, distNodes.length)];
-      if (parentDist) {
-        const isCrit = access.health === 'critical' || parentDist.health === 'critical';
-        const isWarn = access.health === 'warning' || parentDist.health === 'warning';
-        const status = isCrit ? 'critical' : isWarn ? 'warning' : 'nominal';
-        const yMid = (parentDist.y + access.y) / 2;
-        const path = `M ${parentDist.x} ${parentDist.y + NODE_HEIGHT / 2} C ${parentDist.x} ${yMid}, ${access.x} ${yMid}, ${access.x} ${access.y - NODE_HEIGHT / 2}`;
-        const isDimmed = hasActiveFilter && (parentDist.isDimmed && access.isDimmed);
-
-        computedEdges.push({
-          id: `link-${parentDist.id}-${access.id}`,
-          source: parentDist,
-          target: access,
-          path,
-          status,
-          type: 'access',
-          label: '10G Campus Downlink',
-          isDimmed
-        });
-      }
-    });
-
-    return {
-      nodes: computedNodes,
-      edges: computedEdges,
-      tierStats: tierStatsMap,
-      canvasDimensions: { width: computedWidth, height: computedHeight }
-    };
-  }, [devices, selectedSite, topologyLevel, containerSize, searchQuery, roleFilter, healthFilter, hasActiveFilter]);
-
-  const matchCount = useMemo(() => {
-    if (topologyLevel === 'wan') {
-      return wanNodes.filter(n => !n.isDimmed).length;
-    }
-    return nodes.filter(n => !n.isDimmed).length;
-  }, [topologyLevel, wanNodes, nodes]);
-
-  // Handle Drag / Pan Operations
-  const handlePointerDown = (e) => {
-    if (e.button !== 0) return;
-    if (
-      e.target.closest('.noc-graph-control-btn') ||
-      e.target.closest('.noc-graph-node-card') ||
-      e.target.closest('.noc-graph-filter-badge') ||
-      e.target.closest('.noc-wan-site-group') ||
-      e.target.closest('.noc-wan-back-btn') ||
-      e.target.closest('.noc-topology-level-banner') ||
-      e.target.closest('.noc-topology-breadcrumbs') ||
-      e.target.closest('.noc-site-switcher-select')
-    ) {
-      return;
-    }
-
-    setIsPanning(true);
-    setPanDistance(0);
-    setPanStart({ x: e.clientX, y: e.clientY });
-    setStartTransform({ ...transform });
-    if (containerRef.current) {
-      containerRef.current.setPointerCapture(e.pointerId);
-    }
-  };
-
-  const handlePointerMove = (e) => {
-    if (!isPanning) return;
-    const dx = e.clientX - panStart.x;
-    const dy = e.clientY - panStart.y;
-    setPanDistance(Math.sqrt(dx * dx + dy * dy));
-    const nextX = startTransform.x + dx;
-    const nextY = startTransform.y + dy;
-    const clampedX = Math.max(-1200, Math.min(1200, nextX));
-    const clampedY = Math.max(-800, Math.min(800, nextY));
-    setTransform({
-      ...startTransform,
-      x: clampedX,
-      y: clampedY
-    });
-  };
-
-  const handlePointerUp = (e) => {
-    if (isPanning) {
-      setIsPanning(false);
-      try {
-        if (containerRef.current && containerRef.current.hasPointerCapture(e.pointerId)) {
-          containerRef.current.releasePointerCapture(e.pointerId);
+      const ids = new Set(nodes.map(n => n.id));
+      WAN_INTERCONNECTS.forEach(def => {
+        if (ids.has(def.source) && ids.has(def.target)) {
+          const a = nodes.find(n => n.id === def.source);
+          const b = nodes.find(n => n.id === def.target);
+          const status = (a.status === 'critical' || b.status === 'critical') ? 'critical'
+            : (a.status === 'degraded' || b.status === 'degraded') ? 'warning' : 'nominal';
+          edges.push({
+            id: `${def.source}→${def.target}`,
+            source: def.source,
+            target: def.target,
+            rel: def.type.toUpperCase(),
+            caption: def.latency,
+            detail: `${def.label} · ${def.bandwidth} · loss ${def.loss}`,
+            status,
+            dimmed: hasActiveFilter && a.dimmed && b.dimmed,
+          });
         }
-      } catch {
-        // Safe release
+      });
+      // Connect orphan sites to the nearest hub so nothing floats unattached
+      const connected = new Set(edges.flatMap(e => [e.source, e.target]));
+      const hub = ids.has('INFRA-CORE') ? 'INFRA-CORE' : nodes[0]?.id;
+      nodes.forEach(n => {
+        if (!connected.has(n.id) && hub && n.id !== hub) {
+          edges.push({ id: `${hub}→${n.id}`, source: hub, target: n.id, rel: 'PEERS', caption: '', detail: 'Logical peering', status: 'nominal', dimmed: false });
+        }
+      });
+    } else {
+      const site = siteList.find(s => s.code === selectedSite);
+      const meta = SITE_METADATA[selectedSite] || {};
+      const scoped = devices.filter(d => d.location === selectedSite || (d.device_name || '').startsWith(selectedSite));
+      const hubId = `site:${selectedSite}`;
+      nodes.push({
+        id: hubId,
+        kind: 'hub',
+        tier: 'site',
+        r: HUB_R,
+        caption: selectedSite,
+        title: meta.name || site?.label || selectedSite,
+        subtitle: meta.shortName || '',
+        region: meta.region || '',
+        flag: meta.flag || '🏢',
+        status: site?.status || 'nominal',
+        health: statusToHealth(site?.status),
+        devices: scoped.length,
+        critical: site?.critical || 0,
+        warning: site?.warning || 0,
+        healthy: site?.healthy || 0,
+        alerts: site?.totalAlerts || 0,
+        avoided: site?.avoidedTickets || 0,
+        dimmed: false,
+        fixed: true,
+        raw: site,
+      });
+      const byTier = { core: [], dist_sec: [], access: [], wireless: [] };
+      scoped.forEach(d => {
+        const role = deriveRole(d);
+        const tier = ROLE_TO_TIER[role] || 'access';
+        const health = getNodeHealth(d);
+        const matchesQuery = !q || (d.device_name || '').toLowerCase().includes(q) || (d.device_id || '').toLowerCase().includes(q);
+        const matchesRole = roleFilter === 'all' || role === roleFilter;
+        const matchesHealth = healthFilter === 'all' || health === healthFilter;
+        const node = {
+          id: d.device_name,
+          kind: 'device',
+          tier,
+          role,
+          r: DEVICE_R,
+          caption: shortDeviceName(d.device_name),
+          title: d.device_name,
+          subtitle: TIER_METADATA[tier].label,
+          health,
+          status: health,
+          alerts: (d.active_alerts || []).length,
+          incidents: (d.active_alerts || []).filter(a => a.snow_incident).length,
+          dimmed: !(matchesQuery && matchesRole && matchesHealth),
+          device: d,
+        };
+        nodes.push(node);
+        byTier[tier].push(node);
+      });
+      const link = (a, b, rel, detail) => {
+        const status = (a.health === 'critical' || b.health === 'critical') ? 'critical'
+          : (a.health === 'warning' || b.health === 'warning') ? 'warning' : 'nominal';
+        edges.push({ id: `${a.id}→${b.id}`, source: a.id, target: b.id, rel, caption: '', detail, status, dimmed: hasActiveFilter && a.dimmed && b.dimmed });
+      };
+      const hub = nodes[0];
+      byTier.core.forEach(n => link(hub, n, 'UPLINK', '100G backbone'));
+      if (byTier.core.length === 0) byTier.dist_sec.forEach(n => link(hub, n, 'UPLINK', '40G uplink'));
+      byTier.dist_sec.forEach((n, i) => {
+        if (byTier.core.length > 0) link(byTier.core[i % byTier.core.length], n, 'AGGREGATES', '40G distribution uplink');
+      });
+      const parents = byTier.dist_sec.length ? byTier.dist_sec : byTier.core.length ? byTier.core : [hub];
+      byTier.access.forEach((n, i) => link(parents[i % parents.length], n, 'SERVES', '10G access downlink'));
+      const apParents = byTier.access.length ? byTier.access : parents;
+      byTier.wireless.forEach((n, i) => link(apParents[i % apParents.length], n, 'POWERS', 'PoE access port'));
+    }
+
+    return { nodes, edges };
+  }, [topologyLevel, selectedSite, siteList, devices, q, roleFilter, healthFilter, hasActiveFilter]);
+
+  const nodeById = useMemo(() => Object.fromEntries(graph.nodes.map(n => [n.id, n])), [graph]);
+
+  const adjacency = useMemo(() => {
+    const adj = {};
+    graph.edges.forEach(e => {
+      (adj[e.source] ||= new Set()).add(e.target);
+      (adj[e.target] ||= new Set()).add(e.source);
+    });
+    return adj;
+  }, [graph]);
+
+  /* ── Simulation ───────────────────────────────────────────────────────── */
+  const graphKey = `${topologyLevel}:${selectedSite}:${graph.nodes.map(n => n.id).join('|')}:${layoutSeed}`;
+
+  useEffect(() => {
+    const W = size.width, H = size.height;
+    const prev = simRef.current ? Object.fromEntries(simRef.current.nodes().map(n => [n.id, n])) : {};
+    const isWan = topologyLevel === 'wan' || !selectedSite;
+
+    // Seed positions: WAN by region columns, LAN by tier rings around hub.
+    const regionX = { Americas: 0.2, EMEA: 0.5, Global: 0.5, APAC: 0.8, Regional: 0.65 };
+    const tierRing = { site: 0, core: 150, dist_sec: 260, access: 370, wireless: 470 };
+    const simNodes = graph.nodes.map((n, i) => {
+      const p = prev[n.id];
+      let x, y;
+      if (p && layoutSeed === 0) { x = p.x; y = p.y; }
+      else if (isWan) {
+        x = W * (regionX[n.region] ?? 0.5) + (Math.random() - 0.5) * 120;
+        y = H * 0.5 + (Math.random() - 0.5) * H * 0.7;
+      } else {
+        const ring = tierRing[n.tier] ?? 300;
+        const angle = (i / Math.max(1, graph.nodes.length)) * Math.PI * 2 + Math.random();
+        x = W / 2 + Math.cos(angle) * ring;
+        y = H / 2 + Math.sin(angle) * ring;
       }
+      const node = { ...n, x, y, vx: 0, vy: 0 };
+      if (n.fixed) { node.fx = W / 2; node.fy = H / 2; }
+      return node;
+    });
+    const simLinks = graph.edges.map(e => ({ ...e }));
+
+    if (simRef.current) simRef.current.stop();
+
+    const sim = forceSimulation(simNodes)
+      .force('link', forceLink(simLinks).id(d => d.id)
+        .distance(l => {
+          const a = l.source, b = l.target;
+          if (isWan) return 140 + (a.r + b.r);
+          if (a.kind === 'hub' || b.kind === 'hub') return 150;
+          return 110;
+        })
+        .strength(isWan ? 0.5 : 0.8))
+      .force('charge', forceManyBody().strength(isWan ? -900 : -520).distanceMax(600))
+      .force('collide', forceCollide().radius(d => d.r + (showLabels ? 26 : 10)).strength(0.9))
+      .force('center', forceCenter(W / 2, H / 2).strength(0.05))
+      .force('x', forceX(W / 2).strength(0.03))
+      .force('y', forceY(H / 2).strength(0.05))
+      .alpha(1)
+      .alphaDecay(reducedMotion ? 0.2 : 0.035);
+
+    if (!isWan) {
+      // Keep LAN tiers loosely in concentric rings around the hub.
+      sim.force('ring', (alpha) => {
+        for (const n of simNodes) {
+          if (n.kind !== 'device') continue;
+          const target = tierRing[n.tier] ?? 300;
+          const dx = n.x - W / 2, dy = n.y - H / 2;
+          const dist = Math.hypot(dx, dy) || 1;
+          const diff = (target - dist) * alpha * 0.12;
+          n.vx += (dx / dist) * diff;
+          n.vy += (dy / dist) * diff;
+        }
+      });
+    }
+
+    const publish = () => {
+      const pos = {};
+      for (const n of simNodes) pos[n.id] = { x: n.x, y: n.y, pinned: n.fx != null && n.kind !== 'hub' };
+      setPositions(pos);
+    };
+    sim.on('tick', () => {
+      if (rafRef.current) return;
+      rafRef.current = requestAnimationFrame(() => { rafRef.current = null; publish(); });
+    });
+    sim.on('end', () => {
+      publish();
+      if (!didFitRef.current) { didFitRef.current = true; fitToView(simNodes, W, H); }
+    });
+    simRef.current = sim;
+    didFitRef.current = false;
+    if (!physicsOn) { sim.stop(); publish(); }
+    return () => { sim.stop(); if (rafRef.current) cancelAnimationFrame(rafRef.current); rafRef.current = null; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [graphKey, size.width, size.height]);
+
+  useEffect(() => {
+    const sim = simRef.current;
+    if (!sim) return;
+    if (physicsOn) sim.alpha(0.6).restart(); else sim.stop();
+  }, [physicsOn]);
+
+  /* ── View helpers ─────────────────────────────────────────────────────── */
+  const fitToView = useCallback((nodes, W, H) => {
+    const list = nodes || (simRef.current ? simRef.current.nodes() : []);
+    if (!list.length) return;
+    const pad = 50;
+    const xs = list.map(n => n.x), ys = list.map(n => n.y);
+    const minX = Math.min(...xs) - pad, maxX = Math.max(...xs) + pad;
+    const minY = Math.min(...ys) - pad, maxY = Math.max(...ys) + pad + 20;
+    const w = W ?? size.width, h = H ?? size.height;
+    // Leave room for the top bar, legend and controls so nodes never sit under the chrome.
+    const topInset = 64, bottomInset = w < 860 ? 112 : 68;
+    const usableH = Math.max(200, h - topInset - bottomInset);
+    const k = Math.min(1.25, Math.max(0.3, Math.min(w / (maxX - minX), usableH / (maxY - minY))));
+    setView({ k, x: w / 2 - ((minX + maxX) / 2) * k, y: topInset + usableH / 2 - ((minY + maxY) / 2) * k });
+  }, [size.width, size.height]);
+
+  const zoomBy = (factor) => {
+    setView(v => {
+      const k = Math.min(3, Math.max(0.25, v.k * factor));
+      const cx = size.width / 2, cy = size.height / 2;
+      return { k, x: cx - (cx - v.x) * (k / v.k), y: cy - (cy - v.y) * (k / v.k) };
+    });
+  };
+
+  const toGraphCoords = (clientX, clientY) => {
+    const rect = svgRef.current.getBoundingClientRect();
+    return { x: (clientX - rect.left - view.x) / view.k, y: (clientY - rect.top - view.y) / view.k };
+  };
+
+  /* ── Wheel zoom (non-passive) ─────────────────────────────────────────── */
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el) return;
+    const onWheel = (e) => {
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      setView(v => {
+        const k = Math.min(3, Math.max(0.25, v.k * (e.deltaY < 0 ? 1.12 : 0.89)));
+        return { k, x: mx - (mx - v.x) * (k / v.k), y: my - (my - v.y) * (k / v.k) };
+      });
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, []);
+
+  /* ── Pointer interactions ─────────────────────────────────────────────── */
+  const onNodePointerDown = (e, id) => {
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    const sim = simRef.current;
+    const node = sim?.nodes().find(n => n.id === id);
+    if (!node) return;
+    const start = toGraphCoords(e.clientX, e.clientY);
+    dragRef.current = { id, node, offX: node.x - start.x, offY: node.y - start.y, moved: false, startClient: { x: e.clientX, y: e.clientY } };
+    node.fx = node.x; node.fy = node.y;
+    if (physicsOn) sim.alphaTarget(0.25).restart();
+  };
+
+  const onNodePointerMove = (e) => {
+    const d = dragRef.current;
+    if (!d) return;
+    const p = toGraphCoords(e.clientX, e.clientY);
+    if (Math.hypot(e.clientX - d.startClient.x, e.clientY - d.startClient.y) > 3) d.moved = true;
+    d.node.fx = p.x + d.offX; d.node.fy = p.y + d.offY;
+    if (!physicsOn) {
+      d.node.x = d.node.fx; d.node.y = d.node.fy;
+      setPositions(prev => ({ ...prev, [d.id]: { x: d.node.x, y: d.node.y, pinned: true } }));
     }
   };
 
-  // Zoom Operations
-  const handleZoom = useCallback((factor, centerX, centerY) => {
-    setTransform(prev => {
-      const newK = Math.max(0.4, Math.min(2.2, prev.k * factor));
-      const cx = centerX !== undefined ? centerX : containerSize.width / 2;
-      const cy = centerY !== undefined ? centerY : containerSize.height / 2;
-      const newX = cx - (cx - prev.x) * (newK / prev.k);
-      const newY = cy - (cy - prev.y) * (newK / prev.k);
-      return { x: newX, y: newY, k: newK };
-    });
-  }, [containerSize]);
+  const onNodePointerUp = (e, node) => {
+    const d = dragRef.current;
+    dragRef.current = null;
+    const sim = simRef.current;
+    if (sim && physicsOn) sim.alphaTarget(0);
+    if (d && !d.moved) {
+      // Treat as click
+      if (node.kind === 'hub') { d.node.fx = d.node.x; d.node.fy = d.node.y; }
+      else { d.node.fx = null; d.node.fy = null; }
+      handleNodeClick(node);
+    } else if (d && node.kind !== 'hub') {
+      // Keep pinned where dropped (Neo4j behaviour)
+      setPositions(prev => ({ ...prev, [d.id]: { ...(prev[d.id] || {}), x: d.node.x, y: d.node.y, pinned: true } }));
+    }
+  };
 
-  // Wheel Zoom Listener
+  const unpin = (id) => {
+    const node = simRef.current?.nodes().find(n => n.id === id);
+    if (!node || node.kind === 'hub') return;
+    node.fx = null; node.fy = null;
+    setPositions(prev => ({ ...prev, [id]: { ...prev[id], pinned: false } }));
+    if (physicsOn) simRef.current.alpha(0.3).restart();
+  };
+
+  const handleNodeClick = (node) => {
+    if (node.kind === 'device') {
+      setInspected(node.id);
+      onSelectDevice(node.device);
+    } else {
+      setInspected(prev => (prev === node.id ? null : node.id));
+    }
+  };
+
+  const handleNodeDoubleClick = (e, node) => {
+    e.stopPropagation();
+    if (node.kind === 'site') onSelectSite(node.id);
+    else if (node.kind === 'device') onSelectDevice(node.device);
+  };
+
+  const onBackgroundPointerDown = (e) => {
+    if (e.button !== 0) return;
+    panRef.current = { sx: e.clientX, sy: e.clientY, ox: view.x, oy: view.y, moved: false };
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  };
+  const onBackgroundPointerMove = (e) => {
+    const p = panRef.current;
+    if (!p) { setPointer({ x: e.clientX, y: e.clientY }); return; }
+    const dx = e.clientX - p.sx, dy = e.clientY - p.sy;
+    if (Math.hypot(dx, dy) > 2) p.moved = true;
+    setView(v => ({ ...v, x: p.ox + dx, y: p.oy + dy }));
+  };
+  const onBackgroundPointerUp = () => {
+    const p = panRef.current;
+    panRef.current = null;
+    if (p && !p.moved) setInspected(null);
+  };
+
+  /* ── Keyboard ─────────────────────────────────────────────────────────── */
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const handleWheel = (e) => {
-      e.preventDefault();
-      if (!e.ctrlKey && !e.metaKey) {
-        setShowWheelHint(true);
-        if (wheelHintTimerRef.current) clearTimeout(wheelHintTimerRef.current);
-        wheelHintTimerRef.current = setTimeout(() => setShowWheelHint(false), 1800);
-        return;
-      }
-
-      setShowWheelHint(false);
-      const rect = el.getBoundingClientRect();
-      const cursorX = e.clientX - rect.left;
-      const cursorY = e.clientY - rect.top;
-      const factor = e.deltaY < 0 ? 1.12 : 0.89;
-      handleZoom(factor, cursorX, cursorY);
+    const onKey = (e) => {
+      if (e.key === 'Escape' && isFullscreen) setIsFullscreen(false);
     };
-
-    el.addEventListener('wheel', handleWheel, { passive: false });
-    return () => {
-      el.removeEventListener('wheel', handleWheel);
-      if (wheelHintTimerRef.current) clearTimeout(wheelHintTimerRef.current);
-    };
-  }, [handleZoom]);
-
-  // Escape key listener to exit fullscreen
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isFullscreen) {
-        setIsFullscreen(false);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, [isFullscreen]);
 
-  const handleZoomIn = () => handleZoom(1.2);
-  const handleZoomOut = () => handleZoom(0.83);
+  useEffect(() => { setInspected(null); }, [topologyLevel, selectedSite]);
 
-  const handleResetZoom = () => {
-    setZoomTransition(true);
-    setTransform({ x: 30, y: 20, k: 0.95 });
-    setTimeout(() => setZoomTransition(false), 320);
-  };
+  /* ── Derived render state ─────────────────────────────────────────────── */
+  const focusId = hovered || inspected || (selectedDevice ? selectedDevice.device_name : null);
+  const focusSet = useMemo(() => {
+    if (!focusId || !nodeById[focusId]) return null;
+    const s = new Set([focusId]);
+    (adjacency[focusId] || []).forEach(n => s.add(n));
+    return s;
+  }, [focusId, adjacency, nodeById]);
 
-  const handleFitToScreen = () => {
-    const activeWidth = topologyLevel === 'wan' ? wanDimensions.width : canvasDimensions.width;
-    const activeHeight = topologyLevel === 'wan' ? wanDimensions.height : canvasDimensions.height;
-    const scaleX = (containerSize.width - 80) / activeWidth;
-    const scaleY = (containerSize.height - 80) / activeHeight;
-    const fitK = Math.max(0.45, Math.min(1.2, Math.min(scaleX, scaleY)));
-    const fitX = (containerSize.width - activeWidth * fitK) / 2;
-    const fitY = (containerSize.height - activeHeight * fitK) / 2;
+  const counts = useMemo(() => {
+    const c = {};
+    graph.nodes.forEach(n => { c[n.tier] = (c[n.tier] || 0) + 1; });
+    return c;
+  }, [graph]);
 
-    setZoomTransition(true);
-    setTransform({ x: fitX, y: fitY, k: fitK });
-    setTimeout(() => setZoomTransition(false), 320);
-  };
+  const healthTotals = useMemo(() => {
+    const t = { critical: 0, warning: 0, healthy: 0 };
+    graph.nodes.forEach(n => { if (n.kind !== 'hub') t[n.health] = (t[n.health] || 0) + 1; });
+    return t;
+  }, [graph]);
 
-  const toggleFullscreen = () => {
-    setIsFullscreen(prev => !prev);
-  };
+  const matchCount = graph.nodes.filter(n => !n.dimmed && n.kind !== 'hub').length;
+  const inspectedNode = inspected ? nodeById[inspected] : null;
+  const hoveredNode = hovered ? nodeById[hovered] : null;
+  const hoveredEdgeObj = hoveredEdge ? graph.edges.find(e => e.id === hoveredEdge) : null;
+  const isWan = topologyLevel === 'wan' || !selectedSite;
+  const siteMeta = SITE_METADATA[selectedSite] || {};
+  const labelsVisible = showLabels && view.k > 0.55;
 
-  const getStatusColor = (status) => {
-    if (status === 'critical') return 'var(--accent-rose, #ef4444)';
-    if (status === 'warning' || status === 'degraded') return 'var(--accent-amber, #f59e0b)';
-    return 'var(--accent-blue, #3b82f6)';
-  };
+  const edgeStroke = (e) => e.status === 'critical' ? HEALTH_COLOR.critical : e.status === 'warning' ? HEALTH_COLOR.warning : 'var(--graph-edge)';
 
+  /* ── Render ───────────────────────────────────────────────────────────── */
   return (
     <div
       ref={containerRef}
-      className={`noc-topology-graph-container ${isPanning ? 'is-panning' : ''} ${isFullscreen ? 'fullscreen' : ''}`}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerUp}
+      className={`tg-container ${isFullscreen ? 'is-fullscreen' : ''}`}
+      role="application"
+      aria-label={isWan ? 'Global WAN topology graph' : `${selectedSite} site topology graph`}
     >
-      {/* Floating Wheel Zoom Modifier Hint Toast */}
-      {showWheelHint && (
-        <div className="noc-wheel-zoom-hint" role="status" aria-live="polite">
-          Use Ctrl + scroll to zoom
+      {/* Top bar */}
+      <div className="tg-topbar">
+        <div className="tg-crumbs">
+          {!isWan && (
+            <button type="button" className="tg-back" onClick={onReturnToWan} title="Back to global WAN">
+              <ArrowLeft size={14} />
+              <span>Global WAN</span>
+            </button>
+          )}
+          {isWan ? (
+            <span className="tg-crumb-current"><Globe size={14} /> Global WAN topology</span>
+          ) : (
+            <>
+              <ChevronRight size={13} className="tg-crumb-sep" />
+              <span className="tg-crumb-current">
+                <span className="tg-flag">{siteMeta.flag || '🏢'}</span>
+                {siteMeta.name || selectedSite}
+                <span className="tg-crumb-code">{selectedSite}</span>
+              </span>
+            </>
+          )}
+        </div>
+
+        <div className="tg-stats">
+          {isWan
+            ? <span>{counts.site || 0} sites · {graph.edges.length} links</span>
+            : <span>{(graph.nodes.length - 1)} devices · {graph.edges.length} links</span>}
+          <span className="tg-stat-dot critical" title="Critical">{healthTotals.critical}</span>
+          <span className="tg-stat-dot warning" title="Warning">{healthTotals.warning}</span>
+          <span className="tg-stat-dot healthy" title="Healthy">{healthTotals.healthy}</span>
+        </div>
+
+        {!isWan && (
+          <label className="tg-site-select">
+            <span className="sr-only">Jump to site</span>
+            <select value={selectedSite} onChange={e => onSelectSite(e.target.value)}>
+              {siteList.map(s => (
+                <option key={s.code} value={s.code}>{SITE_METADATA[s.code]?.flag || '🏢'} {s.code} — {SITE_METADATA[s.code]?.name || s.label}</option>
+              ))}
+            </select>
+          </label>
+        )}
+      </div>
+
+      {/* Filter notice */}
+      {hasActiveFilter && (
+        <div className="tg-filter-notice">
+          <Search size={12} />
+          <span>{matchCount} of {graph.nodes.filter(n => n.kind !== 'hub').length} match your filters</span>
+          {onResetFilters && <button type="button" onClick={onResetFilters}>Clear</button>}
         </div>
       )}
 
-      {/* Level Indicator Banner (Top Left) */}
-      <div
-        className="noc-topology-level-banner"
-        style={{
-          position: 'absolute',
-          top: '16px',
-          left: '16px',
-          zIndex: 12,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px'
-        }}
-      >
-        {topologyLevel === 'wan' ? (
-          <>
-            <div className="noc-topology-level-badge">
-              <Globe size={13} />
-              <span>GLOBAL WAN TOPOLOGY (LEVEL 1)</span>
-            </div>
-            <div className="noc-wan-stats-pill">
-              <span>{wanNodes.length} Connected Sites • Fleet Resilience {wanResilienceScore}%</span>
-            </div>
-          </>
-        ) : (
-          <div className="noc-topology-breadcrumbs" role="navigation" aria-label="Topology Level Navigation">
-            <button
-              type="button"
-              className="noc-wan-back-btn"
-              onClick={onReturnToWan}
-              title="Return to Global WAN Overview"
-            >
-              <ArrowLeft size={13} />
-              <span>← Back to Global WAN</span>
-            </button>
-
-            <div className="noc-topology-breadcrumb-trail">
-              <button
-                type="button"
-                className="noc-breadcrumb-item noc-breadcrumb-root clickable"
-                onClick={onReturnToWan}
-                title="Return to Global WAN Interconnect (Level 1)"
-              >
-                <Globe size={13} />
-                <span>Global WAN Interconnect</span>
-              </button>
-
-              <ChevronRight size={13} className="noc-breadcrumb-separator" />
-
-              <span className="noc-breadcrumb-item noc-breadcrumb-site active" aria-current="location">
-                <span className="noc-breadcrumb-flag">{activeSiteMeta.flag}</span>
-                <span className="noc-breadcrumb-code">{selectedSite || 'SITE'}</span>
-                <span className="noc-breadcrumb-label">({activeSiteMeta.shortName})</span>
-              </span>
-            </div>
-
-            {/* Site Switcher Dropdown (SITE-04) */}
-            <div className="noc-site-switcher-wrapper">
-              <label htmlFor="noc-site-switcher" className="sr-only">Switch Site Topology</label>
-              <select
-                id="noc-site-switcher"
-                className="noc-site-switcher-select"
-                value={selectedSite || ''}
-                onChange={(e) => onSelectSite(e.target.value)}
-                title="Switch Site Topology"
-                aria-label="Switch Site Topology"
-              >
-                {resolvedSiteList.map(s => (
-                  <option key={s.code} value={s.code}>
-                    {s.status === 'critical' ? '✖ ' : s.status === 'degraded' ? '⚠ ' : '● '}
-                    {s.code} — {s.label} ({s.devices?.length || 0} devs)
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="noc-topology-level-badge" style={{ borderColor: 'var(--accent-purple)', color: 'var(--accent-purple)' }}>
-              <Layers size={13} />
-              <span>SITE LAN: {selectedSite || 'LOCAL CLUSTER'} (LEVEL 2)</span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Floating Canvas Controls Toolbar */}
-      <div className="noc-graph-controls-toolbar">
-        <button
-          type="button"
-          className={`noc-graph-control-btn ${isFullscreen ? 'active-pill' : ''}`}
-          onClick={toggleFullscreen}
-          title={isFullscreen ? "Exit Fullscreen Canvas (Esc)" : "Expand Topology View"}
-          aria-label={isFullscreen ? "Exit Fullscreen Canvas" : "Expand Topology View"}
-        >
-          {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
-          <span>{isFullscreen ? 'Exit' : 'Expand'}</span>
-        </button>
-
-        <div className="noc-graph-btn-divider" />
-
-        <button
-          type="button"
-          className="noc-graph-control-btn active-pill"
-          onClick={onToggleSubMode}
-          title="Switch to Card Grid View"
-        >
-          <LayoutGrid size={13} />
-          <span>Card View</span>
-        </button>
-
-        <div className="noc-graph-btn-divider" />
-
-        <button
-          type="button"
-          className="noc-graph-control-btn"
-          onClick={handleZoomIn}
-          title="Zoom In (+)"
-        >
-          <ZoomIn size={14} />
-        </button>
-        <button
-          type="button"
-          className="noc-graph-control-btn"
-          onClick={handleZoomOut}
-          title="Zoom Out (-)"
-        >
-          <ZoomOut size={14} />
-        </button>
-        <button
-          type="button"
-          className="noc-graph-control-btn"
-          onClick={handleFitToScreen}
-          title="Fit Network to View"
-        >
-          <Layers size={13} />
-        </button>
-        <button
-          type="button"
-          className="noc-graph-control-btn"
-          onClick={handleResetZoom}
-          title="Reset View (100%)"
-        >
-          <RotateCcw size={13} />
-          <span style={{ fontSize: '0.7rem', fontWeight: 600 }}>1:1</span>
-        </button>
-      </div>
-
-      {/* Floating Canvas Legend or Active Filter Match Banner */}
-      <div style={{ position: 'absolute', top: '56px', left: '16px', zIndex: 10 }}>
-        {hasActiveFilter ? (
-          <div className="noc-graph-filter-badge" style={{ position: 'static' }}>
-            <Activity size={13} style={{ color: 'var(--accent-blue)' }} />
-            <span>
-              Filtered: <strong>{matchCount}</strong> {topologyLevel === 'wan' ? 'sites' : `of ${nodes.length} devices in ${selectedSite || 'Site LAN'}`}
-            </span>
-            {onResetFilters && (
-              <button
-                type="button"
-                className="noc-graph-filter-reset-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onResetFilters();
-                }}
-                title="Clear all active filters"
-              >
-                Reset
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="noc-graph-legend-badge" style={{ position: 'static' }}>
-            <span className="noc-legend-icon"><Move size={12} /></span>
-            <span>
-              {topologyLevel === 'wan'
-                ? 'Drag to pan • Scroll to zoom • Click site to drill down into LAN'
-                : 'Drag to pan • Scroll to zoom • Click node to inspect triage drawer'}
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* Main SVG Graph Surface */}
+      {/* Canvas */}
       <svg
-        className="noc-topology-canvas"
+        ref={svgRef}
+        className={`tg-svg ${panRef.current ? 'is-panning' : ''}`}
         width="100%"
         height="100%"
-        style={{ display: 'block' }}
+        onPointerDown={onBackgroundPointerDown}
+        onPointerMove={onBackgroundPointerMove}
+        onPointerUp={onBackgroundPointerUp}
+        onPointerLeave={() => { panRef.current = null; }}
       >
         <defs>
-          <pattern id="noc-grid-dots" width="24" height="24" patternUnits="userSpaceOnUse">
-            <circle cx="2" cy="2" r="1" fill="var(--card-border)" opacity="0.35" />
+          <pattern id="tg-dots" width="26" height="26" patternUnits="userSpaceOnUse" patternTransform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
+            <circle cx="1" cy="1" r="1" fill="var(--graph-dot)" />
           </pattern>
-
-          <filter id="glow-teal" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-          </filter>
-          <filter id="glow-blue" x="-30%" y="-30%" width="160%" height="160%">
-            <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="rgba(59, 130, 246, 0.75)" />
-            <feGaussianBlur stdDeviation="2" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-          </filter>
-          <filter id="glow-red" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="4" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-          </filter>
-          <filter id="node-shadow" x="-10%" y="-10%" width="130%" height="130%">
-            <feDropShadow dx="0" dy="6" stdDeviation="8" floodColor="rgba(0, 0, 0, 0.35)" />
+          <filter id="tg-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="4" result="b" />
+            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
           </filter>
         </defs>
+        <rect width="100%" height="100%" fill="url(#tg-dots)" />
 
-        <rect id="noc-canvas-bg" width="100%" height="100%" fill="url(#noc-grid-dots)" />
-
-        <g
-          className="noc-graph-transform-group"
-          transform={`translate(${transform.x}, ${transform.y}) scale(${transform.k})`}
-          style={{ transition: zoomTransition ? 'transform 0.3s cubic-bezier(0.2, 0, 0, 1)' : 'none' }}
-        >
-          {/* ═════════════════════════════════════════════════════════════════════
-              LEVEL 1: GLOBAL MULTI-SITE WAN INTERCONNECT TOPOLOGY
-              ═════════════════════════════════════════════════════════════════════ */}
-          {topologyLevel === 'wan' ? (
-            <>
-              {/* 1. Global WAN Interconnect Links */}
-              <g className="noc-wan-edges-group">
-                {wanEdges.map(edge => {
-                  const isHovered = hoveredWanEdge === edge.id;
-                  const strokeColor = getStatusColor(edge.status);
-
-                  return (
-                    <g key={edge.id} className="noc-wan-edge-item">
-                      {/* Broad invisible hover trigger path */}
-                      <path
-                        d={edge.path}
-                        fill="none"
-                        stroke="transparent"
-                        strokeWidth="20"
-                        onMouseEnter={() => setHoveredWanEdge(edge.id)}
-                        onMouseLeave={() => setHoveredWanEdge(null)}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        <title>{`${edge.label} (${edge.type.toUpperCase()}): ${edge.latency} RTT • Loss: ${edge.loss} • Bandwidth: ${edge.bandwidth}`}</title>
-                      </path>
-
-                      {/* Main WAN Cable Path */}
-                      <path
-                        d={edge.path}
-                        fill="none"
-                        className={`noc-wan-link-cable ${edge.status} ${isHovered ? 'hovered' : ''}`}
-                        strokeWidth={isHovered ? '3.5' : '2.5'}
-                      />
-
-                      {/* Animated Active Telemetry Dash Flow */}
-                      <path
-                        d={edge.path}
-                        fill="none"
-                        className="noc-wan-link-flow"
-                        strokeWidth="2"
-                        opacity={isHovered ? 0.95 : 0.65}
-                      />
-
-                      {/* Midpoint Latency Pill Badge Marker */}
-                      <g
-                        className="noc-wan-link-badge-group"
-                        style={{ cursor: 'pointer' }}
-                        onMouseEnter={() => setHoveredWanEdge(edge.id)}
-                        onMouseLeave={() => setHoveredWanEdge(null)}
-                      >
-                        <title>{`${edge.label}: ${edge.latency} round-trip latency (${edge.loss} loss)`}</title>
-                        <rect
-                          x={edge.midX - 27}
-                          y={edge.midY - 11}
-                          width="54"
-                          height="22"
-                          rx="11"
-                          className="noc-wan-link-badge-bg"
-                        />
-                        <text
-                          x={edge.midX}
-                          y={edge.midY}
-                          className="noc-wan-link-badge-text"
-                        >
-                          {edge.latency}
-                        </text>
-                      </g>
+        <g transform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
+          {/* Edges */}
+          <g className="tg-edges">
+            {graph.edges.map(e => {
+              const a = positions[e.source], b = positions[e.target];
+              if (!a || !b) return null;
+              const na = nodeById[e.source], nb = nodeById[e.target];
+              const dx = b.x - a.x, dy = b.y - a.y;
+              const len = Math.hypot(dx, dy) || 1;
+              const ux = dx / len, uy = dy / len;
+              const x1 = a.x + ux * (na.r + 2), y1 = a.y + uy * (na.r + 2);
+              const x2 = b.x - ux * (nb.r + 2), y2 = b.y - uy * (nb.r + 2);
+              const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+              const inFocus = focusSet ? (focusSet.has(e.source) && focusSet.has(e.target) && (e.source === focusId || e.target === focusId)) : true;
+              const faded = (focusSet && !inFocus) || e.dimmed;
+              const isHot = hoveredEdge === e.id;
+              const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+              const flip = angle > 90 || angle < -90;
+              const label = e.caption || e.rel;
+              return (
+                <g
+                  key={e.id}
+                  className={`tg-edge status-${e.status} ${faded ? 'is-faded' : ''} ${isHot ? 'is-hot' : ''}`}
+                  onPointerEnter={() => setHoveredEdge(e.id)}
+                  onPointerLeave={() => setHoveredEdge(null)}
+                >
+                  <line x1={x1} y1={y1} x2={x2} y2={y2} className="tg-edge-hit" />
+                  <line x1={x1} y1={y1} x2={x2} y2={y2} className="tg-edge-line" stroke={edgeStroke(e)} />
+                  {e.status === 'critical' && !reducedMotion && (
+                    <line x1={x1} y1={y1} x2={x2} y2={y2} className="tg-edge-flow" stroke={edgeStroke(e)} />
+                  )}
+                  {labelsVisible && label && (
+                    <g transform={`translate(${mx} ${my}) rotate(${flip ? angle + 180 : angle})`}>
+                      <rect x={-(label.length * 3.4 + 7)} y={-8} width={label.length * 6.8 + 14} height={16} rx={8} className="tg-edge-label-bg" />
+                      <text y={3.5} textAnchor="middle" className="tg-edge-label">{label}</text>
                     </g>
-                  );
-                })}
-              </g>
+                  )}
+                </g>
+              );
+            })}
+          </g>
 
-              {/* 2. Global WAN Macro Site Nodes */}
-              <g className="noc-wan-nodes-group">
-                {wanNodes.map(site => {
-                  const isDegraded = site.status === 'degraded' || site.status === 'critical';
-                  const statusBg = site.status === 'critical'
-                    ? 'rgba(239, 68, 68, 0.15)'
-                    : site.status === 'degraded'
-                    ? 'rgba(245, 158, 11, 0.15)'
-                    : 'rgba(16, 185, 129, 0.12)';
-                  const statusBorder = site.status === 'critical'
-                    ? 'rgba(239, 68, 68, 0.4)'
-                    : site.status === 'degraded'
-                    ? 'rgba(245, 158, 11, 0.4)'
-                    : 'rgba(16, 185, 129, 0.3)';
-                  const statusColor = site.status === 'critical'
-                    ? 'var(--accent-rose)'
-                    : site.status === 'degraded'
-                    ? 'var(--accent-amber)'
-                    : 'var(--health-healthy)';
-
-                  return (
-                    <g
-                      key={site.id}
-                      className={`noc-wan-site-group ${site.isDimmed ? 'dimmed' : ''}`}
-                      transform={`translate(${site.x - WAN_NODE_WIDTH / 2}, ${site.y - WAN_NODE_HEIGHT / 2})`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelectSite(site.code);
-                      }}
-                      style={{ cursor: 'pointer' }}
-                      role="button"
-                      tabIndex="0"
-                      aria-label={`Site ${site.code}, Health: ${site.status}`}
-                    >
-                      {/* Perimeter Blast Radius Animated Halo */}
-                      {site.hasBlastRadius && (
-                        <rect
-                          x="-6"
-                          y="-6"
-                          width={WAN_NODE_WIDTH + 12}
-                          height={WAN_NODE_HEIGHT + 12}
-                          rx="16"
-                          fill="none"
-                          stroke={site.status === 'critical' ? 'var(--accent-rose, #ef4444)' : 'var(--accent-amber, #f59e0b)'}
-                          strokeWidth="2.5"
-                          className="blast-radius-halo"
-                        />
-                      )}
-
-                      {/* Main Macro Card Surface */}
-                      <rect
-                        width={WAN_NODE_WIDTH}
-                        height={WAN_NODE_HEIGHT}
-                        rx="12"
-                        className={`noc-wan-site-card-bg ${site.status}`}
-                      />
-
-                      {/* Row 1: Regional Flag + Site Code + Health Badge */}
-                      <text x="14" y="22" className="noc-wan-flag">
-                        {site.flag}
-                      </text>
-                      <text x="38" y="23" className="noc-wan-code">
-                        {site.code}
-                      </text>
-
-                      <g transform={`translate(${WAN_NODE_WIDTH - 86}, 12)`}>
-                        <rect
-                          width="72"
-                          height="18"
-                          rx="9"
-                          fill={statusBg}
-                          stroke={statusBorder}
-                          strokeWidth="1"
-                        />
-                        <circle cx="9" cy="9" r="3" fill={statusColor} />
-                        <text
-                          x="20"
-                          y="9.5"
-                          fill={statusColor}
-                          className="noc-wan-status-text"
-                        >
-                          {site.status.toUpperCase()}
-                        </text>
-                      </g>
-
-                      {/* Row 2: Location Name & Registered Devices */}
-                      <text x="14" y="44" className="noc-wan-name">
-                        {site.name.length > 20 ? site.name.slice(0, 19) + '…' : site.name}
-                      </text>
-                      <text x="14" y="60" className="noc-wan-sub">
-                        {site.devicesCount} Devices Registered • {site.region}
-                      </text>
-
-                      {/* Row 3: Active Alerts & Avoided Tickets */}
-                      <text
-                        x="14"
-                        y="78"
-                        className="noc-wan-alert-text"
-                        fill={site.activeAlerts > 0 ? 'var(--accent-rose, #ef4444)' : 'var(--text-tertiary)'}
-                      >
-                        ● {site.activeAlerts} Active Alert{site.activeAlerts === 1 ? '' : 's'}
-                      </text>
-                      <text x="126" y="78" className="noc-wan-avoid-text">
-                        ⚡ {site.avoidedTickets} Avoided
-                      </text>
-
-                      {/* Row 4: Blast Radius Metric Chip & Drill Down Action */}
-                      <rect
-                        x="14"
-                        y="86"
-                        width="88"
-                        height="16"
-                        rx="4"
-                        fill={site.blastRadius > 0 ? 'rgba(239, 68, 68, 0.14)' : 'rgba(16, 185, 129, 0.1)'}
-                        stroke={site.blastRadius > 0 ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.25)'}
-                        strokeWidth="0.8"
-                      />
-                      <text
-                        x="18"
-                        y="94.5"
-                        fill={site.blastRadius > 0 ? 'var(--accent-rose, #ef4444)' : 'var(--health-healthy, #10b981)'}
-                        className="noc-wan-blast-text"
-                      >
-                        Blast: {site.blastRadius}%
-                      </text>
-
-                      {/* Drill Down Action Target */}
-                      <g
-                        className="noc-wan-drilldown-btn"
-                        transform={`translate(${WAN_NODE_WIDTH - 82}, 85)`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectSite(site.code);
-                        }}
-                      >
-                        <rect
-                          width="68"
-                          height="18"
-                          rx="4"
-                          className="noc-wan-drill-bg"
-                        />
-                        <text
-                          x="7"
-                          y="9.5"
-                          className="noc-wan-drill-text"
-                        >
-                          Drill Down →
-                        </text>
-                      </g>
+          {/* Nodes */}
+          <g className="tg-nodes">
+            {graph.nodes.map(n => {
+              const p = positions[n.id];
+              if (!p) return null;
+              const tier = TIER_METADATA[n.tier];
+              const isSelected = inspected === n.id || (selectedDevice && selectedDevice.device_name === n.id);
+              const isHover = hovered === n.id;
+              const faded = (focusSet && !focusSet.has(n.id)) || n.dimmed;
+              const Icon = tier.icon;
+              const iconSize = n.kind === 'device' ? 16 : 20;
+              return (
+                <g
+                  key={n.id}
+                  className={`tg-node kind-${n.kind} health-${n.health} ${isSelected ? 'is-selected' : ''} ${isHover ? 'is-hover' : ''} ${faded ? 'is-faded' : ''} ${p.pinned ? 'is-pinned' : ''}`}
+                  transform={`translate(${p.x} ${p.y})`}
+                  onPointerDown={e => onNodePointerDown(e, n.id)}
+                  onPointerMove={onNodePointerMove}
+                  onPointerUp={e => onNodePointerUp(e, n)}
+                  onPointerEnter={() => setHovered(n.id)}
+                  onPointerLeave={() => setHovered(null)}
+                  onDoubleClick={e => handleNodeDoubleClick(e, n)}
+                  tabIndex={0}
+                  role="button"
+                  aria-label={`${n.title}, ${healthLabel(n.health)}${n.alerts ? `, ${n.alerts} active alerts` : ''}`}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNodeClick(n); } }}
+                >
+                  {(isSelected || isHover) && (
+                    <circle r={n.r + 9} className="tg-node-halo" fill={tier.color} />
+                  )}
+                  {n.health === 'critical' && !reducedMotion && (
+                    <circle r={n.r + 4} className="tg-node-pulse" stroke={HEALTH_COLOR.critical} />
+                  )}
+                  <circle r={n.r} className="tg-node-body" fill={tier.color} />
+                  <circle r={n.r - 2.5} className="tg-node-ring" stroke={HEALTH_COLOR[n.health] || HEALTH_COLOR.unknown} />
+                  <circle r={n.r - 2.5} className="tg-node-sheen" />
+                  {n.kind === 'device' ? (
+                    <g transform={`translate(${-iconSize / 2} ${-iconSize / 2 - 1})`}>
+                      <Icon size={iconSize} color="#fff" strokeWidth={2} />
                     </g>
-                  );
-                })}
-              </g>
-            </>
-          ) : (
-            /* ═════════════════════════════════════════════════════════════════════
-                LEVEL 2: SITE LAN TIER TOPOLOGY (CORE ↔ DIST ↔ ACCESS)
-                ═════════════════════════════════════════════════════════════════════ */
-            <>
-              {/* 1. Horizontal Tier Lane Backgrounds */}
-              {[
-                { id: 'core', y: 40, height: 180, label: 'CORE & WAN BACKBONE', meta: TIER_METADATA.core },
-                { id: 'dist_sec', y: 260, height: 180, label: 'DISTRIBUTION & SECURITY PERIMETER', meta: TIER_METADATA.dist_sec },
-                { id: 'access', y: 480, height: 180, label: 'CAMPUS & ACCESS EDGE', meta: TIER_METADATA.access }
-              ].map(lane => {
-                const stats = tierStats[lane.id] || { count: 0, critical: 0, warning: 0, healthy: 0 };
-                return (
-                  <g key={lane.id} className={`noc-tier-lane-group lane-${lane.id}`}>
-                    <rect
-                      x="20"
-                      y={lane.y}
-                      width={canvasDimensions.width - 40}
-                      height={lane.height}
-                      rx="12"
-                      className="noc-tier-lane-bg"
-                    />
-                    <rect
-                      x="20"
-                      y={lane.y}
-                      width="4"
-                      height={lane.height}
-                      rx="2"
-                      fill={lane.meta.color}
-                    />
-                    <text
-                      x="36"
-                      y={lane.y + 24}
-                      className="noc-tier-lane-title"
-                    >
-                      {lane.label}
+                  ) : (
+                    <text y={n.r > 36 ? 9 : 7} textAnchor="middle" className="tg-node-flag" style={{ fontSize: n.r * 0.72 }}>{n.flag}</text>
+                  )}
+                  {n.alerts > 0 && (
+                    <g transform={`translate(${n.r * 0.72} ${-n.r * 0.72})`} className="tg-badge">
+                      <circle r={9} fill={n.health === 'critical' ? HEALTH_COLOR.critical : HEALTH_COLOR.warning} />
+                      <text y={3.5} textAnchor="middle">{n.alerts > 9 ? '9+' : n.alerts}</text>
+                    </g>
+                  )}
+                  {p.pinned && (
+                    <g transform={`translate(${-n.r * 0.78} ${-n.r * 0.78})`} className="tg-pin" onClick={e => { e.stopPropagation(); unpin(n.id); }}>
+                      <circle r={7} />
+                      <Pin size={8} x={-4} y={-4} color="#fff" />
+                    </g>
+                  )}
+                  {labelsVisible && (
+                    <text y={n.r + 15} textAnchor="middle" className={`tg-node-label ${n.kind === 'device' ? 'is-device' : ''}`}>
+                      {n.caption}
                     </text>
-                    <text
-                      x="36"
-                      y={lane.y + 40}
-                      className="noc-tier-lane-sub"
-                    >
-                      {stats.count} nodes • {stats.critical > 0 ? `${stats.critical} critical • ` : ''}{stats.warning > 0 ? `${stats.warning} warning • ` : ''}{stats.healthy} nominal
-                    </text>
-                  </g>
-                );
-              })}
-
-              {/* 2. Interconnected Link Edges */}
-              <g className="noc-edges-group">
-                {edges.map(edge => {
-                  const isHovered = hoveredEdge === edge.id;
-                  const strokeColor = getStatusColor(edge.status);
-                  const isBroken = edge.status === 'critical';
-
-                  return (
-                    <g key={edge.id} className="noc-edge-item">
-                      <path
-                        d={edge.path}
-                        fill="none"
-                        stroke="transparent"
-                        strokeWidth="16"
-                        onMouseEnter={() => setHoveredEdge(edge.id)}
-                        onMouseLeave={() => setHoveredEdge(null)}
-                        style={{ cursor: 'pointer' }}
-                      />
-                      <path
-                        id={edge.id}
-                        d={edge.path}
-                        fill="none"
-                        stroke={strokeColor}
-                        strokeWidth={isHovered ? '2.5' : edge.type === 'backbone' ? '2.2' : '1.8'}
-                        strokeDasharray={edge.type === 'redundant' ? '5,4' : isBroken ? '6,4' : 'none'}
-                        className={`noc-link-path ${isHovered ? 'hovered' : ''} ${edge.isDimmed ? 'dimmed' : ''}`}
-                        opacity={edge.isDimmed ? 0.08 : isHovered ? 1 : edge.type === 'redundant' ? 0.45 : 0.75}
-                      />
-                      <circle
-                        r={isHovered ? '4' : '3'}
-                        fill={strokeColor}
-                        className="noc-traffic-pulse"
-                        opacity={edge.isDimmed ? 0 : edge.status === 'critical' ? 0.3 : 0.85}
-                      >
-                        <animateMotion
-                          path={edge.path}
-                          dur={edge.type === 'backbone' ? '2.5s' : '3.8s'}
-                          repeatCount="indefinite"
-                        />
-                      </circle>
-                    </g>
-                  );
-                })}
-              </g>
-
-              {/* 3. Device Node Micro-Cards */}
-              <g className="noc-nodes-group">
-                {nodes.map(node => {
-                  const isSelected = selectedDevice && selectedDevice.device_name === node.id;
-                  const isHovered = hoveredNode === node.id;
-                  const tierMeta = TIER_METADATA[node.tier];
-                  const healthColor = getStatusColor(node.health);
-
-                  return (
-                    <g
-                      key={node.id}
-                      className={`noc-graph-node-card ${isSelected ? 'selected' : ''} ${node.isDimmed ? 'dimmed' : ''}`}
-                      transform={`translate(${node.x - NODE_WIDTH / 2}, ${node.y - NODE_HEIGHT / 2})`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelectDevice(node.device);
-                      }}
-                      onMouseEnter={() => setHoveredNode(node.id)}
-                      onMouseLeave={() => setHoveredNode(null)}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      {isSelected && (
-                        <rect
-                          x="-4"
-                          y="-4"
-                          width={NODE_WIDTH + 8}
-                          height={NODE_HEIGHT + 8}
-                          rx="14"
-                          fill="none"
-                          stroke="var(--accent-blue)"
-                          strokeWidth="2.5"
-                          filter="url(#glow-blue)"
-                          className="noc-node-selected-ring"
-                        />
-                      )}
-
-                      <rect
-                        width={NODE_WIDTH}
-                        height={NODE_HEIGHT}
-                        rx="10"
-                        className={`noc-node-surface ${node.health}`}
-                      />
-
-                      <rect
-                        x="0"
-                        y="0"
-                        width="4"
-                        height={NODE_HEIGHT}
-                        rx="2"
-                        fill={tierMeta.color}
-                      />
-
-                      {renderRoleIcon(node.tier, tierMeta.color)}
-
-                      <text
-                        x="38"
-                        y="23"
-                        className="noc-node-title-text"
-                      >
-                        <title>{node.device.device_name}</title>
-                        {node.device.device_name.length > 20
-                          ? node.device.device_name.slice(0, 19) + '…'
-                          : node.device.device_name}
-                      </text>
-
-                      <text
-                        x="38"
-                        y="37"
-                        className="noc-node-subtitle-text"
-                      >
-                        {node.device.ip_address || '10.x.x.x'} • {node.device.location || 'HQ'}
-                      </text>
-
-                      <rect
-                        x="12"
-                        y="48"
-                        width="54"
-                        height="18"
-                        rx="4"
-                        fill="var(--bg-tertiary)"
-                        stroke="var(--card-border)"
-                        strokeWidth="1"
-                      />
-                      <text
-                        x="39"
-                        y="60.5"
-                        textAnchor="middle"
-                        className="noc-node-tier-pill"
-                        fill={tierMeta.color}
-                      >
-                        {tierMeta.tag}
-                      </text>
-
-                      {node.activeAlertCount > 0 ? (
-                        <g>
-                          <rect
-                            x="72"
-                            y="48"
-                            width="86"
-                            height="18"
-                            rx="4"
-                            fill="rgba(239, 68, 68, 0.14)"
-                            stroke="rgba(239, 68, 68, 0.35)"
-                            strokeWidth="1"
-                          />
-                          <text
-                            x="115"
-                            y="60.5"
-                            textAnchor="middle"
-                            className="noc-node-alert-pill-text"
-                            fill="#ef4444"
-                          >
-                            ⚠ {node.activeAlertCount} Alert{node.activeAlertCount > 1 ? 's' : ''}
-                          </text>
-                        </g>
-                      ) : (
-                        <g>
-                          <rect
-                            x="72"
-                            y="48"
-                            width="74"
-                            height="18"
-                            rx="4"
-                            fill="rgba(16, 185, 129, 0.1)"
-                            stroke="rgba(16, 185, 129, 0.25)"
-                            strokeWidth="1"
-                          />
-                          <text
-                            x="109"
-                            y="60.5"
-                            textAnchor="middle"
-                            className="noc-node-alert-pill-text"
-                            fill="var(--health-healthy)"
-                          >
-                            ✓ Nominal
-                          </text>
-                        </g>
-                      )}
-
-                      <circle
-                        cx={NODE_WIDTH - 18}
-                        cy="19"
-                        r="4.5"
-                        fill={healthColor}
-                      />
-                      {node.health === 'critical' && (
-                        <circle
-                          cx={NODE_WIDTH - 18}
-                          cy="19"
-                          r="10"
-                          fill="none"
-                          stroke="#ef4444"
-                          strokeWidth="1.5"
-                          className="noc-radar-pulse-ring"
-                        />
-                      )}
-                    </g>
-                  );
-                })}
-              </g>
-            </>
-          )}
+                  )}
+                </g>
+              );
+            })}
+          </g>
         </g>
       </svg>
+
+      {/* Hover tooltip */}
+      {hoveredNode && !dragRef.current && (
+        <div
+          className="tg-tooltip"
+          style={{
+            left: Math.min(size.width - 240, Math.max(8, pointer.x - (containerRef.current?.getBoundingClientRect().left || 0) + 16)),
+            top: Math.max(8, pointer.y - (containerRef.current?.getBoundingClientRect().top || 0) + 16),
+          }}
+        >
+          <div className="tg-tip-head">
+            <span className="tg-chip" style={{ background: TIER_METADATA[hoveredNode.tier].color }}>{TIER_METADATA[hoveredNode.tier].label}</span>
+            <span className={`tg-health health-${hoveredNode.health}`}>{hoveredNode.kind === 'device' ? healthLabel(hoveredNode.health) : siteStatusLabel(hoveredNode.status)}</span>
+          </div>
+          <div className="tg-tip-title">{hoveredNode.title}</div>
+          {hoveredNode.kind === 'device'
+            ? <div className="tg-tip-sub">{hoveredNode.alerts} active alert{hoveredNode.alerts === 1 ? '' : 's'} · {hoveredNode.incidents} ServiceNow</div>
+            : <div className="tg-tip-sub">{hoveredNode.devices} device{hoveredNode.devices === 1 ? '' : 's'} · {hoveredNode.alerts} active alert{hoveredNode.alerts === 1 ? '' : 's'}</div>}
+          <div className="tg-tip-hint">
+            {hoveredNode.kind === 'site' ? 'Click for details · double-click to open site' : hoveredNode.kind === 'device' ? 'Click to open triage drawer · drag to pin' : 'Drag devices to pin them'}
+          </div>
+        </div>
+      )}
+      {hoveredEdgeObj && !hoveredNode && (
+        <div
+          className="tg-tooltip is-edge"
+          style={{
+            left: Math.min(size.width - 240, Math.max(8, pointer.x - (containerRef.current?.getBoundingClientRect().left || 0) + 16)),
+            top: Math.max(8, pointer.y - (containerRef.current?.getBoundingClientRect().top || 0) + 16),
+          }}
+        >
+          <div className="tg-tip-head">
+            <span className="tg-chip is-rel">{hoveredEdgeObj.rel}</span>
+            <span className={`tg-health health-${hoveredEdgeObj.status === 'nominal' ? 'healthy' : hoveredEdgeObj.status}`}>{hoveredEdgeObj.status === 'nominal' ? 'Nominal' : hoveredEdgeObj.status === 'warning' ? 'Degraded' : 'Critical'}</span>
+          </div>
+          <div className="tg-tip-title">{nodeById[hoveredEdgeObj.source]?.caption} → {nodeById[hoveredEdgeObj.target]?.caption}</div>
+          <div className="tg-tip-sub">{hoveredEdgeObj.caption ? `${hoveredEdgeObj.caption} · ` : ''}{hoveredEdgeObj.detail}</div>
+        </div>
+      )}
+
+      {/* Inspector */}
+      {inspectedNode && (
+        <aside className="tg-inspector" aria-label="Node properties">
+          <div className="tg-insp-head">
+            <span className="tg-chip" style={{ background: TIER_METADATA[inspectedNode.tier].color }}>{TIER_METADATA[inspectedNode.tier].label}</span>
+            <button type="button" className="tg-icon-btn" onClick={() => setInspected(null)} aria-label="Close properties"><X size={14} /></button>
+          </div>
+          <h3 className="tg-insp-title">
+            {inspectedNode.flag && <span className="tg-flag">{inspectedNode.flag}</span>}
+            {inspectedNode.title}
+          </h3>
+          {inspectedNode.subtitle && <p className="tg-insp-sub">{inspectedNode.subtitle}</p>}
+          <dl className="tg-props">
+            {inspectedNode.kind !== 'device' ? (
+              <>
+                <dt>code</dt><dd className="mono">{inspectedNode.caption}</dd>
+                <dt>region</dt><dd>{inspectedNode.region}</dd>
+                <dt>status</dt><dd><span className={`tg-health health-${inspectedNode.health}`}>{siteStatusLabel(inspectedNode.status)}</span></dd>
+                <dt>devices</dt><dd>{inspectedNode.devices}</dd>
+                <dt>critical</dt><dd>{inspectedNode.critical}</dd>
+                <dt>warning</dt><dd>{inspectedNode.warning}</dd>
+                <dt>healthy</dt><dd>{inspectedNode.healthy}</dd>
+                <dt>active alerts</dt><dd>{inspectedNode.alerts}</dd>
+                <dt>tickets avoided</dt><dd>{inspectedNode.avoided}</dd>
+                <dt>links</dt><dd>{adjacency[inspectedNode.id]?.size || 0}</dd>
+              </>
+            ) : (
+              <>
+                <dt>device_id</dt><dd className="mono">{inspectedNode.device.device_id || '—'}</dd>
+                <dt>site</dt><dd>{inspectedNode.device.location || '—'}</dd>
+                <dt>tier</dt><dd>{TIER_METADATA[inspectedNode.tier].label}</dd>
+                <dt>health</dt><dd><span className={`tg-health health-${inspectedNode.health}`}>{healthLabel(inspectedNode.health)}</span></dd>
+                <dt>active alerts</dt><dd>{inspectedNode.alerts}</dd>
+                <dt>servicenow</dt><dd>{inspectedNode.incidents}</dd>
+                <dt>total alerts</dt><dd>{inspectedNode.device.total_alerts ?? '—'}</dd>
+                <dt>auto-resolving</dt><dd>{inspectedNode.device.auto_resolving ?? 0}</dd>
+              </>
+            )}
+          </dl>
+          {inspectedNode.kind === 'site' && (
+            <button type="button" className="tg-primary-btn" onClick={() => onSelectSite(inspectedNode.id)}>
+              <CornerDownRight size={14} /> Open site topology
+            </button>
+          )}
+          {inspectedNode.kind === 'device' && (
+            <button type="button" className="tg-primary-btn" onClick={() => onSelectDevice(inspectedNode.device)}>
+              <Activity size={14} /> Open triage drawer
+            </button>
+          )}
+          {inspectedNode.kind !== 'hub' && positions[inspectedNode.id]?.pinned && (
+            <button type="button" className="tg-ghost-btn" onClick={() => unpin(inspectedNode.id)}>
+              <PinOff size={13} /> Release pin
+            </button>
+          )}
+        </aside>
+      )}
+
+      {/* Legend */}
+      <div className="tg-legend" aria-label="Legend">
+        {Object.values(TIER_METADATA).filter(t => counts[t.id]).map(t => (
+          <span key={t.id} className="tg-legend-item">
+            <span className="tg-legend-swatch" style={{ background: t.color }} />
+            {t.label}
+            <span className="tg-legend-count">{counts[t.id]}</span>
+          </span>
+        ))}
+        <span className="tg-legend-sep" />
+        <span className="tg-legend-item"><span className="tg-legend-ring" style={{ borderColor: HEALTH_COLOR.healthy }} />Healthy</span>
+        <span className="tg-legend-item"><span className="tg-legend-ring" style={{ borderColor: HEALTH_COLOR.warning }} />Warning</span>
+        <span className="tg-legend-item"><span className="tg-legend-ring" style={{ borderColor: HEALTH_COLOR.critical }} />Critical</span>
+      </div>
+
+      {/* Controls */}
+      <div className="tg-controls" role="toolbar" aria-label="Graph controls">
+        <button type="button" className="tg-icon-btn" onClick={() => zoomBy(1.25)} title="Zoom in"><ZoomIn size={15} /></button>
+        <button type="button" className="tg-icon-btn" onClick={() => zoomBy(0.8)} title="Zoom out"><ZoomOut size={15} /></button>
+        <button type="button" className="tg-icon-btn" onClick={() => fitToView()} title="Fit to view"><Scan size={15} /></button>
+        <span className="tg-ctrl-sep" />
+        <button type="button" className={`tg-icon-btn ${physicsOn ? 'is-on' : ''}`} onClick={() => setPhysicsOn(p => !p)} title={physicsOn ? 'Pause physics' : 'Resume physics'}>
+          {physicsOn ? <Pause size={15} /> : <Play size={15} />}
+        </button>
+        <button type="button" className="tg-icon-btn" onClick={() => { didFitRef.current = false; setLayoutSeed(s => s + 1); }} title="Shuffle layout"><Shuffle size={15} /></button>
+        <button type="button" className={`tg-icon-btn ${showLabels ? 'is-on' : ''}`} onClick={() => setShowLabels(s => !s)} title={showLabels ? 'Hide labels' : 'Show labels'}>
+          <span className="tg-ctrl-text">Aa</span>
+        </button>
+        <span className="tg-ctrl-sep" />
+        <button type="button" className="tg-icon-btn" onClick={() => setIsFullscreen(f => !f)} title={isFullscreen ? 'Exit full screen' : 'Full screen'}>
+          {isFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+        </button>
+      </div>
+
+      {/* Empty state */}
+      {graph.nodes.length === 0 && (
+        <div className="tg-empty">
+          <AlertTriangle size={18} />
+          <p>No devices to map yet. Topology appears once device telemetry arrives.</p>
+        </div>
+      )}
+      {graph.nodes.length <= 1 && !isWan && (
+        <div className="tg-empty">
+          <Ticket size={18} />
+          <p>No devices registered at {selectedSite}.</p>
+          <button type="button" className="tg-ghost-btn" onClick={onReturnToWan}><ArrowLeft size={13} /> Back to global WAN</button>
+        </div>
+      )}
     </div>
   );
 }

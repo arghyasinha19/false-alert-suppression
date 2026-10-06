@@ -68,15 +68,15 @@ class BackdateDetector:
         event_ms = self._extract_event_timestamp_ms(payload)
         meta = self._extract_metadata(payload)
         
-        # Missing timestamp -> fail closed
+        # Missing timestamp -> we cannot prove the alert is old, so it must NOT
+        # be suppressed. Let it continue through classification / escalation.
         if event_ms is None:
             explanation = (
                 f"Event timestamp is missing/invalid; cannot compute alert age. "
-                f"Permissible threshold is {self.threshold_minutes} mins. "
-                f"Policy: flag as backdated upfront."
+                f"Policy: do not suppress - continue processing (fail-safe)."
             )
             decision = BackdateDecision(
-                is_backdated=True,
+                is_backdated=False,
                 reason="MISSING_EVENT_TIMESTAMP",
                 event_timestamp_ms=None,
                 ingestion_timestamp_ms=ingestion_ms,
@@ -90,17 +90,18 @@ class BackdateDetector:
             
         skew_ms = ingestion_ms - event_ms
         
-        # Event in future beyond allowed skew -> invalid/suspicious
+        # Event in future beyond allowed skew -> clock skew between DNAC and this
+        # host. That says nothing about the alert being stale, so do not suppress.
         if skew_ms < -self.allow_future_skew_ms:
             explanation = (
                 f"Alert timestamp appears in the future beyond allowed skew. "
                 f"Event time: {self._ms_to_iso(event_ms)}; Ingestion time: {self._ms_to_iso(ingestion_ms)}. "
                 f"Future skew: {self._format_duration(skew_ms)}. "
                 f"Allowed future skew is {self.allow_future_skew_ms // 1000} seconds. "
-                f"Policy: flag as backdated/suspicious upfront."
+                f"Policy: do not suppress - check NTP on DNAC / workers."
             )
             decision = BackdateDecision(
-                is_backdated=True,
+                is_backdated=False,
                 reason="EVENT_TIMESTAMP_IN_FUTURE_BEYOND_ALLOWED_SKEW",
                 event_timestamp_ms=event_ms,
                 ingestion_timestamp_ms=ingestion_ms,

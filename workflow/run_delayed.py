@@ -5,7 +5,6 @@ import json
 import logging
 from datetime import datetime, timezone
 from contextlib import contextmanager, redirect_stdout, redirect_stderr
-from typing import Union, Optional
 
 # =======================
 # Path setup
@@ -14,9 +13,7 @@ project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from workflow.nodes.node_agent_4_servicenow import agent_4_servicenow
-from workflow.nodes.node_email_notifier import email_notifier
-from workflow.nodes.node_reporter import reporter
+from workflow.delayed import run_delayed_check
 
 LOG = logging.getLogger("run_delayed")
 
@@ -90,97 +87,6 @@ def build_summary(final_state: dict, stage: str, runtime_error: str = None) -> d
         "runtime_error": runtime_error,
     }
 
-def check_dnac_status(
-    instance_id: str = None,
-    device_id: str = None,
-    device_name: str = None,
-    issue_name: str = None,
-    issue_details: str = None,
-    event_id: str = None
-) -> Union[bool, str]:
-    """
-    Check DNAC to see if the alert is still active.
-    Returns:
-      - True if still active in DNAC (primary check or fallback active match)
-      - False if resolved in DNAC (primary check or fallback resolved match)
-      - "Uncertain" if alert cannot be found in active or resolved lists
-    """
-    import yaml
-    try:
-        from app.dnac_client import DNACClient
-    except ImportError:
-        # Fallback if run_delayed.py is called from a different working directory
-        sys.path.insert(0, os.path.dirname(project_root))
-        from app.dnac_client import DNACClient
-    
-    # Load config.yaml
-    config_path = os.path.join(project_root, "config.yaml")
-    try:
-        with open(config_path, "r") as f:
-            config = yaml.safe_load(f)
-    except Exception as e:
-        LOG.error(f"Failed to load config.yaml for DNAC check: {e}")
-        return "Uncertain"
-        
-    try:
-        dnac_config = config.get("dnac", {})
-        client = DNACClient(dnac_config)
-
-        # 1. Primary check using instance_id
-        if instance_id:
-            status = client.get_issue_status(instance_id)
-            LOG.info(f"DNAC primary status check result for instance_id={instance_id}: status={status}")
-            if status != "NOT_FOUND":
-                if status.upper() in ["RESOLVED", "IGNORED", "CLEARED", "DELETED"]:
-                    return False
-                else:
-                    return True
-            LOG.info(f"instance_id={instance_id} returned NOT_FOUND (404). Triggering device fallback check.")
-
-        # Helper function for description matching
-        def is_match(issue: dict) -> bool:
-            target_texts = [str(t).strip().lower() for t in [issue_name, issue_details, event_id] if t]
-            if not target_texts:
-                return False
-            issue_texts = [
-                str(issue.get(k, "")).strip().lower()
-                for k in ["name", "issueName", "description", "issueDescription", "issueDetails", "title", "summary", "eventId"]
-                if issue.get(k)
-            ]
-            for target in target_texts:
-                for itext in issue_texts:
-                    if target in itext or itext in target:
-                        return True
-            return False
-
-        # 2. Fallback Step A: Check active device issues
-        LOG.info(f"Checking active issues for device_id={device_id}, device_name={device_name}")
-        active_issues = client.get_device_issues(device_id=device_id, device_name=device_name, issue_status="ACTIVE")
-        for issue in active_issues:
-            iss_status = str(issue.get("issueStatus", issue.get("status", "ACTIVE"))).upper()
-            if iss_status not in ["RESOLVED", "IGNORED", "CLEARED", "DELETED"]:
-                if is_match(issue):
-                    LOG.info(f"Fallback check: Found matching active issue on device {device_id}/{device_name}")
-                    return True
-
-        # 3. Fallback Step B: Check resolved device issues
-        LOG.info(f"Checking resolved issues for device_id={device_id}, device_name={device_name}")
-        resolved_issues = client.get_device_issues(device_id=device_id, device_name=device_name, issue_status="RESOLVED")
-        for issue in resolved_issues:
-            iss_status = str(issue.get("issueStatus", issue.get("status", "RESOLVED"))).upper()
-            if iss_status in ["RESOLVED", "IGNORED", "CLEARED", "DELETED"]:
-                if is_match(issue):
-                    LOG.info(f"Fallback check: Found matching resolved issue on device {device_id}/{device_name}")
-                    return False
-
-        # 4. Fallback Step C: If not found in active or resolved list -> Uncertain
-        LOG.warning(f"Fallback check: Issue not found in active or resolved issues for device {device_id}/{device_name}. Marking as Uncertain.")
-        return "Uncertain"
-
-    except Exception as e:
-        LOG.error(f"DNAC status check failed: {e}. Defaulting to Uncertain.")
-        return "Uncertain"
-
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run Delayed Incident Triage flow")
     
@@ -196,6 +102,8 @@ def main() -> int:
     parser.add_argument("--source", required=False, help="Alert source")
     parser.add_argument("--issue_name", required=False, help="Alert issue name")
     parser.add_argument("--issue_details", required=False, help="Alert details")
+    parser.add_argument("--issue_id", required=False, help="DNAC Assurance issueId")
+    parser.add_argument("--received_at", required=False, help="Webhook receive time (ISO-8601)")
     
     parser.add_argument("--status-file", default="status.json", help="write summary JSON to this file")
     parser.add_argument("--run-log", default="run.log", help="Redirect all internal output to this log file")
@@ -227,45 +135,17 @@ def main() -> int:
             "correlation_id": args.correlation_id,
             "source": args.source,
             "issue_name": args.issue_name,
-            "issue_details": args.issue_details
+            "issue_details": args.issue_details,
+            "issue_id": args.issue_id,
+            "received_at": args.received_at,
         },
-        "results": {}
     }
     
     final_state = None
     try:
         with redirect_all_output(args.run_log):
-            status = check_dnac_status(
-                instance_id=args.instance_id,
-                device_id=args.device_id,
-                device_name=args.device_name,
-                issue_name=args.issue_name,
-                issue_details=args.issue_details,
-                event_id=args.event_id
-            )
-            if status is True or status == "ACTIVE":
-                LOG.warning(f"Alert {args.event_id} STILL ACTIVE in DNAC. Forcing escalation.")
-                initial_state["results"]["agent_2"] = {
-                    "data": {"predicted_category": "Non-Auto Resolving"}
-                }
-                agent4_result = agent_4_servicenow(initial_state)
-                initial_state["results"]["agent_4"] = agent4_result
-            elif status == "Uncertain":
-                LOG.warning(f"Alert {args.event_id} status UNCERTAIN in DNAC. Forcing escalation to be safe.")
-                initial_state["results"]["agent_2"] = {
-                    "data": {"predicted_category": "Uncertain"}
-                }
-                agent4_result = agent_4_servicenow(initial_state)
-                initial_state["results"]["agent_4"] = agent4_result
-            else:
-                # Alert resolved
-                LOG.info(f"Alert {args.event_id} is resolved in DNAC. No ServiceNow ticket required.")
-                initial_state["results"]["delayed_check"] = {"status": "resolved"}
-                
-            # Send Email and Report
-            initial_state = email_notifier(initial_state)
-            final_state = reporter(initial_state)
-            
+            final_state = run_delayed_check(initial_state["alert"])
+
         summary = build_summary(final_state, stage="completed")
         print(json.dumps(summary, indent=2))
         write_json_file(args.status_file, summary)
