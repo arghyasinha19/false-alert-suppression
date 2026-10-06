@@ -1,25 +1,33 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.9
-milestone_name: UI/UX Audit Remediation
-status: complete
-last_updated: "2026-10-06T08:30:00.000Z"
-last_activity: 2026-10-06 -- Phase 23 executed and verified (Milestone v1.9 complete, ready for audit)
+milestone: v2.0
+milestone_name: Multi-Site Hierarchical Topology & WAN Observability
+status: planning
+last_updated: "2026-10-06T08:42:00.000Z"
+last_activity: 2026-10-06 -- Milestone v2.0 started (defining requirements)
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 10
-  completed_plans: 10
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Current Position
 
-Phase: Phase 23 - Craft & Consistency Polish
-Status: Complete ✓ (Plans 23-01 & 23-02 verified)
-Last activity: 2026-10-06 -- Phase 23 executed and verified (Milestone v1.9 complete, ready for audit)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-10-06 — Milestone v2.0 started
+
+## Key Decisions Made (Milestone v2.0)
+
+- Adopt 2-level hierarchical topology model: Level 1 Global Multi-Site WAN interconnect map with site-level health rollups and blast radius metrics; Level 2 drill-down into site-specific LAN graphs (Core ↔ Dist ↔ Access).
+- Provide site switcher dropdown / pill selector and breadcrumb navigation between Global WAN overview and local site topology.
+- Bi-directionally sync site selection and filtering across Regional Site Matrix, SRE High-Density Table, and Multi-Site Topology views.
+
 
 ## Key Decisions Made (Phase 23)
 
@@ -52,4 +60,4 @@ Last activity: 2026-10-06 -- Phase 23 executed and verified (Milestone v1.9 comp
 
 ## Blockers/Concerns
 
-- None. Milestone v1.9 all 5 phases executed and verified (11/11 requirements satisfied). Ready for /gsd-audit-milestone.
+- None. Milestone v2.0 requirements defined and ready for roadmap.

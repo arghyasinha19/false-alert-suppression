@@ -8,16 +8,15 @@ An intelligent, multi-agent network alert triage and suppression platform for Ci
 
 Accurately identify false or transient network alerts to prevent unnecessary ServiceNow ticket creation and reduce operational noise without missing genuine network degradation.
 
-## Current Milestone: v1.9 UI/UX Audit Remediation
+## Current Milestone: v2.0 Multi-Site Hierarchical Topology & WAN Observability
 
-**Goal:** Address the critical, high, and medium UI/UX flaws identified in the DNAC Ops Center audit report to ensure responsive layouts, reliable status indicators, trustworthy contrast, and accessible interactions.
+**Goal:** Deliver an intuitive, 2-level hierarchical topology architecture allowing network operators to visualize multi-site WAN interconnects at the macro level and drill down into site-specific LAN graphs with real-time site health rollups and blast radius metrics.
 
 **Target features:**
-- **Critical Layout & Status Fixes**: Fix the 1100px breakpoint collapse in `.content-area` and ensure the API connection status correctly reflects offline states.
-- **Data Visibility & Bounds**: Implement persistent scrollbars, table edge masks, and strict independent scroll bounds for the topology graph canvas.
-- **Trust & Contrast Remediation**: Fix `text-tertiary` contrast ratios, route chart colours through CSS tokens for dark mode reliability, and ensure text contrast passes minimums.
-- **Accessibility & Hit Areas**: Increase interactive hit areas to a 32px minimum, fix sidebar keyboard navigation, add `aria-current`, and ensure tables/forms have accessible names.
-- **Craft & Consistency Polish**: Standardize typography scale, KPI card designs, empty states, and eliminate demo scaffolding from the chrome.
+- **2-Level Hierarchical Topology Engine**: Global Multi-Site WAN interconnect overview with drill-down into site-specific LAN graphs (Core ↔ Distribution ↔ Access).
+- **Site-Level Health Rollup & Blast Radius**: Macro site nodes showing aggregated health, active alert volume, degraded link counts, and blast radius indicators.
+- **Interactive Multi-Site Navigation & Breadcrumbs**: Breadcrumb and site-switcher navigation between Global WAN canvas and site-level LAN views with quick return.
+- **Cross-View Site Synchronization**: Bi-directional synchronization between the Regional Site Matrix, SRE High-Density Table, and Multi-Site Topology views.
 
 ## Requirements
 
@@ -54,23 +53,27 @@ Accurately identify false or transient network alerts to prevent unnecessary Ser
 - ✓ Detail drawer high-contrast theme-aware visible scrollbar (`DRAWER-01`) — v1.7
 - ✓ Fixed-header, fixed-tabs, and pinned-footer flexbox drawer architecture (`DRAWER-02`) — v1.7
 - ✓ Unclipped cross-tab viewport scrolling across all 4 SRE workspaces (`DRAWER-03`) — v1.7
-
 - ✓ **TOPO-01**: User can view network devices in an interactive topology graph diagram with nodes and connecting links between tiers. — v1.8
 - ✓ **TOPO-02**: Topology graph links visually represent hierarchical connections (Core ↔ Distribution ↔ Access) with status indicators for link degradation or interface errors. — v1.8
 - ✓ **TOPO-03**: Graph canvas supports pan, zoom, fit-to-view, and responsive layout adapting to dark and light modes. — v1.8
 - ✓ **TOPO-04**: Clicking any device node in the graph diagram opens the slide-out SRE details drawer with full triage, telemetry, inventory, and action bar support. — v1.8
+- ✓ **UI-01**: Fix responsive collapse below 1100px to ensure the dashboard remains usable on smaller screens. — v1.9
+- ✓ **UI-02**: Ensure the sidebar connection status accurately reflects API failures and offline states instead of false positives. — v1.9
+- ✓ **UI-03**: Constrain the topology graph canvas to its own bounds to prevent overflowing the main window. — v1.9
+- ✓ **UI-04**: Add permanently visible scrollbars and edge masks to data tables for usability. — v1.9
+- ✓ **UI-05**: Adjust `text-tertiary` colors for accessible contrast in both light and dark modes. — v1.9
+- ✓ **UI-06**: Route chart colors through CSS tokens to guarantee theme integration (dark mode). — v1.9
+- ✓ **UI-07**: Expand interactive element hit areas to a comfortable 32px minimum. — v1.9
+- ✓ **UI-08**: Ensure the chat panel does not trap focus globally with an invisible overlay. — v1.9
+- ✓ **UI-09-22**: Address medium priority consistency fixes including typography scales, KPI card unified design, unlabelled form controls, keyboard navigation (aria-current), and empty states. — v1.9
 
 ### Active
 
-- [ ] **UI-01**: Fix responsive collapse below 1100px to ensure the dashboard remains usable on smaller screens.
-- [ ] **UI-02**: Ensure the sidebar connection status accurately reflects API failures and offline states instead of false positives.
-- [ ] **UI-03**: Constrain the topology graph canvas to its own bounds to prevent overflowing the main window.
-- [ ] **UI-04**: Add permanently visible scrollbars and edge masks to data tables for usability.
-- [ ] **UI-05**: Adjust `text-tertiary` colors for accessible contrast in both light and dark modes.
-- [ ] **UI-06**: Route chart colors through CSS tokens to guarantee theme integration (dark mode).
-- [ ] **UI-07**: Expand interactive element hit areas to a comfortable 32px minimum.
-- [ ] **UI-08**: Ensure the chat panel does not trap focus globally with an invisible overlay.
-- [ ] **UI-09-22**: Address medium priority consistency fixes including typography scales, KPI card unified design, unlabelled form controls, keyboard navigation (aria-current), and empty states.
+- [ ] **SITE-01**: User can view a Global Multi-Site WAN interconnect topology displaying geographically distributed sites as macro nodes with inter-site connection links.
+- [ ] **SITE-02**: User can view site-level health rollup badges, active alert counts, and blast radius indicators on each site macro node.
+- [ ] **SITE-03**: User can click any site node or select from a site switcher to drill down into the site's local Core ↔ Distribution ↔ Access topology graph.
+- [ ] **SITE-04**: User can navigate between the Global WAN overview and local site topology via breadcrumb controls and return to global view with single-click.
+- [ ] **SITE-05**: Filter and selection state synchronizes bi-directionally between Regional Site Matrix cards, SRE Table location filters, and the Multi-Site Topology canvas.
 
 ### Out of Scope
 
@@ -117,4 +120,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-05 after Milestone v1.6 completion*
+*Last updated: 2026-10-06 after Milestone v2.0 initialization*

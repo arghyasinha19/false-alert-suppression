@@ -67,3 +67,21 @@
   - Dedicated Theme-Aware Scrollbar: High-contrast scrollbar styling for `.detail-panel-body` in both dark and light modes, eliminating invisible/transparent scrollbars so operators immediately perceive scrollability.
   - Flexbox Viewport Architecture: Locked outer `.detail-panel` to `height: 100vh; overflow: hidden; display: flex; flex-direction: column;`, anchored `.detail-panel-header` and `.noc-drawer-tabs` at top (`flex-shrink: 0`), pinned `.noc-drawer-action-bar` at bottom (`flex-shrink: 0`), and isolated scrolling strictly to `.detail-panel-body` (`flex: 1 1 auto; overflow-y: auto; min-height: 0;`).
   - Cross-Tab Viewport Verification: Smooth scrolling across all 4 workspaces (Alert Triage, Assurance Telemetry, Device Inventory, Raw Payloads) with automated contract tests in `tests/test_drawer_scrollbar_contract.py`.
+
+### v1.8 Interactive Network Topology Graph Diagram (Completed 2026-10-05)
+- **Goal:** Provide an interactive SVG network topology graph diagram mapping Core, Distribution, and Access tier infrastructure with pan/zoom canvas, live health status nodes, dynamic interconnects, and seamless integration with the SRE details drawer.
+- **Shipped:**
+  - SVG Topology Canvas & Hierarchical Links (`TopologyGraphView.jsx`): Pan, zoom, reset, fit-to-view, and fullscreen mode. Core backbone mesh, Core-to-Dist, and Dist-to-Access links with animated pulse indicators on degraded paths.
+  - Health Nodes & Filter Reactivity: Multi-tier micro-cards with live health badges (`nominal`, `warning`, `critical`), alert counts, and smooth dimming on active search/filter.
+  - SRE Drawer Integration: Clicking any node opens the slide-out SRE inspection drawer with real-time telemetry and triage actions.
+
+### v1.9 UI/UX Audit Remediation (Completed 2026-10-06)
+- **Goal:** Address all critical, high, and medium UI/UX audit findings to deliver a robust, accessible, high-contrast, and responsive NOC dashboard.
+- **Shipped:**
+  - Responsive Layout & Breakpoint Stabilization: Fixed 1100px breakpoint collapse in `.content-area` with fluid flexbox architecture.
+  - Authoritative Connection State Machine: Verified live API health polling, eliminated false-positive online indicators, and demarcated mock/live states.
+  - Data Visibility & Bounds: Implemented persistent scrollbars and table edge gradient masks; constrained topology graph canvas to its own bounds without viewport scroll bleed.
+  - WCAG AAA Contrast Remediation: Corrected `--text-tertiary` to #64748b (light) and #94a3b8 (dark); routed all Recharts colors through CSS tokens with `useChartTheme()`.
+  - Accessibility & Hit Areas: Enforced 32px visible min-height, 44x44px touch targets, full sidebar keyboard navigation (`<button>` elements with `aria-current`), accessible form labels and table captions, and eliminated modal chat backdrop focus trap.
+  - Craft & Consistency Polish: Established 6-step strict typography scale (`--font-xs` through `--font-2xl`), converged KPI cards to executive NOC architecture with active filter glows, eliminated prototype simulation buttons, unified empty states with `EmptyState.jsx`, and expanded domain shorthand tooltips.
+
