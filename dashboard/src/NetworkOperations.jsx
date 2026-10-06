@@ -632,6 +632,8 @@ export default function NetworkOperations({
     }
   });
   const [topologySubMode, setTopologySubMode] = useState('graph');
+  const [topologyLevel, setTopologyLevel] = useState('wan'); // 'wan' (Level 1) | 'lan' (Level 2)
+  const [selectedSite, setSelectedSite] = useState(null);
   const [tableSortCol, setTableSortCol] = useState('health');
   const [tableSortDir, setTableSortDir] = useState('desc');
   const [roleFilter, setRoleFilter] = useState('all');
@@ -1589,6 +1591,7 @@ export default function NetworkOperations({
         topologySubMode === 'graph' ? (
           <TopologyGraphView
             devices={devices}
+            sites={siteMatrix}
             selectedDevice={selectedDevice}
             onSelectDevice={openDevicePanel}
             subMode={topologySubMode}
@@ -1597,6 +1600,17 @@ export default function NetworkOperations({
             roleFilter={roleFilter}
             healthFilter={healthFilter}
             onResetFilters={resetAllFilters}
+            topologyLevel={topologyLevel}
+            selectedSite={selectedSite}
+            onSelectSite={(siteCode) => {
+              setSelectedSite(siteCode);
+              setTopologyLevel('lan');
+              addToast('Site Topology', `Viewing ${getLocationLabel(siteCode)} LAN (Level 2)`, 'info');
+            }}
+            onReturnToWan={() => {
+              setTopologyLevel('wan');
+              setSelectedSite(null);
+            }}
           />
         ) : (
           <div className="noc-topology-view">
@@ -1876,8 +1890,10 @@ export default function NetworkOperations({
                 type="button"
                 className="noc-site-drilldown-btn"
                 onClick={() => {
-                  setSearchQuery(site.code);
+                  setSelectedSite(site.code);
+                  setTopologyLevel('lan');
                   handleViewModeChange('topology');
+                  addToast('Site Topology', `Navigated to ${site.label} (Level 2)`, 'info');
                 }}
               >
                 <span>Inspect Site Devices</span>

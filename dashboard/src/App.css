@@ -5023,3 +5023,245 @@
   white-space: nowrap;
   border: 0;
 }
+
+/* ==========================================================================
+   Milestone v2.0: Global Multi-Site WAN Topology Canvas (Phases 24-26)
+   ========================================================================== */
+
+/* ── Level Indicator Toolbar Badge ── */
+.noc-topology-level-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: var(--font-xs);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--accent-blue);
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+}
+
+[data-theme="dark"] .noc-topology-level-badge {
+  background: rgba(96, 165, 250, 0.15);
+  border-color: rgba(96, 165, 250, 0.4);
+}
+
+.noc-wan-stats-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+}
+
+.noc-wan-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  font-size: var(--font-xs);
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-height: 32px;
+}
+
+.noc-wan-back-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+/* ── WAN Macro Site Card Nodes ── */
+.noc-wan-site-card-bg {
+  fill: var(--card-bg);
+  stroke: var(--card-border);
+  stroke-width: 1.5;
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.12));
+  transition: all var(--transition-fast);
+}
+
+.noc-wan-site-group:hover .noc-wan-site-card-bg {
+  stroke: var(--accent-blue);
+  filter: drop-shadow(0 12px 28px rgba(59, 130, 246, 0.25));
+}
+
+.noc-wan-site-card-bg.critical {
+  stroke: var(--accent-rose);
+}
+
+.noc-wan-site-card-bg.degraded {
+  stroke: var(--accent-amber);
+}
+
+/* ── Blast Radius Animated Perimeter Halo ── */
+.blast-radius-halo {
+  animation: blastRadiusPulse 2.2s infinite ease-in-out;
+  pointer-events: none;
+}
+
+@keyframes blastRadiusPulse {
+  0% {
+    opacity: 0.8;
+    stroke-width: 2.5;
+  }
+  50% {
+    opacity: 0.25;
+    stroke-width: 4.5;
+  }
+  100% {
+    opacity: 0.8;
+    stroke-width: 2.5;
+  }
+}
+
+/* ── WAN Interconnect Cable Links & Telemetry Flow ── */
+.noc-wan-link-cable {
+  fill: none;
+  stroke-linecap: round;
+  transition: stroke var(--transition-fast), stroke-width var(--transition-fast);
+}
+
+.noc-wan-link-cable.nominal {
+  stroke: var(--accent-blue);
+  opacity: 0.7;
+}
+
+.noc-wan-link-cable.warning {
+  stroke: var(--accent-amber);
+  opacity: 0.85;
+}
+
+.noc-wan-link-cable.critical {
+  stroke: var(--accent-rose);
+  opacity: 0.95;
+}
+
+.noc-wan-link-flow {
+  fill: none;
+  stroke: #ffffff;
+  stroke-linecap: round;
+  stroke-dasharray: 6 10;
+  animation: wanFlow 2s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes wanFlow {
+  from {
+    stroke-dashoffset: 32;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ── WAN Link Latency Pill Badge ── */
+.noc-wan-link-badge-bg {
+  fill: var(--card-bg);
+  stroke: var(--card-border);
+  stroke-width: 1;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.15));
+}
+
+.noc-wan-link-badge-group:hover .noc-wan-link-badge-bg {
+  stroke: var(--accent-blue);
+}
+
+.noc-wan-link-badge-text {
+  font-size: var(--font-xs);
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  fill: var(--text-primary);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+/* ── Macro Node Typography ── */
+.noc-wan-flag {
+  font-size: var(--font-lg);
+  dominant-baseline: central;
+}
+
+.noc-wan-code {
+  font-size: var(--font-sm);
+  font-weight: 800;
+  fill: var(--text-primary);
+  letter-spacing: 0.05em;
+  dominant-baseline: central;
+}
+
+.noc-wan-status-text {
+  font-size: var(--font-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  dominant-baseline: central;
+}
+
+.noc-wan-name {
+  font-size: var(--font-md);
+  font-weight: 700;
+  fill: var(--text-primary);
+  dominant-baseline: central;
+}
+
+.noc-wan-sub {
+  font-size: var(--font-xs);
+  fill: var(--text-secondary);
+  dominant-baseline: central;
+}
+
+.noc-wan-alert-text {
+  font-size: var(--font-xs);
+  font-weight: 600;
+  dominant-baseline: central;
+}
+
+.noc-wan-avoid-text {
+  font-size: var(--font-xs);
+  font-weight: 600;
+  fill: var(--accent-emerald, #10b981);
+  dominant-baseline: central;
+}
+
+.noc-wan-blast-text {
+  font-size: var(--font-xs);
+  font-weight: 700;
+  dominant-baseline: central;
+}
+
+.noc-wan-drill-bg {
+  fill: var(--bg-secondary);
+  stroke: var(--card-border);
+  stroke-width: 1;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.noc-wan-drilldown-btn:hover .noc-wan-drill-bg {
+  fill: var(--accent-blue);
+  stroke: var(--accent-blue);
+}
+
+.noc-wan-drill-text {
+  font-size: var(--font-xs);
+  font-weight: 700;
+  fill: var(--text-primary);
+  dominant-baseline: central;
+  cursor: pointer;
+}
+
+.noc-wan-drilldown-btn:hover .noc-wan-drill-text {
+  fill: #ffffff;
+}
+

@@ -2,7 +2,8 @@ import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react'
 import {
   ZoomIn, ZoomOut, Maximize2, Minimize2, RotateCcw,
   LayoutGrid, Server, Shield, Wifi,
-  Activity, Move, Layers
+  Activity, Move, Layers, Globe, ArrowLeft, Zap,
+  AlertTriangle, CheckCircle, ExternalLink, ShieldAlert
 } from 'lucide-react';
 
 const TIER_METADATA = {
@@ -94,8 +95,37 @@ function renderRoleIcon(tierId, color) {
 const NODE_WIDTH = 220;
 const NODE_HEIGHT = 76;
 
+const WAN_NODE_WIDTH = 240;
+const WAN_NODE_HEIGHT = 110;
+
+const WAN_SITE_COORDINATES = {
+  'US-NY': { x: 230, y: 200, region: 'Americas' },
+  'US-CHI': { x: 230, y: 460, region: 'Americas' },
+  'UK-LON': { x: 590, y: 170, region: 'EMEA' },
+  'UK-MAL': { x: 590, y: 400, region: 'EMEA' },
+  'DE-FRA': { x: 590, y: 620, region: 'EMEA' },
+  'SG-SIN': { x: 970, y: 240, region: 'APAC' },
+  'JP-TKY': { x: 970, y: 470, region: 'APAC' },
+  'IN-MUM': { x: 880, y: 680, region: 'APAC' },
+  'AU-SYD': { x: 1060, y: 680, region: 'APAC' },
+  'INFRA-CORE': { x: 590, y: 280, region: 'Core Infrastructure' },
+  'INFRA-ACCESS': { x: 970, y: 350, region: 'Access Infrastructure' }
+};
+
+const WAN_INTERCONNECT_DEFINITIONS = [
+  { source: 'US-NY', target: 'US-CHI', latency: '18ms', type: 'metro', loss: '0.00%', bandwidth: '40 Gbps', label: 'Inter-City Metro' },
+  { source: 'US-NY', target: 'UK-LON', latency: '115ms', type: 'subsea', loss: '0.01%', bandwidth: '100 Gbps', label: 'Transatlantic Subsea' },
+  { source: 'UK-LON', target: 'UK-MAL', latency: '6ms', type: 'metro', loss: '0.00%', bandwidth: '10 Gbps', label: 'Regional Metro' },
+  { source: 'UK-LON', target: 'DE-FRA', latency: '24ms', type: 'backbone', loss: '0.00%', bandwidth: '100 Gbps', label: '100G European Core' },
+  { source: 'DE-FRA', target: 'SG-SIN', latency: '128ms', type: 'terrestrial', loss: '0.02%', bandwidth: '100 Gbps', label: 'Eurasia Terrestrial Transit' },
+  { source: 'SG-SIN', target: 'JP-TKY', latency: '68ms', type: 'subsea', loss: '0.00%', bandwidth: '40 Gbps', label: 'East Asia Subsea Cable' },
+  { source: 'SG-SIN', target: 'IN-MUM', latency: '42ms', type: 'subsea', loss: '0.01%', bandwidth: '40 Gbps', label: 'Bay of Bengal Cable' },
+  { source: 'SG-SIN', target: 'AU-SYD', latency: '92ms', type: 'subsea', loss: '0.02%', bandwidth: '40 Gbps', label: 'Indo-Pacific Subsea' }
+];
+
 export default function TopologyGraphView({
   devices = [],
+  sites = [],
   selectedDevice = null,
   onSelectDevice = () => {},
   subMode = 'graph',
@@ -103,7 +133,12 @@ export default function TopologyGraphView({
   searchQuery = '',
   roleFilter = 'all',
   healthFilter = 'all',
-  onResetFilters = null
+  onResetFilters = null,
+  // Milestone v2.0 Multi-Site Props:
+  topologyLevel = 'wan',
+  selectedSite = null,
+  onSelectSite = () => {},
+  onReturnToWan = () => {}
 }) {
   const containerRef = useRef(null);
   const [containerSize, setContainerSize] = useState({ width: 1100, height: 720 });
@@ -115,6 +150,7 @@ export default function TopologyGraphView({
   const [startTransform, setStartTransform] = useState({ x: 0, y: 0, k: 1 });
   const [hoveredNode, setHoveredNode] = useState(null);
   const [hoveredEdge, setHoveredEdge] = useState(null);
+  const [hoveredWanEdge, setHoveredWanEdge] = useState(null);
   const [showWheelHint, setShowWheelHint] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const wheelHintTimerRef = useRef(null);
@@ -138,10 +174,163 @@ export default function TopologyGraphView({
 
   const hasActiveFilter = Boolean(searchQuery || roleFilter !== 'all' || healthFilter !== 'all');
 
-  // Compute node coordinates grouped by tier
+  // ─────────────────────────────────────────────────────────────────────────────
+  // LEVEL 1: Global Multi-Site WAN Topology Computation
+  // ─────────────────────────────────────────────────────────────────────────────
+  const { wanNodes, wanEdges, wanResilienceScore, wanDimensions } = useMemo(() => {
+    const resolvedSites = sites && sites.length > 0 ? [...sites] : [];
+
+    // Fallback if no sites passed: dynamically group devices by location
+    if (resolvedSites.length === 0 && devices && devices.length > 0) {
+      const siteMap = {};
+      devices.forEach(d => {
+        const loc = d.location || 'INFRA-CORE';
+        if (!siteMap[loc]) {
+          siteMap[loc] = {
+            code: loc,
+            label: loc,
+            devices: [],
+            critical: 0,
+            warning: 0,
+            healthy: 0,
+            totalAlerts: 0,
+            avoidedTickets: 0
+          };
+        }
+        siteMap[loc].devices.push(d);
+        const h = getNodeHealth(d);
+        if (h === 'critical') siteMap[loc].critical++;
+        else if (h === 'warning') siteMap[loc].warning++;
+        else siteMap[loc].healthy++;
+        siteMap[loc].totalAlerts += (d.active_alerts || []).length;
+        siteMap[loc].avoidedTickets += (d.auto_resolving || 0) + (d.backdated || 0);
+      });
+      Object.values(siteMap).forEach(s => {
+        let status = 'nominal';
+        if (s.critical > 0) status = 'critical';
+        else if (s.warning > 0) status = 'degraded';
+        resolvedSites.push({ ...s, status });
+      });
+    }
+
+    const computedWanWidth = Math.max(containerSize.width, 1280);
+    const computedWanHeight = Math.max(containerSize.height, 820);
+
+    let totalSites = resolvedSites.length;
+    let nominalCount = 0;
+    let criticalCount = 0;
+
+    const computedNodes = resolvedSites.map((site, idx) => {
+      const defaultCoord = WAN_SITE_COORDINATES[site.code] || {
+        x: 250 + (idx % 3) * 360,
+        y: 200 + Math.floor(idx / 3) * 240,
+        region: 'Regional Network'
+      };
+
+      if (site.status === 'nominal') nominalCount++;
+      else if (site.status === 'critical') criticalCount++;
+
+      const flag = (site.label || '').split(' ')[0] || '🌐';
+      let name = site.label || site.code;
+      if (name.includes('—')) {
+        name = name.split('—')[1].trim();
+      }
+
+      const totalDevs = (site.devices || []).length;
+      const degradedDevs = (site.critical || 0) + (site.warning || 0);
+      const blastRadius = totalDevs > 0 ? Math.round((degradedDevs / totalDevs) * 100) : 0;
+
+      // Filter matching check
+      const q = (searchQuery || '').toLowerCase().trim();
+      const matchesQuery = !q ||
+        site.code.toLowerCase().includes(q) ||
+        (site.label && site.label.toLowerCase().includes(q));
+      const matchesHealth = healthFilter === 'all' || site.status === healthFilter;
+      const isDimmed = !(matchesQuery && matchesHealth);
+
+      return {
+        id: site.code,
+        code: site.code,
+        label: site.label,
+        name,
+        flag,
+        region: defaultCoord.region,
+        status: site.status || 'nominal',
+        x: defaultCoord.x,
+        y: defaultCoord.y,
+        devicesCount: totalDevs,
+        activeAlerts: site.totalAlerts || 0,
+        avoidedTickets: site.avoidedTickets || 0,
+        critical: site.critical || 0,
+        warning: site.warning || 0,
+        healthy: site.healthy || 0,
+        blastRadius,
+        hasBlastRadius: blastRadius > 0 || site.status !== 'nominal',
+        isDimmed,
+        rawSite: site
+      };
+    });
+
+    const resilience = totalSites > 0
+      ? Math.max(0, Math.min(100, Math.round(((nominalCount + (totalSites - criticalCount) * 0.5) / (totalSites * 1.5)) * 100)))
+      : 100;
+
+    // Generate WAN Interconnect Edges
+    const computedWanEdges = [];
+    WAN_INTERCONNECT_DEFINITIONS.forEach(def => {
+      const srcNode = computedNodes.find(n => n.id === def.source);
+      const tgtNode = computedNodes.find(n => n.id === def.target);
+      if (srcNode && tgtNode) {
+        const dx = tgtNode.x - srcNode.x;
+        const dy = tgtNode.y - srcNode.y;
+        const midX = (srcNode.x + tgtNode.x) / 2;
+        const midY = (srcNode.y + tgtNode.y) / 2;
+        const curvature = Math.abs(dx) > Math.abs(dy) ? -38 : 38;
+        const path = `M ${srcNode.x} ${srcNode.y} Q ${midX} ${midY + curvature} ${tgtNode.x} ${tgtNode.y}`;
+
+        let status = 'nominal';
+        if (srcNode.status === 'critical' || tgtNode.status === 'critical') status = 'critical';
+        else if (srcNode.status === 'degraded' || tgtNode.status === 'degraded') status = 'warning';
+
+        const isDimmed = hasActiveFilter && (srcNode.isDimmed && tgtNode.isDimmed);
+
+        computedWanEdges.push({
+          id: `wan-${srcNode.id}-${tgtNode.id}`,
+          source: srcNode,
+          target: tgtNode,
+          path,
+          midX,
+          midY: midY + curvature / 2,
+          latency: def.latency,
+          loss: def.loss,
+          bandwidth: def.bandwidth,
+          type: def.type,
+          label: def.label,
+          status,
+          isDimmed
+        });
+      }
+    });
+
+    return {
+      wanNodes: computedNodes,
+      wanEdges: computedWanEdges,
+      wanResilienceScore: resilience,
+      wanDimensions: { width: computedWanWidth, height: computedWanHeight }
+    };
+  }, [sites, devices, containerSize, searchQuery, healthFilter, hasActiveFilter]);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // LEVEL 2: Site LAN Tier Topology Computation
+  // ─────────────────────────────────────────────────────────────────────────────
   const { nodes, edges, tierStats, canvasDimensions } = useMemo(() => {
+    const scopedDevices = (topologyLevel === 'lan' && selectedSite)
+      ? devices.filter(d => (d.location === selectedSite || (d.device_name && d.device_name.startsWith(selectedSite))))
+      : devices;
+    const activeDeviceList = scopedDevices.length > 0 ? scopedDevices : devices;
+
     const buckets = { core: [], dist_sec: [], access: [] };
-    devices.forEach(d => {
+    activeDeviceList.forEach(d => {
       const tier = deriveTier(d.device_name);
       if (buckets[tier]) buckets[tier].push(d);
       else buckets.core.push(d);
@@ -313,31 +502,27 @@ export default function TopologyGraphView({
       tierStats: tierStatsMap,
       canvasDimensions: { width: computedWidth, height: computedHeight }
     };
-  }, [devices, containerSize, searchQuery, roleFilter, healthFilter, hasActiveFilter]);
+  }, [devices, selectedSite, topologyLevel, containerSize, searchQuery, roleFilter, healthFilter, hasActiveFilter]);
 
   const matchCount = useMemo(() => {
+    if (topologyLevel === 'wan') {
+      return wanNodes.filter(n => !n.isDimmed).length;
+    }
     return nodes.filter(n => !n.isDimmed).length;
-  }, [nodes]);
+  }, [topologyLevel, wanNodes, nodes]);
 
   // Handle Drag / Pan Operations
   const handlePointerDown = (e) => {
-    if (e.button !== 0) return; // Only primary mouse button
-    // Don't pan if clicking directly on a button, node, or badge
+    if (e.button !== 0) return;
     if (
       e.target.closest('.noc-graph-control-btn') ||
       e.target.closest('.noc-graph-node-card') ||
-      e.target.closest('.noc-graph-filter-badge')
+      e.target.closest('.noc-graph-filter-badge') ||
+      e.target.closest('.noc-wan-site-group') ||
+      e.target.closest('.noc-wan-back-btn') ||
+      e.target.closest('.noc-topology-level-banner')
     ) {
       return;
-    }
-    
-    // Check if we're clicking inside an SVG node group by walking up parents
-    let current = e.target;
-    while (current && current.tagName !== 'svg') {
-      if (current.classList && current.classList.contains('noc-graph-node-card')) {
-        return; // Clicked a node, don't pan
-      }
-      current = current.parentNode;
     }
 
     setIsPanning(true);
@@ -348,108 +533,78 @@ export default function TopologyGraphView({
       containerRef.current.setPointerCapture(e.pointerId);
     }
   };
+
   const handlePointerMove = (e) => {
     if (!isPanning) return;
     const dx = e.clientX - panStart.x;
     const dy = e.clientY - panStart.y;
-    
-    // Just track the maximum distance moved from start, not accumulating on every event
-    setPanDistance(Math.max(Math.abs(dx), Math.abs(dy)));
-
-    const rawX = startTransform.x + dx;
-    const rawY = startTransform.y + dy;
-
-    // Soft boundary pan clamping (D-03):
-    // Ensure at least 25% of graph bounding box remains visible within container
-    const visibleW = canvasDimensions.width * transform.k;
-    const visibleH = canvasDimensions.height * transform.k;
-    const minX = -(visibleW * 0.75);
-    const maxX = containerSize.width - (visibleW * 0.25);
-    const minY = -(visibleH * 0.75);
-    const maxY = containerSize.height - (visibleH * 0.25);
-
-    const clampedX = Math.min(maxX, Math.max(minX, rawX));
-    const clampedY = Math.min(maxY, Math.max(minY, rawY));
-    
+    setPanDistance(Math.sqrt(dx * dx + dy * dy));
+    const nextX = startTransform.x + dx;
+    const nextY = startTransform.y + dy;
+    const clampedX = Math.max(-1200, Math.min(1200, nextX));
+    const clampedY = Math.max(-800, Math.min(800, nextY));
     setTransform({
       ...startTransform,
       x: clampedX,
       y: clampedY
     });
   };
+
   const handlePointerUp = (e) => {
     if (isPanning) {
       setIsPanning(false);
       try {
-        if (containerRef.current) {
+        if (containerRef.current && containerRef.current.hasPointerCapture(e.pointerId)) {
           containerRef.current.releasePointerCapture(e.pointerId);
         }
       } catch {
-        // Safe ignore
-      }
-      // If user tapped empty canvas without panning, deselect device
-      if (panDistance < 6) {
-        if (e.target.tagName === 'svg' || e.target.id === 'noc-canvas-bg' || e.target.classList?.contains('noc-tier-lane-bg')) {
-          onSelectDevice(null);
-        }
+        // Safe release
       }
     }
   };
 
-  // Handle Mouse Wheel Zooming (clamped 0.4x to 2.2x guarded by Ctrl/Cmd)
-  const handleWheel = useCallback((e) => {
-    const hasModifier = e.ctrlKey || e.metaKey;
-    if (!hasModifier) {
-      // Natural browser page scroll passes through; display temporary floating hint
-      if (wheelHintTimerRef.current) clearTimeout(wheelHintTimerRef.current);
-      setShowWheelHint(true);
-      wheelHintTimerRef.current = setTimeout(() => {
-        setShowWheelHint(false);
-      }, 2000);
-      return;
-    }
-
-    // Ctrl or Cmd modifier held: intercept wheel event to zoom canvas
-    e.preventDefault();
-    if (showWheelHint) {
-      setShowWheelHint(false);
-      if (wheelHintTimerRef.current) clearTimeout(wheelHintTimerRef.current);
-    }
-
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-
-    const zoomFactor = e.deltaY < 0 ? 1.1 : 0.909;
-    setTransform(curr => {
-      const nextK = Math.min(2.2, Math.max(0.4, curr.k * zoomFactor));
-      if (nextK === curr.k) return curr;
-
-      // Zoom towards mouse coordinate
-      const nextX = mouseX - (mouseX - curr.x) * (nextK / curr.k);
-      const nextY = mouseY - (mouseY - curr.y) * (nextK / curr.k);
-
-      return { x: nextX, y: nextY, k: nextK };
+  // Zoom Operations
+  const handleZoom = useCallback((factor, centerX, centerY) => {
+    setTransform(prev => {
+      const newK = Math.max(0.4, Math.min(2.2, prev.k * factor));
+      const cx = centerX !== undefined ? centerX : containerSize.width / 2;
+      const cy = centerY !== undefined ? centerY : containerSize.height / 2;
+      const newX = cx - (cx - prev.x) * (newK / prev.k);
+      const newY = cy - (cy - prev.y) * (newK / prev.k);
+      return { x: newX, y: newY, k: newK };
     });
-  }, [showWheelHint]);
+  }, [containerSize]);
 
-  // Attach non-passive wheel listener for clean e.preventDefault()
+  // Wheel Zoom Listener
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    el.addEventListener('wheel', handleWheel, { passive: false });
-    return () => el.removeEventListener('wheel', handleWheel);
-  }, [handleWheel]);
 
-  // Cleanup wheel hint timer on unmount
-  useEffect(() => {
+    const handleWheel = (e) => {
+      e.preventDefault();
+      if (!e.ctrlKey && !e.metaKey) {
+        setShowWheelHint(true);
+        if (wheelHintTimerRef.current) clearTimeout(wheelHintTimerRef.current);
+        wheelHintTimerRef.current = setTimeout(() => setShowWheelHint(false), 1800);
+        return;
+      }
+
+      setShowWheelHint(false);
+      const rect = el.getBoundingClientRect();
+      const cursorX = e.clientX - rect.left;
+      const cursorY = e.clientY - rect.top;
+      const factor = e.deltaY < 0 ? 1.12 : 0.89;
+      handleZoom(factor, cursorX, cursorY);
+    };
+
+    el.addEventListener('wheel', handleWheel, { passive: false });
     return () => {
+      el.removeEventListener('wheel', handleWheel);
       if (wheelHintTimerRef.current) clearTimeout(wheelHintTimerRef.current);
     };
-  }, []);
+  }, [handleZoom]);
 
-  // Keyboard shortcut listener for Esc key to exit fullscreen (D-04)
+  // Escape key listener to exit fullscreen
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && isFullscreen) {
@@ -460,53 +615,37 @@ export default function TopologyGraphView({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isFullscreen]);
 
-  const toggleFullscreen = () => {
-    setIsFullscreen(prev => !prev);
-  };
-
-  // Toolbar Actions
-  const handleZoomIn = () => {
-    setZoomTransition(true);
-    setTransform(curr => ({
-      ...curr,
-      k: Math.min(2.2, curr.k * 1.2)
-    }));
-    setTimeout(() => setZoomTransition(false), 300);
-  };
-
-  const handleZoomOut = () => {
-    setZoomTransition(true);
-    setTransform(curr => ({
-      ...curr,
-      k: Math.max(0.4, curr.k * 0.83)
-    }));
-    setTimeout(() => setZoomTransition(false), 300);
-  };
+  const handleZoomIn = () => handleZoom(1.2);
+  const handleZoomOut = () => handleZoom(0.83);
 
   const handleResetZoom = () => {
     setZoomTransition(true);
     setTransform({ x: 30, y: 20, k: 0.95 });
-    setTimeout(() => setZoomTransition(false), 300);
+    setTimeout(() => setZoomTransition(false), 320);
   };
 
   const handleFitToScreen = () => {
-    if (nodes.length === 0) return;
-    const padding = 60;
-    const scaleX = (containerSize.width - padding * 2) / canvasDimensions.width;
-    const scaleY = (containerSize.height - padding * 2) / canvasDimensions.height;
-    const newK = Math.min(1.2, Math.max(0.45, Math.min(scaleX, scaleY)));
-    const newX = (containerSize.width - canvasDimensions.width * newK) / 2;
-    const newY = Math.max(20, (containerSize.height - canvasDimensions.height * newK) / 2);
+    const activeWidth = topologyLevel === 'wan' ? wanDimensions.width : canvasDimensions.width;
+    const activeHeight = topologyLevel === 'wan' ? wanDimensions.height : canvasDimensions.height;
+    const scaleX = (containerSize.width - 80) / activeWidth;
+    const scaleY = (containerSize.height - 80) / activeHeight;
+    const fitK = Math.max(0.45, Math.min(1.2, Math.min(scaleX, scaleY)));
+    const fitX = (containerSize.width - activeWidth * fitK) / 2;
+    const fitY = (containerSize.height - activeHeight * fitK) / 2;
+
     setZoomTransition(true);
-    setTransform({ x: newX, y: newY, k: newK });
-    setTimeout(() => setZoomTransition(false), 300);
+    setTransform({ x: fitX, y: fitY, k: fitK });
+    setTimeout(() => setZoomTransition(false), 320);
   };
 
-  // Color mapper helper
+  const toggleFullscreen = () => {
+    setIsFullscreen(prev => !prev);
+  };
+
   const getStatusColor = (status) => {
-    if (status === 'critical') return '#ef4444';
-    if (status === 'warning') return '#f59e0b';
-    return '#06b6d4'; // teal
+    if (status === 'critical') return 'var(--accent-rose, #ef4444)';
+    if (status === 'warning' || status === 'degraded') return 'var(--accent-amber, #f59e0b)';
+    return 'var(--accent-blue, #3b82f6)';
   };
 
   return (
@@ -518,16 +657,57 @@ export default function TopologyGraphView({
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
     >
-      {/* Floating Wheel Zoom Modifier Hint Toast (D-01) */}
+      {/* Floating Wheel Zoom Modifier Hint Toast */}
       {showWheelHint && (
         <div className="noc-wheel-zoom-hint" role="status" aria-live="polite">
           Use Ctrl + scroll to zoom
         </div>
       )}
 
+      {/* Level Indicator Banner (Top Left) */}
+      <div
+        className="noc-topology-level-banner"
+        style={{
+          position: 'absolute',
+          top: '16px',
+          left: '16px',
+          zIndex: 12,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}
+      >
+        {topologyLevel === 'wan' ? (
+          <>
+            <div className="noc-topology-level-badge">
+              <Globe size={13} />
+              <span>GLOBAL WAN TOPOLOGY (LEVEL 1)</span>
+            </div>
+            <div className="noc-wan-stats-pill">
+              <span>{wanNodes.length} Connected Sites • Fleet Resilience {wanResilienceScore}%</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              className="noc-wan-back-btn"
+              onClick={onReturnToWan}
+              title="Return to Global WAN Overview"
+            >
+              <ArrowLeft size={13} />
+              <span>← Back to Global WAN</span>
+            </button>
+            <div className="noc-topology-level-badge" style={{ borderColor: 'var(--accent-purple)', color: 'var(--accent-purple)' }}>
+              <Layers size={13} />
+              <span>SITE LAN: {selectedSite || 'LOCAL CLUSTER'} (LEVEL 2)</span>
+            </div>
+          </>
+        )}
+      </div>
+
       {/* Floating Canvas Controls Toolbar */}
       <div className="noc-graph-controls-toolbar">
-        {/* Fullscreen / Expand Canvas Mode Toggle (D-04) */}
         <button
           type="button"
           className={`noc-graph-control-btn ${isFullscreen ? 'active-pill' : ''}`}
@@ -541,7 +721,6 @@ export default function TopologyGraphView({
 
         <div className="noc-graph-btn-divider" />
 
-        {/* Sub-mode switch button: Graph vs Cards */}
         <button
           type="button"
           className="noc-graph-control-btn active-pill"
@@ -589,33 +768,39 @@ export default function TopologyGraphView({
         </button>
       </div>
 
-      {/* Floating Canvas Legend or Active Filter Match Banner (Top Left) */}
-      {hasActiveFilter ? (
-        <div className="noc-graph-filter-badge">
-          <Activity size={13} style={{ color: 'var(--accent-blue)' }} />
-          <span>
-            Filtered: <strong>{matchCount}</strong> of {nodes.length} devices
-          </span>
-          {onResetFilters && (
-            <button
-              type="button"
-              className="noc-graph-filter-reset-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                onResetFilters();
-              }}
-              title="Clear all active filters"
-            >
-              Reset
-            </button>
-          )}
-        </div>
-      ) : (
-        <div className="noc-graph-legend-badge">
-          <span className="noc-legend-icon"><Move size={12} /></span>
-          <span>Drag canvas to pan • Scroll to zoom • Click node to triage</span>
-        </div>
-      )}
+      {/* Floating Canvas Legend or Active Filter Match Banner */}
+      <div style={{ position: 'absolute', top: '56px', left: '16px', zIndex: 10 }}>
+        {hasActiveFilter ? (
+          <div className="noc-graph-filter-badge" style={{ position: 'static' }}>
+            <Activity size={13} style={{ color: 'var(--accent-blue)' }} />
+            <span>
+              Filtered: <strong>{matchCount}</strong> {topologyLevel === 'wan' ? 'sites' : 'devices'}
+            </span>
+            {onResetFilters && (
+              <button
+                type="button"
+                className="noc-graph-filter-reset-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onResetFilters();
+                }}
+                title="Clear all active filters"
+              >
+                Reset
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="noc-graph-legend-badge" style={{ position: 'static' }}>
+            <span className="noc-legend-icon"><Move size={12} /></span>
+            <span>
+              {topologyLevel === 'wan'
+                ? 'Drag to pan • Scroll to zoom • Click site to drill down into LAN'
+                : 'Drag to pan • Scroll to zoom • Click node to inspect triage drawer'}
+            </span>
+          </div>
+        )}
+      </div>
 
       {/* Main SVG Graph Surface */}
       <svg
@@ -625,12 +810,10 @@ export default function TopologyGraphView({
         style={{ display: 'block' }}
       >
         <defs>
-          {/* Subtle Grid Dot Pattern */}
           <pattern id="noc-grid-dots" width="24" height="24" patternUnits="userSpaceOnUse">
             <circle cx="2" cy="2" r="1" fill="var(--card-border)" opacity="0.35" />
           </pattern>
 
-          {/* Node Glow Filters */}
           <filter id="glow-teal" x="-20%" y="-20%" width="140%" height="140%">
             <feGaussianBlur stdDeviation="3" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
@@ -649,295 +832,494 @@ export default function TopologyGraphView({
           </filter>
         </defs>
 
-        {/* Dot Grid Background */}
         <rect id="noc-canvas-bg" width="100%" height="100%" fill="url(#noc-grid-dots)" />
 
-        {/* Pan & Zoom Transform Group */}
-        <g 
+        <g
           className="noc-graph-transform-group"
           transform={`translate(${transform.x}, ${transform.y}) scale(${transform.k})`}
           style={{ transition: zoomTransition ? 'transform 0.3s cubic-bezier(0.2, 0, 0, 1)' : 'none' }}
         >
-          {/* 1. Horizontal Tier Lane Backgrounds */}
-          {[
-            { id: 'core', y: 40, height: 180, label: 'CORE & WAN BACKBONE', meta: TIER_METADATA.core },
-            { id: 'dist_sec', y: 260, height: 180, label: 'DISTRIBUTION & SECURITY PERIMETER', meta: TIER_METADATA.dist_sec },
-            { id: 'access', y: 480, height: 180, label: 'CAMPUS & ACCESS EDGE', meta: TIER_METADATA.access }
-          ].map(lane => {
-            const stats = tierStats[lane.id] || { count: 0, critical: 0, warning: 0, healthy: 0 };
-            return (
-              <g key={lane.id} className={`noc-tier-lane-group lane-${lane.id}`}>
-                {/* Lane Background Band */}
-                <rect
-                  x="20"
-                  y={lane.y}
-                  width={canvasDimensions.width - 40}
-                  height={lane.height}
-                  rx="12"
-                  className="noc-tier-lane-bg"
-                />
-                {/* Lane Header Banner */}
-                <rect
-                  x="20"
-                  y={lane.y}
-                  width="4"
-                  height={lane.height}
-                  rx="2"
-                  fill={lane.meta.color}
-                />
-                <text
-                  x="36"
-                  y={lane.y + 24}
-                  className="noc-tier-lane-title"
-                >
-                  {lane.label}
-                </text>
-                <text
-                  x="36"
-                  y={lane.y + 40}
-                  className="noc-tier-lane-sub"
-                >
-                  {stats.count} nodes • {stats.critical > 0 ? `${stats.critical} critical • ` : ''}{stats.warning > 0 ? `${stats.warning} warning • ` : ''}{stats.healthy} nominal
-                </text>
+          {/* ═════════════════════════════════════════════════════════════════════
+              LEVEL 1: GLOBAL MULTI-SITE WAN INTERCONNECT TOPOLOGY
+              ═════════════════════════════════════════════════════════════════════ */}
+          {topologyLevel === 'wan' ? (
+            <>
+              {/* 1. Global WAN Interconnect Links */}
+              <g className="noc-wan-edges-group">
+                {wanEdges.map(edge => {
+                  const isHovered = hoveredWanEdge === edge.id;
+                  const strokeColor = getStatusColor(edge.status);
+
+                  return (
+                    <g key={edge.id} className="noc-wan-edge-item">
+                      {/* Broad invisible hover trigger path */}
+                      <path
+                        d={edge.path}
+                        fill="none"
+                        stroke="transparent"
+                        strokeWidth="20"
+                        onMouseEnter={() => setHoveredWanEdge(edge.id)}
+                        onMouseLeave={() => setHoveredWanEdge(null)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <title>{`${edge.label} (${edge.type.toUpperCase()}): ${edge.latency} RTT • Loss: ${edge.loss} • Bandwidth: ${edge.bandwidth}`}</title>
+                      </path>
+
+                      {/* Main WAN Cable Path */}
+                      <path
+                        d={edge.path}
+                        fill="none"
+                        className={`noc-wan-link-cable ${edge.status} ${isHovered ? 'hovered' : ''}`}
+                        strokeWidth={isHovered ? '3.5' : '2.5'}
+                      />
+
+                      {/* Animated Active Telemetry Dash Flow */}
+                      <path
+                        d={edge.path}
+                        fill="none"
+                        className="noc-wan-link-flow"
+                        strokeWidth="2"
+                        opacity={isHovered ? 0.95 : 0.65}
+                      />
+
+                      {/* Midpoint Latency Pill Badge Marker */}
+                      <g
+                        className="noc-wan-link-badge-group"
+                        style={{ cursor: 'pointer' }}
+                        onMouseEnter={() => setHoveredWanEdge(edge.id)}
+                        onMouseLeave={() => setHoveredWanEdge(null)}
+                      >
+                        <title>{`${edge.label}: ${edge.latency} round-trip latency (${edge.loss} loss)`}</title>
+                        <rect
+                          x={edge.midX - 27}
+                          y={edge.midY - 11}
+                          width="54"
+                          height="22"
+                          rx="11"
+                          className="noc-wan-link-badge-bg"
+                        />
+                        <text
+                          x={edge.midX}
+                          y={edge.midY}
+                          className="noc-wan-link-badge-text"
+                        >
+                          {edge.latency}
+                        </text>
+                      </g>
+                    </g>
+                  );
+                })}
               </g>
-            );
-          })}
 
-          {/* 2. Interconnected Link Edges */}
-          <g className="noc-edges-group">
-            {edges.map(edge => {
-              const isHovered = hoveredEdge === edge.id;
-              const strokeColor = getStatusColor(edge.status);
-              const isBroken = edge.status === 'critical';
+              {/* 2. Global WAN Macro Site Nodes */}
+              <g className="noc-wan-nodes-group">
+                {wanNodes.map(site => {
+                  const isDegraded = site.status === 'degraded' || site.status === 'critical';
+                  const statusBg = site.status === 'critical'
+                    ? 'rgba(239, 68, 68, 0.15)'
+                    : site.status === 'degraded'
+                    ? 'rgba(245, 158, 11, 0.15)'
+                    : 'rgba(16, 185, 129, 0.12)';
+                  const statusBorder = site.status === 'critical'
+                    ? 'rgba(239, 68, 68, 0.4)'
+                    : site.status === 'degraded'
+                    ? 'rgba(245, 158, 11, 0.4)'
+                    : 'rgba(16, 185, 129, 0.3)';
+                  const statusColor = site.status === 'critical'
+                    ? 'var(--accent-rose)'
+                    : site.status === 'degraded'
+                    ? 'var(--accent-amber)'
+                    : 'var(--health-healthy)';
 
-              return (
-                <g key={edge.id} className="noc-edge-item">
-                  {/* Invisible broad stroke for easier hovering */}
-                  <path
-                    d={edge.path}
-                    fill="none"
-                    stroke="transparent"
-                    strokeWidth="16"
-                    onMouseEnter={() => setHoveredEdge(edge.id)}
-                    onMouseLeave={() => setHoveredEdge(null)}
-                    style={{ cursor: 'pointer' }}
-                  />
+                  return (
+                    <g
+                      key={site.id}
+                      className={`noc-wan-site-group ${site.isDimmed ? 'dimmed' : ''}`}
+                      transform={`translate(${site.x - WAN_NODE_WIDTH / 2}, ${site.y - WAN_NODE_HEIGHT / 2})`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectSite(site.code);
+                      }}
+                      style={{ cursor: 'pointer' }}
+                      role="button"
+                      tabIndex="0"
+                      aria-label={`Site ${site.code}, Health: ${site.status}`}
+                    >
+                      {/* Perimeter Blast Radius Animated Halo */}
+                      {site.hasBlastRadius && (
+                        <rect
+                          x="-6"
+                          y="-6"
+                          width={WAN_NODE_WIDTH + 12}
+                          height={WAN_NODE_HEIGHT + 12}
+                          rx="16"
+                          fill="none"
+                          stroke={site.status === 'critical' ? 'var(--accent-rose, #ef4444)' : 'var(--accent-amber, #f59e0b)'}
+                          strokeWidth="2.5"
+                          className="blast-radius-halo"
+                        />
+                      )}
 
-                  {/* Main Link Cable Path */}
-                  <path
-                    id={edge.id}
-                    d={edge.path}
-                    fill="none"
-                    stroke={strokeColor}
-                    strokeWidth={isHovered ? '2.5' : edge.type === 'backbone' ? '2.2' : '1.8'}
-                    strokeDasharray={edge.type === 'redundant' ? '5,4' : isBroken ? '6,4' : 'none'}
-                    className={`noc-link-path ${isHovered ? 'hovered' : ''} ${edge.isDimmed ? 'dimmed' : ''}`}
-                    opacity={edge.isDimmed ? 0.08 : isHovered ? 1 : edge.type === 'redundant' ? 0.45 : 0.75}
-                  />
+                      {/* Main Macro Card Surface */}
+                      <rect
+                        width={WAN_NODE_WIDTH}
+                        height={WAN_NODE_HEIGHT}
+                        rx="12"
+                        className={`noc-wan-site-card-bg ${site.status}`}
+                      />
 
-                  {/* Animated Traveling Traffic Pulse (SVG native animateMotion) */}
-                  <circle
-                    r={isHovered ? '4' : '3'}
-                    fill={strokeColor}
-                    className="noc-traffic-pulse"
-                    opacity={edge.isDimmed ? 0 : edge.status === 'critical' ? 0.3 : 0.85}
-                  >
-                    <animateMotion
-                      path={edge.path}
-                      dur={edge.type === 'backbone' ? '2.5s' : '3.8s'}
-                      repeatCount="indefinite"
-                    />
-                  </circle>
-                  <circle
-                    r="1.5"
-                    fill="#ffffff"
-                    opacity={edge.isDimmed ? 0 : 0.9}
-                  >
-                    <animateMotion
-                      path={edge.path}
-                      dur={edge.type === 'backbone' ? '2.5s' : '3.8s'}
-                      repeatCount="indefinite"
-                    />
-                  </circle>
-                </g>
-              );
-            })}
-          </g>
+                      {/* Row 1: Regional Flag + Site Code + Health Badge */}
+                      <text x="14" y="22" className="noc-wan-flag">
+                        {site.flag}
+                      </text>
+                      <text x="38" y="23" className="noc-wan-code">
+                        {site.code}
+                      </text>
 
-          {/* 3. Device Node Micro-Cards */}
-          <g className="noc-nodes-group">
-            {nodes.map(node => {
-              const isSelected = selectedDevice && selectedDevice.device_name === node.id;
-              const isHovered = hoveredNode === node.id;
-              const tierMeta = TIER_METADATA[node.tier];
-              const healthColor = getStatusColor(node.health);
+                      <g transform={`translate(${WAN_NODE_WIDTH - 86}, 12)`}>
+                        <rect
+                          width="72"
+                          height="18"
+                          rx="9"
+                          fill={statusBg}
+                          stroke={statusBorder}
+                          strokeWidth="1"
+                        />
+                        <circle cx="9" cy="9" r="3" fill={statusColor} />
+                        <text
+                          x="20"
+                          y="9.5"
+                          fill={statusColor}
+                          className="noc-wan-status-text"
+                        >
+                          {site.status.toUpperCase()}
+                        </text>
+                      </g>
 
-              return (
-                <g
-                  key={node.id}
-                  className={`noc-graph-node-card ${isSelected ? 'selected' : ''} ${node.isDimmed ? 'dimmed' : ''}`}
-                  transform={`translate(${node.x - NODE_WIDTH / 2}, ${node.y - NODE_HEIGHT / 2})`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSelectDevice(node.device);
-                  }}
-                  onMouseEnter={() => setHoveredNode(node.id)}
-                  onMouseLeave={() => setHoveredNode(null)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  {/* Selection Glowing Highlight Ring */}
-                  {isSelected && (
+                      {/* Row 2: Location Name & Registered Devices */}
+                      <text x="14" y="44" className="noc-wan-name">
+                        {site.name.length > 20 ? site.name.slice(0, 19) + '…' : site.name}
+                      </text>
+                      <text x="14" y="60" className="noc-wan-sub">
+                        {site.devicesCount} Devices Registered • {site.region}
+                      </text>
+
+                      {/* Row 3: Active Alerts & Avoided Tickets */}
+                      <text
+                        x="14"
+                        y="78"
+                        className="noc-wan-alert-text"
+                        fill={site.activeAlerts > 0 ? 'var(--accent-rose, #ef4444)' : 'var(--text-tertiary)'}
+                      >
+                        ● {site.activeAlerts} Active Alert{site.activeAlerts === 1 ? '' : 's'}
+                      </text>
+                      <text x="126" y="78" className="noc-wan-avoid-text">
+                        ⚡ {site.avoidedTickets} Avoided
+                      </text>
+
+                      {/* Row 4: Blast Radius Metric Chip & Drill Down Action */}
+                      <rect
+                        x="14"
+                        y="86"
+                        width="88"
+                        height="16"
+                        rx="4"
+                        fill={site.blastRadius > 0 ? 'rgba(239, 68, 68, 0.14)' : 'rgba(16, 185, 129, 0.1)'}
+                        stroke={site.blastRadius > 0 ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.25)'}
+                        strokeWidth="0.8"
+                      />
+                      <text
+                        x="18"
+                        y="94.5"
+                        fill={site.blastRadius > 0 ? 'var(--accent-rose, #ef4444)' : 'var(--health-healthy, #10b981)'}
+                        className="noc-wan-blast-text"
+                      >
+                        Blast: {site.blastRadius}%
+                      </text>
+
+                      {/* Drill Down Action Target */}
+                      <g
+                        className="noc-wan-drilldown-btn"
+                        transform={`translate(${WAN_NODE_WIDTH - 82}, 85)`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelectSite(site.code);
+                        }}
+                      >
+                        <rect
+                          width="68"
+                          height="18"
+                          rx="4"
+                          className="noc-wan-drill-bg"
+                        />
+                        <text
+                          x="7"
+                          y="9.5"
+                          className="noc-wan-drill-text"
+                        >
+                          Drill Down →
+                        </text>
+                      </g>
+                    </g>
+                  );
+                })}
+              </g>
+            </>
+          ) : (
+            /* ═════════════════════════════════════════════════════════════════════
+                LEVEL 2: SITE LAN TIER TOPOLOGY (CORE ↔ DIST ↔ ACCESS)
+                ═════════════════════════════════════════════════════════════════════ */
+            <>
+              {/* 1. Horizontal Tier Lane Backgrounds */}
+              {[
+                { id: 'core', y: 40, height: 180, label: 'CORE & WAN BACKBONE', meta: TIER_METADATA.core },
+                { id: 'dist_sec', y: 260, height: 180, label: 'DISTRIBUTION & SECURITY PERIMETER', meta: TIER_METADATA.dist_sec },
+                { id: 'access', y: 480, height: 180, label: 'CAMPUS & ACCESS EDGE', meta: TIER_METADATA.access }
+              ].map(lane => {
+                const stats = tierStats[lane.id] || { count: 0, critical: 0, warning: 0, healthy: 0 };
+                return (
+                  <g key={lane.id} className={`noc-tier-lane-group lane-${lane.id}`}>
                     <rect
-                      x="-4"
-                      y="-4"
-                      width={NODE_WIDTH + 8}
-                      height={NODE_HEIGHT + 8}
-                      rx="14"
-                      fill="none"
-                      stroke="var(--accent-blue)"
-                      strokeWidth="2.5"
-                      filter="url(#glow-blue)"
-                      className="noc-node-selected-ring"
+                      x="20"
+                      y={lane.y}
+                      width={canvasDimensions.width - 40}
+                      height={lane.height}
+                      rx="12"
+                      className="noc-tier-lane-bg"
                     />
-                  )}
+                    <rect
+                      x="20"
+                      y={lane.y}
+                      width="4"
+                      height={lane.height}
+                      rx="2"
+                      fill={lane.meta.color}
+                    />
+                    <text
+                      x="36"
+                      y={lane.y + 24}
+                      className="noc-tier-lane-title"
+                    >
+                      {lane.label}
+                    </text>
+                    <text
+                      x="36"
+                      y={lane.y + 40}
+                      className="noc-tier-lane-sub"
+                    >
+                      {stats.count} nodes • {stats.critical > 0 ? `${stats.critical} critical • ` : ''}{stats.warning > 0 ? `${stats.warning} warning • ` : ''}{stats.healthy} nominal
+                    </text>
+                  </g>
+                );
+              })}
 
-                  {/* Node Card Container */}
-                  <rect
-                    x="0"
-                    y="0"
-                    width={NODE_WIDTH}
-                    height={NODE_HEIGHT}
-                    rx="10"
-                    className="noc-node-card-body"
-                    stroke={isSelected ? 'var(--accent-blue)' : isHovered ? 'var(--card-border-hover)' : 'var(--card-border)'}
-                    strokeWidth={isSelected ? '2' : '1'}
-                    filter="url(#node-shadow)"
-                  />
+              {/* 2. Interconnected Link Edges */}
+              <g className="noc-edges-group">
+                {edges.map(edge => {
+                  const isHovered = hoveredEdge === edge.id;
+                  const strokeColor = getStatusColor(edge.status);
+                  const isBroken = edge.status === 'critical';
 
-                  {/* Tier Accent Left Edge */}
-                  <rect
-                    x="0"
-                    y="0"
-                    width="4"
-                    height={NODE_HEIGHT}
-                    rx="2"
-                    fill={tierMeta.color}
-                  />
+                  return (
+                    <g key={edge.id} className="noc-edge-item">
+                      <path
+                        d={edge.path}
+                        fill="none"
+                        stroke="transparent"
+                        strokeWidth="16"
+                        onMouseEnter={() => setHoveredEdge(edge.id)}
+                        onMouseLeave={() => setHoveredEdge(null)}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <path
+                        id={edge.id}
+                        d={edge.path}
+                        fill="none"
+                        stroke={strokeColor}
+                        strokeWidth={isHovered ? '2.5' : edge.type === 'backbone' ? '2.2' : '1.8'}
+                        strokeDasharray={edge.type === 'redundant' ? '5,4' : isBroken ? '6,4' : 'none'}
+                        className={`noc-link-path ${isHovered ? 'hovered' : ''} ${edge.isDimmed ? 'dimmed' : ''}`}
+                        opacity={edge.isDimmed ? 0.08 : isHovered ? 1 : edge.type === 'redundant' ? 0.45 : 0.75}
+                      />
+                      <circle
+                        r={isHovered ? '4' : '3'}
+                        fill={strokeColor}
+                        className="noc-traffic-pulse"
+                        opacity={edge.isDimmed ? 0 : edge.status === 'critical' ? 0.3 : 0.85}
+                      >
+                        <animateMotion
+                          path={edge.path}
+                          dur={edge.type === 'backbone' ? '2.5s' : '3.8s'}
+                          repeatCount="indefinite"
+                        />
+                      </circle>
+                    </g>
+                  );
+                })}
+              </g>
 
-                  {/* Vector Role Icon */}
-                  {renderRoleIcon(node.tier, tierMeta.color)}
+              {/* 3. Device Node Micro-Cards */}
+              <g className="noc-nodes-group">
+                {nodes.map(node => {
+                  const isSelected = selectedDevice && selectedDevice.device_name === node.id;
+                  const isHovered = hoveredNode === node.id;
+                  const tierMeta = TIER_METADATA[node.tier];
+                  const healthColor = getStatusColor(node.health);
 
-                  {/* Device Hostname with Tooltip */}
-                  <text
-                    x="38"
-                    y="23"
-                    className="noc-node-title-text"
-                  >
-                    <title>{node.device.device_name}</title>
-                    {node.device.device_name.length > 20
-                      ? node.device.device_name.slice(0, 19) + '…'
-                      : node.device.device_name}
-                  </text>
+                  return (
+                    <g
+                      key={node.id}
+                      className={`noc-graph-node-card ${isSelected ? 'selected' : ''} ${node.isDimmed ? 'dimmed' : ''}`}
+                      transform={`translate(${node.x - NODE_WIDTH / 2}, ${node.y - NODE_HEIGHT / 2})`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectDevice(node.device);
+                      }}
+                      onMouseEnter={() => setHoveredNode(node.id)}
+                      onMouseLeave={() => setHoveredNode(null)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {isSelected && (
+                        <rect
+                          x="-4"
+                          y="-4"
+                          width={NODE_WIDTH + 8}
+                          height={NODE_HEIGHT + 8}
+                          rx="14"
+                          fill="none"
+                          stroke="var(--accent-blue)"
+                          strokeWidth="2.5"
+                          filter="url(#glow-blue)"
+                          className="noc-node-selected-ring"
+                        />
+                      )}
 
-                  {/* Device IP & Location Subtitle */}
-                  <text
-                    x="38"
-                    y="37"
-                    className="noc-node-subtitle-text"
-                  >
-                    {node.device.ip_address || '10.x.x.x'} • {node.device.location || 'HQ'}
-                  </text>
-
-                  {/* Tier Pill Badge */}
-                  <rect
-                    x="12"
-                    y="48"
-                    width="54"
-                    height="18"
-                    rx="4"
-                    fill="var(--bg-tertiary)"
-                    stroke="var(--card-border)"
-                    strokeWidth="1"
-                  />
-                  <text
-                    x="39"
-                    y="60.5"
-                    textAnchor="middle"
-                    className="noc-node-tier-pill"
-                    fill={tierMeta.color}
-                  >
-                    {tierMeta.tag}
-                  </text>
-
-                  {/* Active Alert Count Pill (if any) */}
-                  {node.activeAlertCount > 0 ? (
-                    <g>
                       <rect
-                        x="72"
+                        width={NODE_WIDTH}
+                        height={NODE_HEIGHT}
+                        rx="10"
+                        className={`noc-node-surface ${node.health}`}
+                      />
+
+                      <rect
+                        x="0"
+                        y="0"
+                        width="4"
+                        height={NODE_HEIGHT}
+                        rx="2"
+                        fill={tierMeta.color}
+                      />
+
+                      {renderRoleIcon(node.tier, tierMeta.color)}
+
+                      <text
+                        x="38"
+                        y="23"
+                        className="noc-node-title-text"
+                      >
+                        <title>{node.device.device_name}</title>
+                        {node.device.device_name.length > 20
+                          ? node.device.device_name.slice(0, 19) + '…'
+                          : node.device.device_name}
+                      </text>
+
+                      <text
+                        x="38"
+                        y="37"
+                        className="noc-node-subtitle-text"
+                      >
+                        {node.device.ip_address || '10.x.x.x'} • {node.device.location || 'HQ'}
+                      </text>
+
+                      <rect
+                        x="12"
                         y="48"
-                        width="86"
+                        width="54"
                         height="18"
                         rx="4"
-                        fill="rgba(239, 68, 68, 0.14)"
-                        stroke="rgba(239, 68, 68, 0.35)"
+                        fill="var(--bg-tertiary)"
+                        stroke="var(--card-border)"
                         strokeWidth="1"
                       />
                       <text
-                        x="115"
+                        x="39"
                         y="60.5"
                         textAnchor="middle"
-                        className="noc-node-alert-pill-text"
-                        fill="#ef4444"
+                        className="noc-node-tier-pill"
+                        fill={tierMeta.color}
                       >
-                        ⚠ {node.activeAlertCount} Alert{node.activeAlertCount > 1 ? 's' : ''}
+                        {tierMeta.tag}
                       </text>
-                    </g>
-                  ) : (
-                    <g>
-                      <rect
-                        x="72"
-                        y="48"
-                        width="74"
-                        height="18"
-                        rx="4"
-                        fill="rgba(16, 185, 129, 0.1)"
-                        stroke="rgba(16, 185, 129, 0.25)"
-                        strokeWidth="1"
-                      />
-                      <text
-                        x="109"
-                        y="60.5"
-                        textAnchor="middle"
-                        className="noc-node-alert-pill-text"
-                        fill="var(--health-healthy)"
-                      >
-                        ✓ Nominal
-                      </text>
-                    </g>
-                  )}
 
-                  {/* Health Status Dot & Radar Pulse */}
-                  <circle
-                    cx={NODE_WIDTH - 18}
-                    cy="19"
-                    r="4.5"
-                    fill={healthColor}
-                  />
-                  {node.health === 'critical' && (
-                    <circle
-                      cx={NODE_WIDTH - 18}
-                      cy="19"
-                      r="10"
-                      fill="none"
-                      stroke="#ef4444"
-                      strokeWidth="1.5"
-                      className="noc-radar-pulse-ring"
-                    />
-                  )}
-                </g>
-              );
-            })}
-          </g>
+                      {node.activeAlertCount > 0 ? (
+                        <g>
+                          <rect
+                            x="72"
+                            y="48"
+                            width="86"
+                            height="18"
+                            rx="4"
+                            fill="rgba(239, 68, 68, 0.14)"
+                            stroke="rgba(239, 68, 68, 0.35)"
+                            strokeWidth="1"
+                          />
+                          <text
+                            x="115"
+                            y="60.5"
+                            textAnchor="middle"
+                            className="noc-node-alert-pill-text"
+                            fill="#ef4444"
+                          >
+                            ⚠ {node.activeAlertCount} Alert{node.activeAlertCount > 1 ? 's' : ''}
+                          </text>
+                        </g>
+                      ) : (
+                        <g>
+                          <rect
+                            x="72"
+                            y="48"
+                            width="74"
+                            height="18"
+                            rx="4"
+                            fill="rgba(16, 185, 129, 0.1)"
+                            stroke="rgba(16, 185, 129, 0.25)"
+                            strokeWidth="1"
+                          />
+                          <text
+                            x="109"
+                            y="60.5"
+                            textAnchor="middle"
+                            className="noc-node-alert-pill-text"
+                            fill="var(--health-healthy)"
+                          >
+                            ✓ Nominal
+                          </text>
+                        </g>
+                      )}
+
+                      <circle
+                        cx={NODE_WIDTH - 18}
+                        cy="19"
+                        r="4.5"
+                        fill={healthColor}
+                      />
+                      {node.health === 'critical' && (
+                        <circle
+                          cx={NODE_WIDTH - 18}
+                          cy="19"
+                          r="10"
+                          fill="none"
+                          stroke="#ef4444"
+                          strokeWidth="1.5"
+                          className="noc-radar-pulse-ring"
+                        />
+                      )}
+                    </g>
+                  );
+                })}
+              </g>
+            </>
+          )}
         </g>
       </svg>
     </div>
