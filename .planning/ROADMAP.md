@@ -25,7 +25,7 @@
 | 16 | v1.7 | Details Drawer Scrollbar & Viewport Layout | Accessible, visible, theme-aware scrollbars and fixed-header flex layout for device details drawer | DRAWER-01 - DRAWER-03 | Complete ✓ |
 | 17 | v1.8 | SVG Topology Canvas & Hierarchical Links | Zoomable/pannable SVG graph canvas, hierarchical tier placement, and animated connection links | GRAPH-01 - GRAPH-04 | Complete ✓ |
 | 18 | v1.8 | Health Nodes, Filter Sync & SRE Drawer | Rich micro-cards, pulsing alert indicators, filter reactivity, and drawer integration | GRAPH-05 - GRAPH-07 | Complete ✓ |
-| 19 | v1.9 | Critical Layout & Status Fixes | Fix responsive collapse below 1100px and ensure connection status reflects offline states | UI-01, UI-02 | Not started |
+| 19 | v1.9 | Critical Layout & Status Fixes | Fix responsive collapse below 1100px and ensure connection status reflects offline states | UI-01, UI-02 | Complete ✓ |
 | 20 | v1.9 | Data Visibility & Bounds | Implement persistent scrollbars, table edge masks, and strict independent scroll bounds for the topology graph | UI-03, UI-04 | Not started |
 | 21 | v1.9 | Trust & Contrast Remediation | Fix text-tertiary contrast ratios and route chart colors through CSS tokens for dark mode reliability | UI-05, UI-06 | Not started |
 | 22 | v1.9 | Accessibility & Hit Areas | Increase hit areas to 32px minimum, fix sidebar keyboard navigation, add aria-current, ensure accessible names | UI-07, UI-08, UI-16, UI-17 | Not started |
@@ -52,7 +52,9 @@ Refer to repository history for prior phase details.
 
 **Goal:** Fix the 1100px breakpoint collapse in `.content-area` and ensure the API connection status correctly reflects offline states instead of returning false positives.
 
-**Status:** Not started
+**Status:** Complete ✓ (2/2 plans complete)
+- [x] **Plan 19-01**: Fluid Flexbox Layout & 1100px Breakpoint Stabilization (UI-01)
+- [x] **Plan 19-02**: Authoritative Connection State Machine, Polling Resiliency & Mock Demarcation (UI-02)
 
 **Requirements:**
 - **UI-01**: Fix responsive collapse below 1100px in the `.content-area` by removing `calc(100vw - ...)` constraints and letting flexbox size it correctly.
