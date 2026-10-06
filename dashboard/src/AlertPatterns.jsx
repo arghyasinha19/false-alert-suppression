@@ -4,6 +4,7 @@ import {
   ChevronDown, ChevronRight, ChevronUp, Server, Fingerprint, SearchX
 } from 'lucide-react';
 import TableScrollWrapper from './components/TableScrollWrapper';
+import useChartTheme from './hooks/useChartTheme';
 import {
   ComposedChart, Area, Line,
   XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
@@ -186,6 +187,7 @@ function generateMockPatterns() {
    Main Component
    ============================================================================ */
 export default function AlertPatterns() {
+  const chartTheme = useChartTheme();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [granularity, setGranularity] = useState('hourly');
@@ -362,27 +364,27 @@ export default function AlertPatterns() {
             <ComposedChart data={volumeSeries} margin={{ top: 10, right: 50, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="gradBackdatedP" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#2563eb" stopOpacity={0.35} />
-                  <stop offset="95%" stopColor="#2563eb" stopOpacity={0.0} />
+                  <stop offset="5%" stopColor={chartTheme.colors.primary} stopOpacity={0.35} />
+                  <stop offset="95%" stopColor={chartTheme.colors.primary} stopOpacity={0.0} />
                 </linearGradient>
                 <linearGradient id="gradAutoP" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#059669" stopOpacity={0.35} />
-                  <stop offset="95%" stopColor="#059669" stopOpacity={0.0} />
+                  <stop offset="5%" stopColor={chartTheme.colors.success} stopOpacity={0.35} />
+                  <stop offset="95%" stopColor={chartTheme.colors.success} stopOpacity={0.0} />
                 </linearGradient>
                 <linearGradient id="gradNonAutoP" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#dc2626" stopOpacity={0.35} />
-                  <stop offset="95%" stopColor="#dc2626" stopOpacity={0.0} />
+                  <stop offset="5%" stopColor={chartTheme.colors.danger} stopOpacity={0.35} />
+                  <stop offset="95%" stopColor={chartTheme.colors.danger} stopOpacity={0.0} />
                 </linearGradient>
                 <linearGradient id="gradUncertainP" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#d97706" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#d97706" stopOpacity={0.0} />
+                  <stop offset="5%" stopColor={chartTheme.colors.warning} stopOpacity={0.2} />
+                  <stop offset="95%" stopColor={chartTheme.colors.warning} stopOpacity={0.0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
+              <CartesianGrid strokeDasharray={chartTheme.grid.dashArray} stroke={chartTheme.grid.stroke} />
               <XAxis
                 dataKey="time"
-                stroke="#94a3b8"
-                tick={{ fontSize: 10, fill: '#94a3b8' }}
+                stroke={chartTheme.axis.stroke}
+                tick={{ fontSize: 10, fill: chartTheme.axis.tickFill }}
                 minTickGap={45}
                 tickFormatter={v => {
                   try {
@@ -402,12 +404,12 @@ export default function AlertPatterns() {
                   }
                 }}
               />
-              <YAxis yAxisId="left" stroke="#94a3b8" tick={{ fontSize: 10, fill: '#94a3b8' }} />
+              <YAxis yAxisId="left" stroke={chartTheme.axis.stroke} tick={{ fontSize: 10, fill: chartTheme.axis.tickFill }} />
               {selectedCluster === null && (
-                <YAxis yAxisId="right" orientation="right" stroke="#7c3aed" tick={{ fontSize: 10, fill: '#7c3aed' }} />
+                <YAxis yAxisId="right" orientation="right" stroke={chartTheme.colors.purple} tick={{ fontSize: 10, fill: chartTheme.colors.purple }} />
               )}
               <RechartsTooltip
-                contentStyle={TOOLTIP_STYLE}
+                contentStyle={chartTheme.tooltipStyle}
                 labelFormatter={label => {
                   try {
                     const d = new Date(label);
@@ -425,18 +427,18 @@ export default function AlertPatterns() {
                   }
                 }}
               />
-              <Legend verticalAlign="top" iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '0.72rem', paddingBottom: '8px' }} />
+              <Legend verticalAlign="top" iconType="circle" iconSize={8} wrapperStyle={{ ...chartTheme.legendStyle, paddingBottom: '8px' }} />
 
               {selectedCluster === null ? (
                 <>
-                  <Area yAxisId="left" type="monotone" dataKey="Backdated" stackId="1" stroke="#2563eb" fill="url(#gradBackdatedP)" strokeWidth={2} />
-                  <Area yAxisId="left" type="monotone" dataKey="Auto Resolving" stackId="1" stroke="#059669" fill="url(#gradAutoP)" strokeWidth={2} />
-                  <Area yAxisId="left" type="monotone" dataKey="Non-Auto Resolving" stackId="1" stroke="#dc2626" fill="url(#gradNonAutoP)" strokeWidth={2} />
-                  <Area yAxisId="left" type="monotone" dataKey="Uncertain" stackId="1" stroke="#d97706" fill="url(#gradUncertainP)" strokeWidth={2} />
-                  <Line yAxisId="right" type="monotone" dataKey="cumulative" stroke="#7c3aed" strokeWidth={2.5} dot={false} strokeDasharray="6 3" name="Cumulative Volume" />
+                  <Area yAxisId="left" type="monotone" dataKey="Backdated" stackId="1" stroke={chartTheme.colors.primary} fill="url(#gradBackdatedP)" strokeWidth={2} />
+                  <Area yAxisId="left" type="monotone" dataKey="Auto Resolving" stackId="1" stroke={chartTheme.colors.success} fill="url(#gradAutoP)" strokeWidth={2} />
+                  <Area yAxisId="left" type="monotone" dataKey="Non-Auto Resolving" stackId="1" stroke={chartTheme.colors.danger} fill="url(#gradNonAutoP)" strokeWidth={2} />
+                  <Area yAxisId="left" type="monotone" dataKey="Uncertain" stackId="1" stroke={chartTheme.colors.warning} fill="url(#gradUncertainP)" strokeWidth={2} />
+                  <Line yAxisId="right" type="monotone" dataKey="cumulative" stroke={chartTheme.colors.purple} strokeWidth={2.5} dot={false} strokeDasharray="6 3" name="Cumulative Volume" />
                 </>
               ) : (
-                <Area yAxisId="left" type="monotone" dataKey="total" stroke="#2563eb" fill="url(#gradBackdatedP)" strokeWidth={2} name="Cluster Alerts" />
+                <Area yAxisId="left" type="monotone" dataKey="total" stroke={chartTheme.colors.primary} fill="url(#gradBackdatedP)" strokeWidth={2} name="Cluster Alerts" />
               )}
             </ComposedChart>
           </ResponsiveContainer>

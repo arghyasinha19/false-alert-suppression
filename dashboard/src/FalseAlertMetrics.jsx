@@ -13,6 +13,7 @@ import {
 } from 'recharts';
 import AnimatedCounter from './AnimatedCounter';
 import TableScrollWrapper from './components/TableScrollWrapper';
+import useChartTheme from './hooks/useChartTheme';
 
 const COLORS = ['#2563eb', '#059669', '#dc2626', '#d97706', '#7c3aed', '#0891b2'];
 const CATEGORY_COLORS = {
@@ -302,6 +303,24 @@ function EventDetailModal({ alert, onClose }) {
 }
 
 export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
+  const chartTheme = useChartTheme();
+
+  const dynamicCategoryColors = useMemo(() => ({
+    'Backdated': chartTheme.colors.primary,
+    'Auto Resolving': chartTheme.colors.success,
+    'Non-Auto Resolving': chartTheme.colors.danger,
+    'Uncertain': chartTheme.colors.warning,
+  }), [chartTheme]);
+
+  const dynamicDefaultColors = useMemo(() => [
+    chartTheme.colors.primary,
+    chartTheme.colors.success,
+    chartTheme.colors.danger,
+    chartTheme.colors.warning,
+    chartTheme.colors.purple,
+    chartTheme.colors.cyan,
+  ], [chartTheme]);
+
   const [deviceFilter, setDeviceFilter] = useState('ALL');
   const [timeRange, setTimeRange] = useState('ALL');
   const [customStartTime, setCustomStartTime] = useState('');
@@ -998,23 +1017,23 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
               <AreaChart data={kpi.hourlySeries} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="gradBackdated" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0.0} />
+                    <stop offset="5%" stopColor={chartTheme.colors.primary} stopOpacity={0.4} />
+                    <stop offset="95%" stopColor={chartTheme.colors.primary} stopOpacity={0.0} />
                   </linearGradient>
                   <linearGradient id="gradAuto" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#059669" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#059669" stopOpacity={0.0} />
+                    <stop offset="5%" stopColor={chartTheme.colors.success} stopOpacity={0.4} />
+                    <stop offset="95%" stopColor={chartTheme.colors.success} stopOpacity={0.0} />
                   </linearGradient>
                   <linearGradient id="gradNonAuto" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#dc2626" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#dc2626" stopOpacity={0.0} />
+                    <stop offset="5%" stopColor={chartTheme.colors.danger} stopOpacity={0.4} />
+                    <stop offset="95%" stopColor={chartTheme.colors.danger} stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
+                <CartesianGrid strokeDasharray={chartTheme.grid.dashArray} stroke={chartTheme.grid.stroke} />
                 <XAxis
                   dataKey="time"
-                  stroke="#94a3b8"
-                  tick={{ fontSize: 10, fill: '#94a3b8' }}
+                  stroke={chartTheme.axis.stroke}
+                  tick={{ fontSize: 10, fill: chartTheme.axis.tickFill }}
                   minTickGap={35}
                   tickFormatter={v => {
                     try {
@@ -1027,9 +1046,9 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
                     }
                   }}
                 />
-                <YAxis stroke="#94a3b8" tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                <YAxis stroke={chartTheme.axis.stroke} tick={{ fontSize: 10, fill: chartTheme.axis.tickFill }} />
                 <RechartsTooltip
-                  contentStyle={TOOLTIP_STYLE}
+                  contentStyle={chartTheme.tooltipStyle}
                   labelFormatter={v => {
                     try {
                       return new Date(v).toLocaleString([], {
@@ -1045,10 +1064,10 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
                     }
                   }}
                 />
-                <Area type="monotone" dataKey="Backdated" stroke="#2563eb" fill="url(#gradBackdated)" strokeWidth={2} />
-                <Area type="monotone" dataKey="Auto Resolving" stroke="#059669" fill="url(#gradAuto)" strokeWidth={2} />
-                <Area type="monotone" dataKey="Non-Auto Resolving" stroke="#dc2626" fill="url(#gradNonAuto)" strokeWidth={2} />
-                <Area type="monotone" dataKey="Uncertain" stroke="#d97706" fill="transparent" strokeWidth={2} strokeDasharray="5 5" />
+                <Area type="monotone" dataKey="Backdated" stroke={chartTheme.colors.primary} fill="url(#gradBackdated)" strokeWidth={2} />
+                <Area type="monotone" dataKey="Auto Resolving" stroke={chartTheme.colors.success} fill="url(#gradAuto)" strokeWidth={2} />
+                <Area type="monotone" dataKey="Non-Auto Resolving" stroke={chartTheme.colors.danger} fill="url(#gradNonAuto)" strokeWidth={2} />
+                <Area type="monotone" dataKey="Uncertain" stroke={chartTheme.colors.warning} fill="transparent" strokeWidth={2} strokeDasharray="5 5" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -1059,10 +1078,10 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={pieData} cx="50%" cy="45%" innerRadius={52} outerRadius={82} paddingAngle={4} dataKey="value" stroke="none">
-                  {pieData.map((entry, index) => (<Cell key={`cell-${index}`} fill={CATEGORY_COLORS[entry.name] || COLORS[index]} />))}
+                  {pieData.map((entry, index) => (<Cell key={`cell-${index}`} fill={dynamicCategoryColors[entry.name] || dynamicDefaultColors[index % dynamicDefaultColors.length]} />))}
                 </Pie>
-                <RechartsTooltip contentStyle={TOOLTIP_STYLE} />
-                <Legend verticalAlign="bottom" iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }} />
+                <RechartsTooltip contentStyle={chartTheme.tooltipStyle} />
+                <Legend verticalAlign="bottom" iconType="circle" iconSize={8} wrapperStyle={chartTheme.legendStyle} />
               </PieChart>
             </ResponsiveContainer>
           </div>

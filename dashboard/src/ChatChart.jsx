@@ -1,10 +1,11 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   Legend, ResponsiveContainer, ReferenceArea,
 } from 'recharts';
 import { ZoomIn, RotateCcw, Maximize2 } from 'lucide-react';
+import useChartTheme from './hooks/useChartTheme';
 
 const DEFAULT_COLORS = [
   '#2563eb', '#059669', '#dc2626', '#d97706',
@@ -37,14 +38,14 @@ function truncateLabel(val, maxLen = 14) {
 }
 
 /* ---- Custom axis tick with rotation for long labels ---- */
-function AngledTick({ x, y, payload, maxLen = 14 }) {
+function AngledTick({ x, y, payload, maxLen = 14, fill }) {
   const label = truncateLabel(payload.value, maxLen);
   return (
     <g transform={`translate(${x},${y})`}>
       <text
         x={0} y={0} dy={12}
         textAnchor="end"
-        fill="var(--text-secondary, #475569)"
+        fill={fill || "var(--text-secondary, #475569)"}
         fontSize={10}
         transform="rotate(-35)"
       >
@@ -58,6 +59,7 @@ function AngledTick({ x, y, payload, maxLen = 14 }) {
    ZoomableChart — wraps Bar / Line / Area with drag-to-zoom
    ==================================================================== */
 function ZoomableChart({ data, x_key, renderInner, chartType: ChartType, margin }) {
+  const chartTheme = useChartTheme();
   const [refAreaLeft, setRefAreaLeft] = useState(null);
   const [refAreaRight, setRefAreaRight] = useState(null);
   const [zoomLeft, setZoomLeft] = useState(null);
@@ -135,17 +137,19 @@ function ZoomableChart({ data, x_key, renderInner, chartType: ChartType, margin 
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border, #e2e8f0)" />
+          <CartesianGrid strokeDasharray={chartTheme.grid.dashArray} stroke={chartTheme.grid.stroke} />
           <XAxis
             dataKey={x_key}
-            tick={needsAngle ? <AngledTick maxLen={16} /> : { fontSize: 11, fill: 'var(--text-secondary, #475569)' }}
+            stroke={chartTheme.axis.stroke}
+            tick={needsAngle ? <AngledTick maxLen={16} fill={chartTheme.axis.tickFill} /> : { fontSize: 11, fill: chartTheme.axis.tickFill }}
             interval={visibleData.length > 20 ? Math.floor(visibleData.length / 10) : 0}
           />
           <YAxis
-            tick={{ fontSize: 11, fill: 'var(--text-secondary, #475569)' }}
+            stroke={chartTheme.axis.stroke}
+            tick={{ fontSize: 11, fill: chartTheme.axis.tickFill }}
             allowDecimals={false}
           />
-          <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
+          <Tooltip contentStyle={chartTheme.tooltipStyle} />
 
           {renderInner(visibleData)}
 
@@ -154,7 +158,7 @@ function ZoomableChart({ data, x_key, renderInner, chartType: ChartType, margin 
               x1={refAreaLeft}
               x2={refAreaRight}
               strokeOpacity={0.3}
-              fill="var(--accent-blue, #2563eb)"
+              fill={chartTheme.colors.primary}
               fillOpacity={0.12}
             />
           )}
@@ -189,7 +193,19 @@ function ChatChart({ spec }) {
     multi_series_keys = [],
   } = spec;
 
-  const palette = colors.length > 0 ? colors : DEFAULT_COLORS;
+  const chartTheme = useChartTheme();
+  const defaultPalette = useMemo(() => [
+    chartTheme.colors.primary,
+    chartTheme.colors.success,
+    chartTheme.colors.danger,
+    chartTheme.colors.warning,
+    chartTheme.colors.purple,
+    chartTheme.colors.cyan,
+    chartTheme.colors.orange,
+    chartTheme.colors.indigo,
+  ], [chartTheme]);
+
+  const palette = colors.length > 0 ? colors : defaultPalette;
 
   const renderChart = () => {
     switch (chart_type) {
@@ -316,15 +332,15 @@ function ChatChart({ spec }) {
           innerRadius="40%"
           paddingAngle={2}
           label={({ name, percent }) => `${truncateLabel(name, 16)} ${(percent * 100).toFixed(0)}%`}
-          labelLine={{ stroke: 'var(--text-tertiary, #94a3b8)', strokeWidth: 1 }}
+          labelLine={{ stroke: chartTheme.colors.slate, strokeWidth: 1 }}
         >
           {data.map((_, i) => (
             <Cell key={i} fill={palette[i % palette.length]} />
           ))}
         </Pie>
-        <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
+        <Tooltip contentStyle={chartTheme.tooltipStyle} />
         <Legend
-          wrapperStyle={{ fontSize: '0.78rem' }}
+          wrapperStyle={chartTheme.legendStyle}
           formatter={(value) => humanizeKey(value)}
         />
       </PieChart>
