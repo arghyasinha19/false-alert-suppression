@@ -3,8 +3,23 @@ import {
   ZoomIn, ZoomOut, Maximize2, Minimize2, RotateCcw,
   LayoutGrid, Server, Shield, Wifi,
   Activity, Move, Layers, Globe, ArrowLeft, Zap,
-  AlertTriangle, CheckCircle, ExternalLink, ShieldAlert
+  AlertTriangle, CheckCircle, ExternalLink, ShieldAlert,
+  ChevronRight
 } from 'lucide-react';
+
+const SITE_METADATA = {
+  'UK-LON': { flag: '🇬🇧', name: 'United Kingdom — London', shortName: 'London Core DC' },
+  'UK-MAL': { flag: '🇬🇧', name: 'United Kingdom — Malmesbury', shortName: 'Malmesbury Campus' },
+  'DE-FRA': { flag: '🇩🇪', name: 'Germany — Frankfurt', shortName: 'Frankfurt Transit DC' },
+  'US-NY':  { flag: '🇺🇸', name: 'United States — New York', shortName: 'New York Metro DC' },
+  'US-CHI': { flag: '🇺🇸', name: 'United States — Chicago', shortName: 'Chicago Regional DC' },
+  'SG-SIN': { flag: '🇸🇬', name: 'Singapore', shortName: 'Singapore APAC Hub' },
+  'JP-TKY': { flag: '🇯🇵', name: 'Japan — Tokyo', shortName: 'Tokyo Regional Hub' },
+  'IN-MUM': { flag: '🇮🇳', name: 'India — Mumbai', shortName: 'Mumbai West DC' },
+  'AU-SYD': { flag: '🇦🇺', name: 'Australia — Sydney', shortName: 'Sydney Oceanic DC' },
+  'INFRA-CORE': { flag: '🏢', name: 'Core Infrastructure', shortName: 'Global Core Fabric' },
+  'INFRA-ACCESS': { flag: '⚡', name: 'Access Infrastructure', shortName: 'Edge Access Fabric' }
+};
 
 const TIER_METADATA = {
   core: {
@@ -175,13 +190,11 @@ export default function TopologyGraphView({
   const hasActiveFilter = Boolean(searchQuery || roleFilter !== 'all' || healthFilter !== 'all');
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // LEVEL 1: Global Multi-Site WAN Topology Computation
+  // Multi-Site Metadata & Resolved Sites Collection
   // ─────────────────────────────────────────────────────────────────────────────
-  const { wanNodes, wanEdges, wanResilienceScore, wanDimensions } = useMemo(() => {
-    const resolvedSites = sites && sites.length > 0 ? [...sites] : [];
-
-    // Fallback if no sites passed: dynamically group devices by location
-    if (resolvedSites.length === 0 && devices && devices.length > 0) {
+  const resolvedSiteList = useMemo(() => {
+    if (sites && sites.length > 0) return sites;
+    if (devices && devices.length > 0) {
       const siteMap = {};
       devices.forEach(d => {
         const loc = d.location || 'INFRA-CORE';
@@ -205,14 +218,34 @@ export default function TopologyGraphView({
         siteMap[loc].totalAlerts += (d.active_alerts || []).length;
         siteMap[loc].avoidedTickets += (d.auto_resolving || 0) + (d.backdated || 0);
       });
-      Object.values(siteMap).forEach(s => {
+      return Object.values(siteMap).map(s => {
         let status = 'nominal';
         if (s.critical > 0) status = 'critical';
         else if (s.warning > 0) status = 'degraded';
-        resolvedSites.push({ ...s, status });
+        return { ...s, status };
       });
     }
+    return [];
+  }, [sites, devices]);
 
+  const activeSiteMeta = useMemo(() => {
+    const found = resolvedSiteList.find(s => s.code === selectedSite);
+    const meta = SITE_METADATA[selectedSite] || {};
+    return {
+      code: selectedSite,
+      label: found?.label || meta.name || selectedSite || 'Local Site',
+      flag: meta.flag || (found?.label || '').split(' ')[0] || '🏢',
+      shortName: meta.shortName || found?.label || selectedSite,
+      deviceCount: found?.devices?.length || 0,
+      status: found?.status || 'nominal'
+    };
+  }, [resolvedSiteList, selectedSite]);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // LEVEL 1: Global Multi-Site WAN Topology Computation
+  // ─────────────────────────────────────────────────────────────────────────────
+  const { wanNodes, wanEdges, wanResilienceScore, wanDimensions } = useMemo(() => {
+    const resolvedSites = resolvedSiteList;
     const computedWanWidth = Math.max(containerSize.width, 1280);
     const computedWanHeight = Math.max(containerSize.height, 820);
 
@@ -318,7 +351,7 @@ export default function TopologyGraphView({
       wanResilienceScore: resilience,
       wanDimensions: { width: computedWanWidth, height: computedWanHeight }
     };
-  }, [sites, devices, containerSize, searchQuery, healthFilter, hasActiveFilter]);
+  }, [resolvedSiteList, containerSize, searchQuery, healthFilter, hasActiveFilter]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // LEVEL 2: Site LAN Tier Topology Computation
@@ -520,7 +553,9 @@ export default function TopologyGraphView({
       e.target.closest('.noc-graph-filter-badge') ||
       e.target.closest('.noc-wan-site-group') ||
       e.target.closest('.noc-wan-back-btn') ||
-      e.target.closest('.noc-topology-level-banner')
+      e.target.closest('.noc-topology-level-banner') ||
+      e.target.closest('.noc-topology-breadcrumbs') ||
+      e.target.closest('.noc-site-switcher-select')
     ) {
       return;
     }
@@ -688,7 +723,7 @@ export default function TopologyGraphView({
             </div>
           </>
         ) : (
-          <>
+          <div className="noc-topology-breadcrumbs" role="navigation" aria-label="Topology Level Navigation">
             <button
               type="button"
               className="noc-wan-back-btn"
@@ -698,11 +733,52 @@ export default function TopologyGraphView({
               <ArrowLeft size={13} />
               <span>← Back to Global WAN</span>
             </button>
+
+            <div className="noc-topology-breadcrumb-trail">
+              <button
+                type="button"
+                className="noc-breadcrumb-item noc-breadcrumb-root clickable"
+                onClick={onReturnToWan}
+                title="Return to Global WAN Interconnect (Level 1)"
+              >
+                <Globe size={13} />
+                <span>Global WAN Interconnect</span>
+              </button>
+
+              <ChevronRight size={13} className="noc-breadcrumb-separator" />
+
+              <span className="noc-breadcrumb-item noc-breadcrumb-site active" aria-current="location">
+                <span className="noc-breadcrumb-flag">{activeSiteMeta.flag}</span>
+                <span className="noc-breadcrumb-code">{selectedSite || 'SITE'}</span>
+                <span className="noc-breadcrumb-label">({activeSiteMeta.shortName})</span>
+              </span>
+            </div>
+
+            {/* Site Switcher Dropdown (SITE-04) */}
+            <div className="noc-site-switcher-wrapper">
+              <label htmlFor="noc-site-switcher" className="sr-only">Switch Site Topology</label>
+              <select
+                id="noc-site-switcher"
+                className="noc-site-switcher-select"
+                value={selectedSite || ''}
+                onChange={(e) => onSelectSite(e.target.value)}
+                title="Switch Site Topology"
+                aria-label="Switch Site Topology"
+              >
+                {resolvedSiteList.map(s => (
+                  <option key={s.code} value={s.code}>
+                    {s.status === 'critical' ? '✖ ' : s.status === 'degraded' ? '⚠ ' : '● '}
+                    {s.code} — {s.label} ({s.devices?.length || 0} devs)
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="noc-topology-level-badge" style={{ borderColor: 'var(--accent-purple)', color: 'var(--accent-purple)' }}>
               <Layers size={13} />
               <span>SITE LAN: {selectedSite || 'LOCAL CLUSTER'} (LEVEL 2)</span>
             </div>
-          </>
+          </div>
         )}
       </div>
 
@@ -774,7 +850,7 @@ export default function TopologyGraphView({
           <div className="noc-graph-filter-badge" style={{ position: 'static' }}>
             <Activity size={13} style={{ color: 'var(--accent-blue)' }} />
             <span>
-              Filtered: <strong>{matchCount}</strong> {topologyLevel === 'wan' ? 'sites' : 'devices'}
+              Filtered: <strong>{matchCount}</strong> {topologyLevel === 'wan' ? 'sites' : `of ${nodes.length} devices in ${selectedSite || 'Site LAN'}`}
             </span>
             {onResetFilters && (
               <button

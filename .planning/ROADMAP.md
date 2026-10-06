@@ -8,7 +8,7 @@
 | Phase | Milestone | Name | Goal | Requirements | Status |
 |-------|-----------|------|------|--------------|--------|
 | 24 | v2.0 | Global Multi-Site WAN Interconnect Canvas | Render interactive macro site nodes, aggregated site health badges, blast radius indicators, and inter-site WAN links | SITE-01, SITE-02, SITE-03 | Complete |
-| 25 | v2.0 | Site-Specific LAN Topology Drill-Down & Breadcrumbs | Drill down into site LAN graphs with intuitive breadcrumbs and site-switcher navigation | SITE-04, SITE-05, SITE-06 | Not started |
+| 25 | v2.0 | Site-Specific LAN Topology Drill-Down & Breadcrumbs | Drill down into site LAN graphs with intuitive breadcrumbs and site-switcher navigation | SITE-04, SITE-05, SITE-06 | Complete |
 | 26 | v2.0 | Cross-View Site Synchronization & Filter Alignment | Synchronize site selection and location filtering bi-directionally across Site Matrix, SRE Table, and Topology | SITE-07, SITE-08 | Not started |
 
 ---
@@ -35,7 +35,7 @@
 
 **Goal:** Implement Level 2 Site LAN tier graph drill-down with intuitive breadcrumb navigation and site switcher selector.
 
-**Status:** Not started
+**Status:** Complete
 
 **Requirements:**
 - **SITE-04**: User can drill down into any site from the Global WAN map (via click or site-switcher selector) to view that site's local Core ↔ Distribution ↔ Access tier topology graph.
