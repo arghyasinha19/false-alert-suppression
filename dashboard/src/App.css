@@ -1073,7 +1073,7 @@
 
 .badge.auto-resolving, .badge.auto { background: var(--accent-green-light); color: var(--accent-green); }
 .badge.non-auto-resolving, .badge.non-auto { background: var(--accent-red-light); color: var(--accent-red); }
-.badge.backdated { background: var(--accent-blue-light); color: var(--accent-blue); }
+.badge.backdated { background: var(--accent-blue-light); color: var(--badge-blue-text); }
 .badge.uncertain { background: var(--accent-yellow-light); color: var(--accent-yellow); }
 .badge.delayed { background: var(--accent-purple-light); color: var(--accent-purple); }
 
@@ -1084,9 +1084,9 @@
 .badge.health-healthy { background: var(--accent-green-light); color: var(--accent-green); }
 .badge.health-warning { background: var(--accent-yellow-light); color: var(--accent-yellow); }
 .badge.health-critical { background: var(--accent-red-light); color: var(--accent-red); }
-.badge.health-unknown { background: #f1f5f9; color: var(--text-tertiary); }
+.badge.health-unknown { background: var(--bg-tertiary); color: var(--text-tertiary); }
 
-.badge.snow-new { background: var(--accent-blue-light); color: var(--accent-blue); }
+.badge.snow-new { background: var(--accent-blue-light); color: var(--badge-blue-text); }
 .badge.snow-reopen { background: var(--accent-orange-light); color: var(--accent-orange); }
 .badge.snow-comment { background: var(--accent-purple-light); color: var(--accent-purple); }
 
@@ -2463,8 +2463,8 @@
 }
 
 .badge.badge-subtle.blue {
-  background: rgba(59, 130, 246, 0.14);
-  color: #3b82f6;
+  background: var(--accent-blue-light);
+  color: var(--badge-blue-text);
   border: 1px solid rgba(59, 130, 246, 0.25);
 }
 

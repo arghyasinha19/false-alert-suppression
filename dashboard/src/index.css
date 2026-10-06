@@ -12,7 +12,8 @@
   --card-border-hover: rgba(0, 0, 0, 0.12);
   --text-primary: #0f172a;
   --text-secondary: #475569;
-  --text-tertiary: #94a3b8;
+  --text-tertiary: #64748b;
+  --badge-blue-text: #1e40af;
   --accent-blue: #2563eb;
   --accent-blue-bright: #3b82f6;
   --accent-blue-light: #eff6ff;
@@ -38,7 +39,7 @@
   --health-healthy: #059669;
   --health-warning: #d97706;
   --health-critical: #dc2626;
-  --health-unknown: #94a3b8;
+  --health-unknown: #64748b;
   --sidebar-width: 260px;
   --transition-fast: 0.15s ease;
   --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -70,7 +71,8 @@
   --card-border-hover: rgba(255, 255, 255, 0.16);
   --text-primary: #f8fafc;
   --text-secondary: #cbd5e1;
-  --text-tertiary: #64748b;
+  --text-tertiary: #94a3b8;
+  --badge-blue-text: #93c5fd;
 
   --accent-blue: #3b82f6;
   --accent-blue-bright: #60a5fa;
@@ -106,7 +108,7 @@
   --health-healthy: #10b981;
   --health-warning: #f59e0b;
   --health-critical: #ef4444;
-  --health-unknown: #64748b;
+  --health-unknown: #94a3b8;
 
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3);
