@@ -1,6 +1,7 @@
 // Added comments for the UI
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Server, AlertTriangle, CheckCircle,
   Search, X, Clock, Wifi, WifiOff, Shield,
@@ -607,7 +608,14 @@ function AgentDecisionStepper({ timeline, alertIndex, expandedMetrics, onToggleM
   );
 }
 
-export default function NetworkOperations({ devices: rawDevices, lastRefresh, pollInterval = 15000, onRefresh }) {
+export default function NetworkOperations({
+  devices: rawDevices,
+  lastRefresh,
+  pollInterval = 15000,
+  onRefresh,
+  connectionStatus = 'connected',
+  lastSuccessfulSync = null,
+}) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [panelOpen, setPanelOpen] = useState(false);
@@ -691,7 +699,7 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
   };
 
   const handlePollDNAC = async () => {
-    if (!selectedDevice || pollingHealth) return;
+    if (!selectedDevice || pollingHealth || connectionStatus === 'offline') return;
     setPollingHealth(true);
     try {
       const resp = await fetch(
@@ -1088,6 +1096,10 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
   }, [devices]);
 
   const openDevicePanel = (device) => {
+    if (!device) {
+      closePanel();
+      return;
+    }
     setSelectedDevice(device);
     selectedDeviceNameRef.current = device.device_name;
     setPanelOpen(true);
@@ -1197,17 +1209,23 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
   return (
     <>
       {/* Live Refresh Indicator */}
-      <div className="noc-refresh-bar">
+      <div className={`noc-refresh-bar ${connectionStatus}`}>
         <div className="noc-refresh-left">
-          <span className="noc-live-dot" />
-          <span className="noc-live-label">Live</span>
+          <span className={`noc-live-dot ${connectionStatus}`} />
+          <span className="noc-live-label">
+            {connectionStatus === 'connected' ? 'Live' : connectionStatus === 'stale' ? 'Stale' : 'Offline'}
+          </span>
           <span className="noc-refresh-text">
-            {lastRefresh ? `Updated ${secondsAgo}s ago` : 'Connecting...'}
+            {connectionStatus === 'connected'
+              ? (lastSuccessfulSync || lastRefresh ? `Updated ${secondsAgo}s ago` : 'Connecting...')
+              : (lastSuccessfulSync || lastRefresh
+                  ? `Last sync: ${formatTimeOnly(lastSuccessfulSync || lastRefresh)} (Connection failed)`
+                  : 'Sync paused (Connection failed)')}
           </span>
         </div>
         <div className="noc-refresh-right">
           <RefreshCw size={12} className={secondsAgo < 2 ? 'spin-once' : ''} />
-          <span>Auto-refresh {Math.round(pollInterval / 1000)}s</span>
+          <span>{connectionStatus === 'connected' ? `Auto-refresh ${Math.round(pollInterval / 1000)}s` : 'Auto-retry active'}</span>
         </div>
         <div className="noc-refresh-progress">
           <div className="noc-refresh-progress-fill" style={{ width: `${progressPct}%` }} />
@@ -1351,87 +1369,93 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
       </div>
 
       {/* Search Bar & View Mode Switcher */}
-      <div className="filter-bar">
-        <Search size={15} style={{ color: 'var(--text-tertiary)' }} />
-        <input
-          className="filter-search"
-          type="text"
-          placeholder="Search devices, locations, or tiers..."
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-        />
-        {searchQuery && (
-          <button
-            className="filter-pill"
-            onClick={() => setSearchQuery('')}
-            style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
-          >
-            <X size={12} /> Clear
-          </button>
-        )}
-
-        {/* Multi-Mode Representation Switcher */}
-        <div className="noc-view-switcher" role="radiogroup" aria-label="View representation mode">
-          <button
-            type="button"
-            className={`noc-view-btn ${viewMode === 'topology' ? 'active' : ''}`}
-            onClick={() => handleViewModeChange('topology')}
-            aria-pressed={viewMode === 'topology'}
-            title="Executive Topology View: Grouped by network tier"
-          >
-            <Layers size={13} />
-            <span>Topology</span>
-          </button>
-          <button
-            type="button"
-            className={`noc-view-btn ${viewMode === 'table' ? 'active' : ''}`}
-            onClick={() => handleViewModeChange('table')}
-            aria-pressed={viewMode === 'table'}
-            title="SRE High-Density Table View: Compact sortable telemetry"
-          >
-            <Table size={13} />
-            <span>SRE Table</span>
-          </button>
-          <button
-            type="button"
-            className={`noc-view-btn ${viewMode === 'matrix' ? 'active' : ''}`}
-            onClick={() => handleViewModeChange('matrix')}
-            aria-pressed={viewMode === 'matrix'}
-            title="Regional Site Matrix View: Geographic multi-region rollup"
-          >
-            <Globe size={13} />
-            <span>Site Matrix</span>
-          </button>
+      <div className="noc-controls-bar">
+        {/* Left: Search row */}
+        <div className="noc-controls-search-row">
+          <Search size={15} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
+          <input
+            className="filter-search"
+            type="text"
+            placeholder="Search devices, locations, or tiers..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button
+              className="filter-pill"
+              onClick={() => setSearchQuery('')}
+              style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}
+            >
+              <X size={12} /> Clear
+            </button>
+          )}
+          <span className="noc-device-count-badge">
+            {filteredDevices.length} device{filteredDevices.length !== 1 ? 's' : ''}
+          </span>
         </div>
 
-        {/* Topology Sub-Mode Switcher: Graph vs Cards */}
-        {viewMode === 'topology' && (
-          <div className="noc-submode-pill-group" role="radiogroup" aria-label="Topology presentation sub-mode">
+        {/* Right: View Controls */}
+        <div className="noc-controls-right">
+          {/* Multi-Mode Representation Switcher */}
+          <div className="noc-view-switcher" role="radiogroup" aria-label="View representation mode">
             <button
               type="button"
-              className={`noc-submode-btn ${topologySubMode === 'graph' ? 'active' : ''}`}
-              onClick={() => setTopologySubMode('graph')}
-              title="Interactive SVG Graph Diagram"
+              className={`noc-view-btn ${viewMode === 'topology' ? 'active' : ''}`}
+              onClick={() => handleViewModeChange('topology')}
+              aria-pressed={viewMode === 'topology'}
+              title="Executive Topology View: Grouped by network tier"
             >
-              <Layers size={11} />
-              <span>Graph</span>
+              <Layers size={13} />
+              <span>Topology</span>
             </button>
             <button
               type="button"
-              className={`noc-submode-btn ${topologySubMode === 'cards' ? 'active' : ''}`}
-              onClick={() => setTopologySubMode('cards')}
-              title="Tiered Device Card Grid"
+              className={`noc-view-btn ${viewMode === 'table' ? 'active' : ''}`}
+              onClick={() => handleViewModeChange('table')}
+              aria-pressed={viewMode === 'table'}
+              title="SRE High-Density Table View: Compact sortable telemetry"
             >
-              <LayoutGrid size={11} />
-              <span>Cards</span>
+              <Table size={13} />
+              <span>SRE Table</span>
+            </button>
+            <button
+              type="button"
+              className={`noc-view-btn ${viewMode === 'matrix' ? 'active' : ''}`}
+              onClick={() => handleViewModeChange('matrix')}
+              aria-pressed={viewMode === 'matrix'}
+              title="Regional Site Matrix View: Geographic multi-region rollup"
+            >
+              <Globe size={13} />
+              <span>Site Matrix</span>
             </button>
           </div>
-        )}
 
-        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginLeft: '0.5rem', whiteSpace: 'nowrap' }}>
-          {filteredDevices.length} device{filteredDevices.length !== 1 ? 's' : ''} shown
-        </span>
+          {/* Topology Sub-Mode Switcher: Graph vs Cards */}
+          {viewMode === 'topology' && (
+            <div className="noc-submode-pill-group" role="radiogroup" aria-label="Topology presentation sub-mode">
+              <button
+                type="button"
+                className={`noc-submode-btn ${topologySubMode === 'graph' ? 'active' : ''}`}
+                onClick={() => setTopologySubMode('graph')}
+                title="Interactive SVG Graph Diagram"
+              >
+                <Layers size={11} />
+                <span>Graph</span>
+              </button>
+              <button
+                type="button"
+                className={`noc-submode-btn ${topologySubMode === 'cards' ? 'active' : ''}`}
+                onClick={() => setTopologySubMode('cards')}
+                title="Tiered Device Card Grid"
+              >
+                <LayoutGrid size={11} />
+                <span>Cards</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
+
 
       {/* Tier 2: Multi-Dimensional Filter Strip */}
       <div className="noc-filter-strip">
@@ -1871,11 +1895,13 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
         </div>
       )}
 
-      {/* Detail Panel Overlay */}
-      <div className={`detail-overlay ${panelOpen ? 'open' : ''}`} onClick={closePanel} />
+      {createPortal(
+        <>
+          {/* Detail Panel Overlay */}
+          <div className={`detail-overlay ${panelOpen ? 'open' : ''}`} onClick={closePanel} />
 
-      {/* Detail Slide-Out Panel */}
-      <div className={`detail-panel ${panelOpen ? 'open' : ''}`}>
+          {/* Detail Slide-Out Panel */}
+          <div className={`detail-panel ${panelOpen ? 'open' : ''}`}>
         {selectedDevice && (() => {
           const snow = getSnowSummary(selectedDevice);
           const activeAlerts = selectedDevice.active_alerts || [];
@@ -1933,6 +1959,25 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
 
           const renderProvenanceBanner = () => {
             const timeStr = deviceTelemetry?.synced_at ? formatTimestamp(deviceTelemetry.synced_at) : (lastRefresh ? formatTimestamp(lastRefresh) : 'Just now');
+            if (connectionStatus === 'offline') {
+              return (
+                <div className="noc-provenance-banner offline">
+                  <span className="noc-banner-text">
+                    <Database size={13} />
+                    <span>Simulated Device Profile • Backend API offline</span>
+                  </span>
+                  <button
+                    type="button"
+                    className="noc-retry-btn"
+                    disabled={true}
+                    title="Backend API offline • Live controller polling unavailable"
+                  >
+                    <RefreshCw size={11} />
+                    <span>Poll DNAC</span>
+                  </button>
+                </div>
+              );
+            }
             if (telemetrySource === 'dnac_live') {
               return (
                 <div className="noc-provenance-banner live">
@@ -2340,8 +2385,8 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
                   type="button"
                   className="noc-action-btn"
                   onClick={handlePollDNAC}
-                  disabled={pollingHealth}
-                  title="Trigger live Assurance re-check"
+                  disabled={pollingHealth || connectionStatus === 'offline'}
+                  title={connectionStatus === 'offline' ? "Backend API offline • Live controller polling unavailable" : "Trigger live Assurance re-check"}
                 >
                   <RefreshCw size={13} className={pollingHealth ? 'spin' : ''} />
                   <span>Poll DNAC</span>
@@ -2406,6 +2451,9 @@ export default function NetworkOperations({ devices: rawDevices, lastRefresh, po
           </div>
         ))}
       </div>
+        </>,
+        document.body
+      )}
     </>
   );
 }
