@@ -1,8 +1,8 @@
 import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import {
-  ZoomIn, ZoomOut, Maximize2, RotateCcw,
+  ZoomIn, ZoomOut, Maximize2, Minimize2, RotateCcw,
   LayoutGrid, Server, Shield, Wifi,
-  Activity, Move
+  Activity, Move, Layers
 } from 'lucide-react';
 
 const TIER_METADATA = {
@@ -108,12 +108,16 @@ export default function TopologyGraphView({
   const containerRef = useRef(null);
   const [containerSize, setContainerSize] = useState({ width: 1100, height: 720 });
   const [transform, setTransform] = useState({ x: 30, y: 20, k: 0.95 });
+  const [zoomTransition, setZoomTransition] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [panDistance, setPanDistance] = useState(0);
   const [startTransform, setStartTransform] = useState({ x: 0, y: 0, k: 1 });
   const [hoveredNode, setHoveredNode] = useState(null);
   const [hoveredEdge, setHoveredEdge] = useState(null);
+  const [showWheelHint, setShowWheelHint] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const wheelHintTimerRef = useRef(null);
 
   // ResizeObserver to track container bounds
   useEffect(() => {
@@ -326,6 +330,16 @@ export default function TopologyGraphView({
     ) {
       return;
     }
+    
+    // Check if we're clicking inside an SVG node group by walking up parents
+    let current = e.target;
+    while (current && current.tagName !== 'svg') {
+      if (current.classList && current.classList.contains('noc-graph-node-card')) {
+        return; // Clicked a node, don't pan
+      }
+      current = current.parentNode;
+    }
+
     setIsPanning(true);
     setPanDistance(0);
     setPanStart({ x: e.clientX, y: e.clientY });
@@ -334,19 +348,35 @@ export default function TopologyGraphView({
       containerRef.current.setPointerCapture(e.pointerId);
     }
   };
-
   const handlePointerMove = (e) => {
     if (!isPanning) return;
     const dx = e.clientX - panStart.x;
     const dy = e.clientY - panStart.y;
-    setPanDistance(d => d + Math.abs(dx) + Math.abs(dy));
+    
+    // Just track the maximum distance moved from start, not accumulating on every event
+    setPanDistance(Math.max(Math.abs(dx), Math.abs(dy)));
+
+    const rawX = startTransform.x + dx;
+    const rawY = startTransform.y + dy;
+
+    // Soft boundary pan clamping (D-03):
+    // Ensure at least 25% of graph bounding box remains visible within container
+    const visibleW = canvasDimensions.width * transform.k;
+    const visibleH = canvasDimensions.height * transform.k;
+    const minX = -(visibleW * 0.75);
+    const maxX = containerSize.width - (visibleW * 0.25);
+    const minY = -(visibleH * 0.75);
+    const maxY = containerSize.height - (visibleH * 0.25);
+
+    const clampedX = Math.min(maxX, Math.max(minX, rawX));
+    const clampedY = Math.min(maxY, Math.max(minY, rawY));
+    
     setTransform({
       ...startTransform,
-      x: startTransform.x + dx,
-      y: startTransform.y + dy
+      x: clampedX,
+      y: clampedY
     });
   };
-
   const handlePointerUp = (e) => {
     if (isPanning) {
       setIsPanning(false);
@@ -366,9 +396,26 @@ export default function TopologyGraphView({
     }
   };
 
-  // Handle Mouse Wheel Zooming (clamped 0.4x to 2.2x)
+  // Handle Mouse Wheel Zooming (clamped 0.4x to 2.2x guarded by Ctrl/Cmd)
   const handleWheel = useCallback((e) => {
+    const hasModifier = e.ctrlKey || e.metaKey;
+    if (!hasModifier) {
+      // Natural browser page scroll passes through; display temporary floating hint
+      if (wheelHintTimerRef.current) clearTimeout(wheelHintTimerRef.current);
+      setShowWheelHint(true);
+      wheelHintTimerRef.current = setTimeout(() => {
+        setShowWheelHint(false);
+      }, 2000);
+      return;
+    }
+
+    // Ctrl or Cmd modifier held: intercept wheel event to zoom canvas
     e.preventDefault();
+    if (showWheelHint) {
+      setShowWheelHint(false);
+      if (wheelHintTimerRef.current) clearTimeout(wheelHintTimerRef.current);
+    }
+
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
@@ -385,7 +432,7 @@ export default function TopologyGraphView({
 
       return { x: nextX, y: nextY, k: nextK };
     });
-  }, []);
+  }, [showWheelHint]);
 
   // Attach non-passive wheel listener for clean e.preventDefault()
   useEffect(() => {
@@ -395,23 +442,51 @@ export default function TopologyGraphView({
     return () => el.removeEventListener('wheel', handleWheel);
   }, [handleWheel]);
 
+  // Cleanup wheel hint timer on unmount
+  useEffect(() => {
+    return () => {
+      if (wheelHintTimerRef.current) clearTimeout(wheelHintTimerRef.current);
+    };
+  }, []);
+
+  // Keyboard shortcut listener for Esc key to exit fullscreen (D-04)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFullscreen]);
+
+  const toggleFullscreen = () => {
+    setIsFullscreen(prev => !prev);
+  };
+
   // Toolbar Actions
   const handleZoomIn = () => {
+    setZoomTransition(true);
     setTransform(curr => ({
       ...curr,
       k: Math.min(2.2, curr.k * 1.2)
     }));
+    setTimeout(() => setZoomTransition(false), 300);
   };
 
   const handleZoomOut = () => {
+    setZoomTransition(true);
     setTransform(curr => ({
       ...curr,
       k: Math.max(0.4, curr.k * 0.83)
     }));
+    setTimeout(() => setZoomTransition(false), 300);
   };
 
   const handleResetZoom = () => {
+    setZoomTransition(true);
     setTransform({ x: 30, y: 20, k: 0.95 });
+    setTimeout(() => setZoomTransition(false), 300);
   };
 
   const handleFitToScreen = () => {
@@ -422,7 +497,9 @@ export default function TopologyGraphView({
     const newK = Math.min(1.2, Math.max(0.45, Math.min(scaleX, scaleY)));
     const newX = (containerSize.width - canvasDimensions.width * newK) / 2;
     const newY = Math.max(20, (containerSize.height - canvasDimensions.height * newK) / 2);
+    setZoomTransition(true);
     setTransform({ x: newX, y: newY, k: newK });
+    setTimeout(() => setZoomTransition(false), 300);
   };
 
   // Color mapper helper
@@ -435,14 +512,35 @@ export default function TopologyGraphView({
   return (
     <div
       ref={containerRef}
-      className={`noc-topology-graph-container ${isPanning ? 'is-panning' : ''}`}
+      className={`noc-topology-graph-container ${isPanning ? 'is-panning' : ''} ${isFullscreen ? 'fullscreen' : ''}`}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
     >
+      {/* Floating Wheel Zoom Modifier Hint Toast (D-01) */}
+      {showWheelHint && (
+        <div className="noc-wheel-zoom-hint" role="status" aria-live="polite">
+          Use Ctrl + scroll to zoom
+        </div>
+      )}
+
       {/* Floating Canvas Controls Toolbar */}
       <div className="noc-graph-controls-toolbar">
+        {/* Fullscreen / Expand Canvas Mode Toggle (D-04) */}
+        <button
+          type="button"
+          className={`noc-graph-control-btn ${isFullscreen ? 'active-pill' : ''}`}
+          onClick={toggleFullscreen}
+          title={isFullscreen ? "Exit Fullscreen Canvas (Esc)" : "Expand Topology View"}
+          aria-label={isFullscreen ? "Exit Fullscreen Canvas" : "Expand Topology View"}
+        >
+          {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+          <span>{isFullscreen ? 'Exit' : 'Expand'}</span>
+        </button>
+
+        <div className="noc-graph-btn-divider" />
+
         {/* Sub-mode switch button: Graph vs Cards */}
         <button
           type="button"
@@ -478,7 +576,7 @@ export default function TopologyGraphView({
           onClick={handleFitToScreen}
           title="Fit Network to View"
         >
-          <Maximize2 size={13} />
+          <Layers size={13} />
         </button>
         <button
           type="button"
@@ -555,7 +653,11 @@ export default function TopologyGraphView({
         <rect id="noc-canvas-bg" width="100%" height="100%" fill="url(#noc-grid-dots)" />
 
         {/* Pan & Zoom Transform Group */}
-        <g transform={`translate(${transform.x}, ${transform.y}) scale(${transform.k})`}>
+        <g 
+          className="noc-graph-transform-group"
+          transform={`translate(${transform.x}, ${transform.y}) scale(${transform.k})`}
+          style={{ transition: zoomTransition ? 'transform 0.3s cubic-bezier(0.2, 0, 0, 1)' : 'none' }}
+        >
           {/* 1. Horizontal Tier Lane Backgrounds */}
           {[
             { id: 'core', y: 40, height: 180, label: 'CORE & WAN BACKBONE', meta: TIER_METADATA.core },

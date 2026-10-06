@@ -4340,8 +4340,9 @@
 .noc-topology-graph-container {
   position: relative;
   width: 100%;
-  height: 680px;
-  min-height: 520px;
+  height: clamp(560px, calc(100vh - 280px), 780px);
+  min-height: 560px;
+  max-height: 780px;
   overflow: hidden;
   border-radius: var(--radius-lg);
   background: var(--bg-secondary);
@@ -4352,8 +4353,62 @@
   transition: border-color var(--transition-fast);
 }
 
+.noc-topology-graph-container.fullscreen {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  max-height: 100vh;
+  z-index: 1000;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+}
+
+.noc-topology-graph-container.fullscreen .noc-graph-controls-toolbar {
+  top: 24px;
+  right: 24px;
+  z-index: 1010;
+}
+
 .noc-topology-graph-container.is-panning {
   cursor: grabbing;
+}
+
+/* ── Floating Wheel Zoom Hint Toast (UI-03, D-01) ── */
+.noc-wheel-zoom-hint {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  padding: 6px 16px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-full, 9999px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  animation: fadeInToast 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+[data-theme="light"] .noc-wheel-zoom-hint {
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes fadeInToast {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 
 .noc-topology-canvas {
