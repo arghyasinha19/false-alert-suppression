@@ -85,3 +85,12 @@
   - Accessibility & Hit Areas: Enforced 32px visible min-height, 44x44px touch targets, full sidebar keyboard navigation (`<button>` elements with `aria-current`), accessible form labels and table captions, and eliminated modal chat backdrop focus trap.
   - Craft & Consistency Polish: Established 6-step strict typography scale (`--font-xs` through `--font-2xl`), converged KPI cards to executive NOC architecture with active filter glows, eliminated prototype simulation buttons, unified empty states with `EmptyState.jsx`, and expanded domain shorthand tooltips.
 
+### v2.0 Multi-Site Hierarchical Topology & WAN Observability (Completed 2026-10-06)
+- **Goal:** Enable global enterprise observability by providing a 2-level hierarchical network topology canvas featuring an interactive Level 1 Global Multi-Site WAN interconnect map and a Level 2 Site-Specific LAN tier graph with seamless cross-view synchronization.
+- **Shipped:**
+  - Level 1 Global Multi-Site WAN Interconnect Canvas (`SITE-01`, `SITE-02`, `SITE-03`): Interactive macro site cards clustered across EMEA, Americas, and APAC; dynamic blast radius calculation with pulsing perimeter halos (`.blast-radius-halo`); smooth cubic bezier WAN cables with animated packet transit flows (`@keyframes wanFlow`) and latency badges (`24ms`, `115ms`, etc.).
+  - Level 2 Site LAN Drill-Down & Breadcrumbs (`SITE-04`, `SITE-05`, `SITE-06`): Local 3-tier hierarchy (Core ↔ Distribution ↔ Access) scoped strictly to the selected site fleet; responsive breadcrumbs (`Global WAN Interconnect > [Site Name]`) with single-click return; accessible site-switcher dropdown (`.noc-site-switcher-select`) for instant site hopping; site-scoped device filtering.
+  - Cross-View Site Synchronization & Filter Alignment (`SITE-07`, `SITE-08`): Deep-linking between Regional Site Matrix cards and topology drill-down with `.active-site` border glow; interactive SRE High-Density Table location buttons (`.noc-table-loc-btn`); dedicated multi-dimensional `Site:` filter cluster with live device count chips and global reset.
+  - 100% Automated Quality Gates: 106 automated tests passing with zero failures; clean production build with 894ms compilation.
+
+

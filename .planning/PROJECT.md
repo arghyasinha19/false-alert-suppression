@@ -66,16 +66,19 @@ Accurately identify false or transient network alerts to prevent unnecessary Ser
 - ✓ **UI-07**: Expand interactive element hit areas to a comfortable 32px minimum. — v1.9
 - ✓ **UI-08**: Ensure the chat panel does not trap focus globally with an invisible overlay. — v1.9
 - ✓ **UI-09-22**: Address medium priority consistency fixes including typography scales, KPI card unified design, unlabelled form controls, keyboard navigation (aria-current), and empty states. — v1.9
+- ✓ **SITE-01**: User can view a Global Multi-Site WAN interconnect topology displaying geographically distributed sites as macro nodes with inter-site connection links. — v2.0
+- ✓ **SITE-02**: User can view site-level health rollup badges, active alert counts, avoided ticket totals, and blast radius indicators on each site macro node. — v2.0
+- ✓ **SITE-03**: User can view inter-site WAN connection links with live health status, latency, and animated flow indicators. — v2.0
+- ✓ **SITE-04**: User can drill down into any site from the Global WAN map (via click or site-switcher selector) to view that site's local Core ↔ Distribution ↔ Access tier topology graph. — v2.0
+- ✓ **SITE-05**: User can navigate between the Global WAN overview and local site views using responsive breadcrumbs (`Global WAN Interconnect > Site`) with single-click return to global. — v2.0
+- ✓ **SITE-06**: User can filter devices within a site's LAN topology while preserving site boundaries and context. — v2.0
+- ✓ **SITE-07**: Selecting a site in the Regional Site Matrix automatically filters or transitions the Topology view to that site's LAN graph. — v2.0
+- ✓ **SITE-08**: Filtering by location in the SRE Table or multi-dimensional filter bar synchronizes with the Topology view's active site scope. — v2.0
 
 ### Active
 
-- [ ] **SITE-01**: User can view a Global Multi-Site WAN interconnect topology displaying geographically distributed sites as macro nodes with inter-site connection links.
-- [ ] **SITE-02**: User can view site-level health rollup badges, active alert counts, and blast radius indicators on each site macro node.
-- [ ] **SITE-03**: User can click any site node or select from a site switcher to drill down into the site's local Core ↔ Distribution ↔ Access topology graph.
-- [ ] **SITE-04**: User can navigate between the Global WAN overview and local site topology via breadcrumb controls and return to global view with single-click.
-- [ ] **SITE-05**: Filter and selection state synchronizes bi-directionally between Regional Site Matrix cards, SRE Table location filters, and the Multi-Site Topology canvas.
+*None — Milestone v2.0 complete and verified.*
 
-### Out of Scope
 
 - Bypassing DNAC RBAC or making unauthenticated calls.
 - Storing unencrypted DNAC passwords in source code (always load from env vars or `config.yaml`).
