@@ -2364,6 +2364,51 @@
   background: radial-gradient(circle at top right, var(--accent-purple) 0%, transparent 70%);
 }
 
+.noc-kpi-card.highlight-cyan::after {
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-teal));
+}
+.noc-kpi-card.highlight-cyan::before {
+  background: radial-gradient(circle at top right, var(--accent-cyan) 0%, transparent 70%);
+}
+
+/* Interactive Click-to-Filter NOC KPI Cards (UI-09-22, D-02) */
+.noc-kpi-card.clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.noc-kpi-card.clickable:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-blue);
+  box-shadow: var(--shadow-md);
+}
+
+.noc-kpi-card.clickable.active {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 2px var(--accent-blue-light), var(--shadow-md);
+  background: var(--bg-tertiary);
+}
+
+.noc-kpi-card.clickable.active.highlight-green {
+  border-color: var(--accent-green);
+  box-shadow: 0 0 0 2px var(--accent-green-light), var(--shadow-md);
+}
+
+.noc-kpi-card.clickable.active.highlight-red {
+  border-color: var(--accent-red);
+  box-shadow: 0 0 0 2px var(--accent-red-light), var(--shadow-md);
+}
+
+.noc-kpi-card.clickable.active.highlight-yellow {
+  border-color: var(--accent-yellow);
+  box-shadow: 0 0 0 2px var(--accent-yellow-light), var(--shadow-md);
+}
+
+.noc-kpi-card.clickable.active.highlight-blue {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 2px var(--accent-blue-light), var(--shadow-md);
+}
+
 /* Card Top: Icon (left) + Badge Pill (right) */
 .noc-kpi-top {
   display: flex;

@@ -13,6 +13,7 @@ import {
 } from 'recharts';
 import AnimatedCounter from './AnimatedCounter';
 import TableScrollWrapper from './components/TableScrollWrapper';
+import EmptyState from './components/EmptyState';
 import useChartTheme from './hooks/useChartTheme';
 
 const COLORS = ['#2563eb', '#059669', '#dc2626', '#d97706', '#7c3aed', '#0891b2'];
@@ -327,7 +328,6 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
   const [customEndTime, setCustomEndTime] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [selectedEvent, setSelectedEvent] = useState(null);
-  const [simulating, setSimulating] = useState(false);
 
   // Table-specific filters & sorting
   const [matrixSearch, setMatrixSearch] = useState('');
@@ -359,20 +359,6 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
     } else {
       setSortColumn(columnKey);
       setSortDirection('asc');
-    }
-  };
-
-  const handleSimulate = async (count = 5) => {
-    setSimulating(true);
-    try {
-      await fetch(`${API_BASE}/api/alerts/simulate?count=${count}`, { method: 'POST' });
-      if (onRefresh) {
-        await onRefresh();
-      }
-    } catch (e) {
-      console.error('Failed to simulate alerts:', e);
-    } finally {
-      setSimulating(false);
     }
   };
 
@@ -705,15 +691,15 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
   };
 
   const TRACE_COLUMNS = [
-    { key: 'event_id', label: 'Event ID', width: '220px', minWidth: '160px', tooltip: 'Unique DNAC event identifier — click ID to view alert trace' },
+    { key: 'event_id', label: 'Event ID', width: '220px', minWidth: '160px', tooltip: 'Unique Cisco DNA Center (DNAC) event identifier — click ID to view alert trace' },
     { key: 'device', label: 'Device', width: '180px', minWidth: '130px', tooltip: 'Network device hostname — click to filter matrix by device' },
-    { key: 'severity', label: 'Severity', width: '85px', minWidth: '70px', tooltip: 'Alert severity level (1=Critical, 2=Major, 3=Minor)' },
+    { key: 'severity', label: 'Severity', width: '85px', minWidth: '70px', tooltip: 'Priority level: P1 (Critical), P2 (Major), P3 (Minor)' },
     { key: 'issue', label: 'Issue', width: '200px', minWidth: '140px', tooltip: 'Reported network failure description or issue category' },
     { key: 'timestamp', label: 'Timestamp', width: '160px', minWidth: '130px', tooltip: 'Alert timestamp in local time' },
     { key: 'agent1', label: 'Agent 1', width: '100px', minWidth: '85px', tooltip: 'Backdated / freshness check (Suppressed vs Fresh)' },
     { key: 'ml', label: 'ML Classification', width: '180px', minWidth: '140px', tooltip: 'Machine learning classifier category and confidence score' },
     { key: 'agent3', label: 'Agent 3', width: '95px', minWidth: '80px', tooltip: 'Correlation and suppression queue status' },
-    { key: 'snow', label: 'ServiceNow', width: '190px', minWidth: '140px', tooltip: 'ITSM ticket action and incident reference' },
+    { key: 'snow', label: 'ServiceNow', width: '190px', minWidth: '140px', tooltip: 'ServiceNow (SNOW) ITSM ticket action and incident reference' },
   ];
 
   return (
@@ -820,125 +806,218 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
         ))}
       </div>
 
-      {/* Simulate Action */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
-        <button
-          className="filter-pill simulate-btn"
-          style={{
-            background: 'linear-gradient(135deg, #2563eb, #0891b2)',
-            color: '#ffffff',
-            border: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontWeight: 600,
-            cursor: simulating ? 'wait' : 'pointer',
-            boxShadow: '0 2px 8px rgba(37, 99, 235, 0.3)',
-            padding: '0.45rem 0.9rem',
-          }}
-          disabled={simulating}
-          onClick={() => handleSimulate(5)}
-          title="Simulate 5 incoming alerts and run through ML pipeline"
-        >
-          <Zap size={14} className={simulating ? 'spin-once' : ''} />
-          {simulating ? 'Simulating...' : '⚡ Simulate +5 Alerts'}
-        </button>
-      </div>
-
       {/* KPI Cards Row 1 */}
       <div className="kpi-grid">
-        <div className="glass-card kpi-card highlight-blue">
-          <div className="kpi-icon blue"><Activity size={20} /></div>
-          <div className="kpi-content">
-            <h3>Total Processed</h3>
-            <p className="value"><AnimatedCounter value={kpi.total} /></p>
-            <p className="sub-value">
-              {categoryFilter !== 'ALL'
-                ? `${filteredAlerts.length} ${categoryFilter === 'BACKDATED' ? 'Backdated' : categoryFilter === 'AUTO' ? 'Auto-Resolving' : categoryFilter === 'NON_AUTO' ? 'Non-Auto' : 'Uncertain'} filtered · ${kpi.total} total`
-                : `alerts ingested (${kpi.total} total)`}
-            </p>
+        <div className="glass-card noc-kpi-card highlight-blue">
+          <div className="noc-kpi-top">
+            <div className="kpi-icon blue"><Activity size={20} /></div>
+            <span className="badge badge-subtle blue">INGESTED</span>
+          </div>
+          <div className="noc-kpi-body">
+            <div className="noc-kpi-main">
+              <h3 className="noc-kpi-title">Total Ingested</h3>
+              <div className="noc-kpi-value-row">
+                <span className="noc-kpi-value"><AnimatedCounter value={kpi.total} /></span>
+                <span className="noc-kpi-unit">Alerts</span>
+              </div>
+            </div>
+            <div className="noc-kpi-footer">
+              <p className="noc-kpi-subtitle">
+                {categoryFilter !== 'ALL'
+                  ? `${filteredAlerts.length} ${categoryFilter === 'BACKDATED' ? 'Backdated' : categoryFilter === 'AUTO' ? 'Auto-Resolving' : categoryFilter === 'NON_AUTO' ? 'Non-Auto' : 'Uncertain'} filtered · ${kpi.total} total`
+                  : `Alerts ingested (${kpi.total} total)`}
+              </p>
+            </div>
           </div>
         </div>
-        <div className="glass-card kpi-card highlight-green">
-          <div className="kpi-icon green"><ShieldCheck size={20} /></div>
-          <div className="kpi-content">
-            <h3>Suppression Rate</h3>
-            <p className="value" style={{ color: 'var(--accent-green)' }}>
-              <AnimatedCounter value={kpi.suppressionRate} decimals={1} suffix="%" />
-            </p>
-            <p className="sub-value">noise eliminated</p>
+
+        <div className="glass-card noc-kpi-card highlight-green">
+          <div className="noc-kpi-top">
+            <div className="kpi-icon green"><ShieldCheck size={20} /></div>
+            <span className="badge badge-subtle green">SUPPRESSED</span>
+          </div>
+          <div className="noc-kpi-body">
+            <div className="noc-kpi-main">
+              <h3 className="noc-kpi-title">Suppression Rate</h3>
+              <div className="noc-kpi-value-row">
+                <span className="noc-kpi-value" style={{ color: 'var(--accent-green)' }}>
+                  <AnimatedCounter value={kpi.suppressionRate} decimals={1} suffix="%" />
+                </span>
+                <span className="noc-kpi-unit">Rate</span>
+              </div>
+            </div>
+            <div className="noc-kpi-footer">
+              <p className="noc-kpi-subtitle">Noise eliminated at edge</p>
+            </div>
           </div>
         </div>
-        <div className="glass-card kpi-card highlight-cyan">
-          <div className="kpi-icon cyan"><Ban size={20} /></div>
-          <div className="kpi-content">
-            <h3>Tickets Avoided</h3>
-            <p className="value"><AnimatedCounter value={kpi.ticketsAvoided} /></p>
-            <p className="sub-value" title={`${kpi.backdated} backdated alerts suppressed + ${kpi.autoResolving} predicted auto-resolved`}>
-              {kpi.backdated} suppressed · {kpi.autoResolving} resolved
-            </p>
+
+        <div className="glass-card noc-kpi-card highlight-cyan">
+          <div className="noc-kpi-top">
+            <div className="kpi-icon cyan"><Ban size={20} /></div>
+            <span className="badge badge-subtle cyan">AVOIDED</span>
+          </div>
+          <div className="noc-kpi-body">
+            <div className="noc-kpi-main">
+              <h3 className="noc-kpi-title">Tickets Avoided</h3>
+              <div className="noc-kpi-value-row">
+                <span className="noc-kpi-value"><AnimatedCounter value={kpi.ticketsAvoided} /></span>
+                <span className="noc-kpi-unit">Tickets</span>
+              </div>
+            </div>
+            <div className="noc-kpi-footer">
+              <p className="noc-kpi-subtitle" title={`${kpi.backdated} backdated alerts suppressed + ${kpi.autoResolving} predicted auto-resolved`}>
+                {kpi.backdated} suppressed · {kpi.autoResolving} resolved
+              </p>
+            </div>
           </div>
         </div>
-        <div className="glass-card kpi-card highlight-red">
-          <div className="kpi-icon red"><Ticket size={20} /></div>
-          <div className="kpi-content">
-            <h3>SNOW Tickets</h3>
-            <p className="value"><AnimatedCounter value={kpi.totalSnowTickets} /></p>
-            <p className="sub-value" title={`${kpi.snowCreated} new incidents, ${kpi.snowAppended} work notes appended, ${kpi.snowReopened} incidents reopened`}>
-              {kpi.snowCreated} new · {kpi.snowReopened} reopen · {kpi.snowAppended} notes
-            </p>
+
+        <div className="glass-card noc-kpi-card highlight-red">
+          <div className="noc-kpi-top">
+            <div className="kpi-icon red"><Ticket size={20} /></div>
+            <span className="badge badge-subtle red" title="ServiceNow ITSM Ticketing System">ESCALATED</span>
+          </div>
+          <div className="noc-kpi-body">
+            <div className="noc-kpi-main">
+              <h3 className="noc-kpi-title" title="ServiceNow ITSM Incidents">SNOW Tickets</h3>
+              <div className="noc-kpi-value-row">
+                <span className="noc-kpi-value"><AnimatedCounter value={kpi.totalSnowTickets} /></span>
+                <span className="noc-kpi-unit">Incidents</span>
+              </div>
+            </div>
+            <div className="noc-kpi-footer">
+              <p className="noc-kpi-subtitle" title={`${kpi.snowCreated} new incidents, ${kpi.snowAppended} work notes appended, ${kpi.snowReopened} incidents reopened`}>
+                {kpi.snowCreated} new · {kpi.snowReopened} reopen · {kpi.snowAppended} notes
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* KPI Cards Row 2 */}
+      {/* KPI Cards Row 2 (Click to Filter) */}
       <div className="kpi-grid">
         <div
-          className={`glass-card kpi-card ${categoryFilter === 'BACKDATED' ? 'active highlight-blue' : ''}`}
+          className={`glass-card noc-kpi-card highlight-blue clickable ${categoryFilter === 'BACKDATED' ? 'active' : ''}`}
           onClick={() => setCategoryFilter(f => f === 'BACKDATED' ? 'ALL' : 'BACKDATED')}
           title="Click to toggle filter for Backdated / Suppressed alerts"
+          role="button"
+          tabIndex={0}
+          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCategoryFilter(f => f === 'BACKDATED' ? 'ALL' : 'BACKDATED'); }}}
+          aria-pressed={categoryFilter === 'BACKDATED'}
         >
-          <div className="kpi-icon blue"><Clock size={20} /></div>
-          <div className="kpi-content">
-            <h3>Backdated / Suppressed</h3>
-            <p className="value"><AnimatedCounter value={kpi.backdated} /></p>
-            <p className="sub-value">{categoryFilter === 'BACKDATED' ? '✓ Filter active (click to clear)' : 'suppressed by Agent 1'}</p>
+          <div className="noc-kpi-top">
+            <div className="kpi-icon blue"><Clock size={20} /></div>
+            <span className={`badge badge-subtle ${categoryFilter === 'BACKDATED' ? 'blue' : ''}`}>
+              {categoryFilter === 'BACKDATED' ? 'ACTIVE FILTER ✓' : 'FILTERABLE'}
+            </span>
+          </div>
+          <div className="noc-kpi-body">
+            <div className="noc-kpi-main">
+              <h3 className="noc-kpi-title">Backdated / Suppressed</h3>
+              <div className="noc-kpi-value-row">
+                <span className="noc-kpi-value"><AnimatedCounter value={kpi.backdated} /></span>
+                <span className="noc-kpi-unit">Alerts</span>
+              </div>
+            </div>
+            <div className="noc-kpi-footer">
+              <p className="noc-kpi-subtitle">
+                {categoryFilter === 'BACKDATED' ? 'Click to clear filter' : 'Suppressed by Agent 1'}
+              </p>
+            </div>
           </div>
         </div>
+
         <div
-          className={`glass-card kpi-card ${categoryFilter === 'AUTO' ? 'active highlight-green' : ''}`}
+          className={`glass-card noc-kpi-card highlight-green clickable ${categoryFilter === 'AUTO' ? 'active' : ''}`}
           onClick={() => setCategoryFilter(f => f === 'AUTO' ? 'ALL' : 'AUTO')}
           title="Click to toggle filter for Auto-Resolving alerts"
+          role="button"
+          tabIndex={0}
+          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCategoryFilter(f => f === 'AUTO' ? 'ALL' : 'AUTO'); }}}
+          aria-pressed={categoryFilter === 'AUTO'}
         >
-          <div className="kpi-icon green"><CheckCircle size={20} /></div>
-          <div className="kpi-content">
-            <h3>Auto-Resolving</h3>
-            <p className="value"><AnimatedCounter value={kpi.autoResolving} /></p>
-            <p className="sub-value">{categoryFilter === 'AUTO' ? '✓ Filter active (click to clear)' : 'queued for delayed re-check'}</p>
+          <div className="noc-kpi-top">
+            <div className="kpi-icon green"><CheckCircle size={20} /></div>
+            <span className={`badge badge-subtle ${categoryFilter === 'AUTO' ? 'green' : ''}`}>
+              {categoryFilter === 'AUTO' ? 'ACTIVE FILTER ✓' : 'FILTERABLE'}
+            </span>
+          </div>
+          <div className="noc-kpi-body">
+            <div className="noc-kpi-main">
+              <h3 className="noc-kpi-title">Auto-Resolving</h3>
+              <div className="noc-kpi-value-row">
+                <span className="noc-kpi-value"><AnimatedCounter value={kpi.autoResolving} /></span>
+                <span className="noc-kpi-unit">Alerts</span>
+              </div>
+            </div>
+            <div className="noc-kpi-footer">
+              <p className="noc-kpi-subtitle">
+                {categoryFilter === 'AUTO' ? 'Click to clear filter' : 'Queued for delayed check'}
+              </p>
+            </div>
           </div>
         </div>
+
         <div
-          className={`glass-card kpi-card ${categoryFilter === 'NON_AUTO' ? 'active highlight-red' : ''}`}
+          className={`glass-card noc-kpi-card highlight-red clickable ${categoryFilter === 'NON_AUTO' ? 'active' : ''}`}
           onClick={() => setCategoryFilter(f => f === 'NON_AUTO' ? 'ALL' : 'NON_AUTO')}
           title="Click to toggle filter for Non-Auto Resolving alerts"
+          role="button"
+          tabIndex={0}
+          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCategoryFilter(f => f === 'NON_AUTO' ? 'ALL' : 'NON_AUTO'); }}}
+          aria-pressed={categoryFilter === 'NON_AUTO'}
         >
-          <div className="kpi-icon red"><AlertTriangle size={20} /></div>
-          <div className="kpi-content">
-            <h3>Non-Auto Resolving</h3>
-            <p className="value"><AnimatedCounter value={kpi.nonAutoResolving} /></p>
-            <p className="sub-value">{categoryFilter === 'NON_AUTO' ? '✓ Filter active (click to clear)' : 'escalated to ServiceNow'}</p>
+          <div className="noc-kpi-top">
+            <div className="kpi-icon red"><AlertTriangle size={20} /></div>
+            <span className={`badge badge-subtle ${categoryFilter === 'NON_AUTO' ? 'red' : ''}`}>
+              {categoryFilter === 'NON_AUTO' ? 'ACTIVE FILTER ✓' : 'FILTERABLE'}
+            </span>
+          </div>
+          <div className="noc-kpi-body">
+            <div className="noc-kpi-main">
+              <h3 className="noc-kpi-title">Non-Auto Resolving</h3>
+              <div className="noc-kpi-value-row">
+                <span className="noc-kpi-value"><AnimatedCounter value={kpi.nonAutoResolving} /></span>
+                <span className="noc-kpi-unit">Alerts</span>
+              </div>
+            </div>
+            <div className="noc-kpi-footer">
+              <p className="noc-kpi-subtitle">
+                {categoryFilter === 'NON_AUTO' ? 'Click to clear filter' : 'Escalated to ServiceNow'}
+              </p>
+            </div>
           </div>
         </div>
+
         <div
-          className={`glass-card kpi-card ${categoryFilter === 'UNCERTAIN' ? 'active highlight-yellow' : ''}`}
+          className={`glass-card noc-kpi-card highlight-yellow clickable ${categoryFilter === 'UNCERTAIN' ? 'active' : ''}`}
           onClick={() => setCategoryFilter(f => f === 'UNCERTAIN' ? 'ALL' : 'UNCERTAIN')}
           title="Click to toggle filter for Uncertain alerts"
+          role="button"
+          tabIndex={0}
+          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCategoryFilter(f => f === 'UNCERTAIN' ? 'ALL' : 'UNCERTAIN'); }}}
+          aria-pressed={categoryFilter === 'UNCERTAIN'}
         >
-          <div className="kpi-icon yellow"><Zap size={20} /></div>
-          <div className="kpi-content">
-            <h3>Uncertain</h3>
-            <p className="value"><AnimatedCounter value={kpi.uncertain} /></p>
-            <p className="sub-value">{categoryFilter === 'UNCERTAIN' ? '✓ Filter active (click to clear)' : 'low ML confidence'}</p>
+          <div className="noc-kpi-top">
+            <div className="kpi-icon yellow"><Zap size={20} /></div>
+            <span className={`badge badge-subtle ${categoryFilter === 'UNCERTAIN' ? 'yellow' : ''}`}>
+              {categoryFilter === 'UNCERTAIN' ? 'ACTIVE FILTER ✓' : 'FILTERABLE'}
+            </span>
+          </div>
+          <div className="noc-kpi-body">
+            <div className="noc-kpi-main">
+              <h3 className="noc-kpi-title">Uncertain</h3>
+              <div className="noc-kpi-value-row">
+                <span className="noc-kpi-value"><AnimatedCounter value={kpi.uncertain} /></span>
+                <span className="noc-kpi-unit">Alerts</span>
+              </div>
+            </div>
+            <div className="noc-kpi-footer">
+              <p className="noc-kpi-subtitle">
+                {categoryFilter === 'UNCERTAIN' ? 'Click to clear filter' : 'Low ML model confidence'}
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -1152,24 +1231,16 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
               {deviceRanking.length === 0 && (
                 <tr>
                   <td colSpan="10" style={{ padding: 0 }}>
-                    <div className="table-empty-state">
-                      <div className="empty-state-badge">
-                        <ServerOff size={22} />
-                      </div>
-                      <div className="empty-state-title">No devices found in selected scope</div>
-                      <div className="empty-state-desc">
-                        No alert telemetry was found for the current device filter or time range. Try resetting your filters to view device rankings.
-                      </div>
-                      <button
-                        onClick={() => {
-                          setDeviceFilter('ALL');
-                          setTimeRange('ALL');
-                        }}
-                        className="empty-state-action"
-                      >
-                        <RotateCcw size={13} /> Reset Device & Time Scope
-                      </button>
-                    </div>
+                    <EmptyState
+                      icon={<ServerOff size={22} />}
+                      title="No devices found in selected scope"
+                      description="No alert telemetry was found for the current device filter or time range. Try resetting your filters to view device rankings."
+                      actionLabel="Reset Device & Time Scope"
+                      onAction={() => {
+                        setDeviceFilter('ALL');
+                        setTimeRange('ALL');
+                      }}
+                    />
                   </td>
                 </tr>
               )}
@@ -1325,9 +1396,9 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
               style={{ fontSize: '0.76rem', padding: '0.35rem 0.55rem' }}
             >
               <option value="ALL">Severity: All</option>
-              <option value="1">P1 — Critical</option>
-              <option value="2">P2 — Major</option>
-              <option value="3">P3 — Warning</option>
+              <option value="1" title="Priority 1: Critical — Immediate intervention required">P1 — Critical</option>
+              <option value="2" title="Priority 2: Major — Service degraded">P2 — Major</option>
+              <option value="3" title="Priority 3: Warning — Informational or low impact">P3 — Warning</option>
             </select>
 
             {/* Classification Filter */}
@@ -1354,8 +1425,9 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
               value={matrixSnow}
               onChange={(e) => setMatrixSnow(e.target.value)}
               style={{ fontSize: '0.76rem', padding: '0.35rem 0.55rem' }}
+              title="Filter by ServiceNow (SNOW) incident action"
             >
-              <option value="ALL">SNOW: All</option>
+              <option value="ALL">SNOW (ServiceNow): All</option>
               <option value="CREATED">Created</option>
               <option value="APPENDED">Appended</option>
               <option value="REOPENED">Reopened</option>
@@ -1510,27 +1582,22 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
               {matrixAlerts.length === 0 && (
                 <tr>
                   <td colSpan="9" style={{ padding: 0 }}>
-                    <div className="table-empty-state">
-                      <div className="empty-state-badge">
-                        <FilterX size={22} />
-                      </div>
-                      <div className="empty-state-title">No alerts match the current matrix filters</div>
-                      <div className="empty-state-desc">
-                        Try broadening your search term or resetting the severity, ML category, or ServiceNow filter pills.
-                      </div>
-                      <button
-                        onClick={() => {
-                          setMatrixSearch('');
-                          setMatrixDevice('ALL');
-                          setMatrixSeverity('ALL');
-                          setMatrixOutcome('ALL');
-                          setMatrixSnow('ALL');
-                        }}
-                        className="empty-state-action"
-                      >
-                        <RotateCcw size={13} /> Clear matrix filters
-                      </button>
-                    </div>
+                    <EmptyState
+                      icon={<FilterX size={22} />}
+                      title="No alerts match the current matrix filters"
+                      description="Try broadening your search term or resetting the severity, ML category, or ServiceNow filter pills."
+                      actionLabel="Clear matrix filters"
+                      onAction={() => {
+                        setMatrixSearch('');
+                        setMatrixDevice('ALL');
+                        setMatrixSeverity('ALL');
+                        setMatrixOutcome('ALL');
+                        setMatrixSnow('ALL');
+                        setCategoryFilter('ALL');
+                        setDeviceFilter('ALL');
+                        setTimeRange('ALL');
+                      }}
+                    />
                   </td>
                 </tr>
               )}
