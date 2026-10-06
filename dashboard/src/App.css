@@ -5415,4 +5415,41 @@
   color: #0f172a;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   Phase 26: Cross-View Site Synchronization & Filter Alignment
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.noc-table-loc-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-size: var(--font-xs);
+  font-weight: 500;
+  cursor: pointer;
+  min-height: 32px;
+  transition: all var(--transition-fast, 0.15s ease);
+  text-align: left;
+}
+
+.noc-table-loc-btn:hover {
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--accent-blue, #3b82f6);
+}
+
+.noc-table-loc-btn:focus-visible {
+  outline: 2px solid var(--accent-blue, #3b82f6);
+  outline-offset: 1px;
+}
+
+.noc-site-card.active-site {
+  border-color: var(--accent-purple, #a855f7) !important;
+  box-shadow: 0 0 16px rgba(168, 85, 247, 0.3) !important;
+}
+
+
 

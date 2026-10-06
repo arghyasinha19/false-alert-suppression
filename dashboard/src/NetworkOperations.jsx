@@ -803,13 +803,15 @@ export default function NetworkOperations({
     return { roleCounts: roles, healthCounts: health, snowCounts: snow };
   }, [devices]);
 
-  const hasActiveFilters = searchQuery !== '' || roleFilter !== 'all' || healthFilter !== 'all' || snowFilter !== 'all';
+  const hasActiveFilters = searchQuery !== '' || roleFilter !== 'all' || healthFilter !== 'all' || snowFilter !== 'all' || Boolean(selectedSite);
 
   const resetAllFilters = () => {
     setSearchQuery('');
     setRoleFilter('all');
     setHealthFilter('all');
     setSnowFilter('all');
+    setSelectedSite(null);
+    setTopologyLevel('wan');
   };
 
   // Freeze body scroll when detail panel is open
@@ -844,7 +846,8 @@ export default function NetworkOperations({
 
   const progressPct = Math.min(100, (secondsAgo / (pollInterval / 1000)) * 100);
 
-  const filteredDevices = useMemo(() => {
+  // Base filtered devices (by Search Query, Role, Health, ServiceNow)
+  const baseFilteredDevices = useMemo(() => {
     return devices.filter(d => {
       // 1. Search Query
       if (searchQuery) {
@@ -887,6 +890,12 @@ export default function NetworkOperations({
     });
   }, [devices, searchQuery, roleFilter, healthFilter, snowFilter]);
 
+  // Scoped filtered devices for Table & Card Grid Views (scoped to selectedSite if set)
+  const filteredDevices = useMemo(() => {
+    if (!selectedSite) return baseFilteredDevices;
+    return baseFilteredDevices.filter(d => (d.location || deriveLocation(d.device_name)) === selectedSite);
+  }, [baseFilteredDevices, selectedSite]);
+
   // Tier Groups for Executive Topology View
   const tierGroups = useMemo(() => {
     const buckets = {
@@ -927,7 +936,7 @@ export default function NetworkOperations({
   // Site Matrix for Regional Site Matrix View
   const siteMatrix = useMemo(() => {
     const siteMap = {};
-    filteredDevices.forEach(d => {
+    baseFilteredDevices.forEach(d => {
       const loc = d.location || deriveLocation(d.device_name);
       if (!siteMap[loc]) {
         siteMap[loc] = {
@@ -967,7 +976,7 @@ export default function NetworkOperations({
       }
       return a.label.localeCompare(b.label);
     });
-  }, [filteredDevices]);
+  }, [baseFilteredDevices]);
 
   // Sorted Devices for SRE High-Density Table View
   const sortedTableDevices = useMemo(() => {
@@ -1571,6 +1580,45 @@ export default function NetworkOperations({
             </div>
           </div>
 
+          {/* Site / Location Scope Filter Cluster (SITE-08) */}
+          <div className="noc-filter-cluster">
+            <span className="noc-filter-cluster-label">Site:</span>
+            <div className="noc-chip-group">
+              <button
+                type="button"
+                className={`noc-filter-chip ${!selectedSite ? 'active' : ''}`}
+                onClick={() => {
+                  setSelectedSite(null);
+                  setTopologyLevel('wan');
+                }}
+                title="View all global sites"
+              >
+                <Globe size={11} />
+                <span>All Sites (Global)</span>
+              </button>
+              {siteMatrix.map(site => (
+                <button
+                  key={site.code}
+                  type="button"
+                  className={`noc-filter-chip ${selectedSite === site.code ? 'active' : ''}`}
+                  onClick={() => {
+                    if (selectedSite === site.code) {
+                      setSelectedSite(null);
+                      setTopologyLevel('wan');
+                    } else {
+                      setSelectedSite(site.code);
+                      setTopologyLevel('lan');
+                    }
+                  }}
+                  title={`Scope view to ${site.label} (${site.devices.length} devices)`}
+                >
+                  <span>{site.code}</span>
+                  <span className="noc-chip-count">{site.devices.length}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Reset All Filters Pill */}
           {hasActiveFilters && (
             <button
@@ -1757,9 +1805,19 @@ export default function NetworkOperations({
                       </span>
                     </td>
                     <td>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                      <button
+                        type="button"
+                        className="noc-table-loc-btn"
+                        onClick={() => {
+                          const siteCode = device.location || deriveLocation(device.device_name);
+                          setSelectedSite(siteCode);
+                          setTopologyLevel('lan');
+                          addToast('Site Filtered', `Filtered view to ${getLocationLabel(siteCode)}`, 'info');
+                        }}
+                        title={`Filter all views to ${locLabel}`}
+                      >
                         {locLabel}
-                      </span>
+                      </button>
                     </td>
                     <td>
                       <span className={`badge health-${health}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
@@ -1838,11 +1896,21 @@ export default function NetworkOperations({
       {/* ── View 3: Regional Site Matrix View ── */}
       {viewMode === 'matrix' && (
         <div className="noc-matrix-grid">
-          {siteMatrix.map(site => (
-            <div
-              key={site.code}
-              className={`noc-site-card site-${site.status}`}
-            >
+          {siteMatrix.map(site => {
+            const isSiteSelected = selectedSite === site.code;
+            return (
+              <div
+                key={site.code}
+                className={`noc-site-card site-${site.status} ${isSiteSelected ? 'active-site selected' : ''}`}
+                onClick={() => {
+                  setSelectedSite(site.code);
+                  setTopologyLevel('lan');
+                  handleViewModeChange('topology');
+                  addToast('Site Topology', `Navigated to ${site.label} (Level 2)`, 'info');
+                }}
+                style={{ cursor: 'pointer' }}
+                title={`Click to inspect ${site.label} LAN Topology`}
+              >
               <div>
                 <div className="noc-site-header">
                   <h3 className="noc-site-title">{site.label}</h3>
@@ -1900,7 +1968,8 @@ export default function NetworkOperations({
                 <ChevronRight size={13} />
               </button>
             </div>
-          ))}
+          );
+        })}
         </div>
       )}
 
