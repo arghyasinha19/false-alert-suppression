@@ -90,9 +90,9 @@ Refer to repository history for prior phase details.
 
 **Goal:** Fix `text-tertiary` contrast ratios, route chart colours through CSS tokens for dark mode reliability, and ensure text contrast passes minimums.
 
-**Status:** Planned (2 plans)
-- [ ] **Plan 21-01**: CSS Token Contrast Remediation & Blue Badge Legibility (UI-05)
-- [ ] **Plan 21-02**: Dynamic Chart Theme Integration via useChartTheme (UI-06)
+**Status:** Complete ✓ (2/2 plans complete)
+- [x] **Plan 21-01**: CSS Token Contrast Remediation & Blue Badge Legibility (UI-05)
+- [x] **Plan 21-02**: Dynamic Chart Theme Integration via useChartTheme (UI-06)
 
 **Requirements:**
 - **UI-05**: Adjust `text-tertiary` to meet contrast minimums (`#64748b` in light mode, `#94a3b8` in dark mode) and darken blue pill text to pass AA contrast.
