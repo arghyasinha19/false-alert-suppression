@@ -255,7 +255,7 @@ function TaskIndicators({ tasks, isLoading }) {
 /* -----------------------------------------------------------------------
    Main ChatPanel component
    ----------------------------------------------------------------------- */
-function ChatPanel({ isOpen, onClose }) {
+function ChatPanel({ isOpen, onClose, triggerRef }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -266,6 +266,41 @@ function ChatPanel({ isOpen, onClose }) {
   const isResizing = useRef(false);
   const resizeStartX = useRef(0);
   const resizeStartWidth = useRef(DEFAULT_PANEL_WIDTH);
+
+  // Sync CSS variable for content area inset (D-01)
+  useEffect(() => {
+    if (isOpen) {
+      document.documentElement.style.setProperty('--chat-panel-width', `${panelWidth}px`);
+    } else {
+      document.documentElement.style.removeProperty('--chat-panel-width');
+    }
+    return () => {
+      document.documentElement.style.removeProperty('--chat-panel-width');
+    };
+  }, [isOpen, panelWidth]);
+
+  // Escape key closes panel and restores focus to sidebar trigger (D-03)
+  useEffect(() => {
+    if (!isOpen) return;
+    const handlePanelEscape = (e) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose();
+        if (triggerRef?.current) {
+          triggerRef.current.focus();
+        }
+      }
+    };
+    window.addEventListener('keydown', handlePanelEscape);
+    return () => window.removeEventListener('keydown', handlePanelEscape);
+  }, [isOpen, onClose, triggerRef]);
+
+  const handleClose = () => {
+    onClose();
+    if (triggerRef?.current) {
+      triggerRef.current.focus();
+    }
+  };
 
   // --- Resize handlers ---
   const handleResizeStart = useCallback((e) => {
@@ -456,150 +491,161 @@ function ChatPanel({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <>
-      <div className="chat-overlay" onClick={onClose} />
-      <div className="chat-panel" style={{ width: panelWidth }}>
-        {/* Resize handle */}
-        <div
-          className="chat-resize-handle"
-          onMouseDown={handleResizeStart}
-          title="Drag to resize"
-        >
-          <GripVertical size={14} />
-        </div>
-        {/* Header */}
-        <div className="chat-header">
-          <div className="chat-header-icon">
-            <Bot size={18} color="#fff" />
-          </div>
-          <div className="chat-header-text">
-            <h3>DNAC Ops Assistant</h3>
-            <span>AI-powered network insights</span>
-          </div>
-          <button className="chat-close-btn" onClick={onClose}>
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* Messages */}
-        <div className="chat-messages">
-          {messages.length === 0 && (
-            <div className="chat-msg chat-msg-assistant" style={{ opacity: 0.7 }}>
-              <div className="chat-msg-bubble">
-                <p>
-                  Hi! I'm your <strong>DNAC Ops Assistant</strong>.
-                  I can help you with:
-                </p>
-                <ul>
-                  <li>Alert status and history for specific devices</li>
-                  <li>Suppression rate and KPI metrics</li>
-                  <li>Live device status from DNAC</li>
-                  <li>Charts and visualizations of alert data</li>
-                </ul>
-                <p>Ask me anything about your network operations!</p>
-              </div>
-            </div>
-          )}
-
-          {messages.map((msg, i) => (
-            <div key={i} className={`chat-msg chat-msg-${msg.role}`}>
-              <div className="chat-msg-role">
-                {msg.role === 'user' ? (
-                  <><User size={10} /> You</>
-                ) : (
-                  <><Bot size={10} /> Assistant</>
-                )}
-              </div>
-              {msg.isError ? (
-                <div className="chat-error-banner">
-                  <span style={{ fontSize: '1rem' }}>⚠️</span>
-                  <div>
-                    <strong style={{ display: 'block', marginBottom: '2px' }}>API not configured</strong>
-                    <span style={{ fontSize: '0.75rem', opacity: 0.85 }}>{msg.text}</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="chat-msg-bubble">
-                  {msg.role === 'assistant' ? renderAssistantContent(msg.text) : msg.text}
-                </div>
-              )}
-
-              {/* Charts */}
-              {msg.charts && msg.charts.length > 0 && (
-                msg.charts.map((chart, ci) => (
-                  <ChatChart key={ci} spec={chart} />
-                ))
-              )}
-
-              {/* Suggestion chips */}
-              {msg.suggestions && msg.suggestions.length > 0 && (
-                <div className="chat-suggestions">
-                  {msg.suggestions.map((s, si) => (
-                    <button
-                      key={si}
-                      className="chat-suggestion-chip"
-                      onClick={() => handleSuggestionClick(s)}
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Citations */}
-              {msg.citations && msg.citations.length > 0 && (
-                <Citations citations={msg.citations} />
-              )}
-            </div>
-          ))}
-
-          {/* Active task indicators */}
-          {isLoading && activeTasks.length > 0 && (
-            <div className="chat-msg chat-msg-assistant">
-              <div className="chat-msg-role">
-                <Bot size={10} /> Assistant
-              </div>
-              <TaskIndicators tasks={activeTasks} isLoading={isLoading} />
-            </div>
-          )}
-
-          {/* Loading with no tasks yet */}
-          {isLoading && activeTasks.length === 0 && (
-            <div className="chat-msg chat-msg-assistant">
-              <div className="chat-msg-role">
-                <Bot size={10} /> Assistant
-              </div>
-              <div className="chat-task-pill active">
-                <div className="chat-task-spinner" />
-                Thinking...
-              </div>
-            </div>
-          )}
-
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Input */}
-        <div className="chat-input-area">
-          <textarea
-            ref={textareaRef}
-            value={input}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask about alerts, devices, or metrics..."
-            rows={1}
-            disabled={isLoading}
-          />
-          <button
-            className="chat-send-btn"
-            onClick={() => sendMessage()}
-            disabled={isLoading || !input.trim()}
-          >
-            <Send size={16} />
-          </button>
-        </div>
+    <aside
+      id="ops-assistant-panel"
+      role="region"
+      aria-label="DNAC Ops Assistant"
+      className="chat-panel docked"
+      style={{ width: panelWidth }}
+    >
+      {/* Resize handle */}
+      <div
+        className="chat-resize-handle"
+        onMouseDown={handleResizeStart}
+        title="Drag to resize"
+      >
+        <GripVertical size={14} />
       </div>
-    </>
+      {/* Header */}
+      <div className="chat-header">
+        <div className="chat-header-icon">
+          <Bot size={18} color="#fff" />
+        </div>
+        <div className="chat-header-text">
+          <h3>DNAC Ops Assistant</h3>
+          <span>AI-powered network insights</span>
+        </div>
+        <button
+          className="chat-close-btn touch-target-expand"
+          onClick={handleClose}
+          aria-label="Close Ops Assistant"
+          title="Close Ops Assistant (Esc)"
+        >
+          <X size={18} />
+        </button>
+      </div>
+
+      {/* Messages */}
+      <div className="chat-messages">
+        {messages.length === 0 && (
+          <div className="chat-msg chat-msg-assistant" style={{ opacity: 0.7 }}>
+            <div className="chat-msg-bubble">
+              <p>
+                Hi! I'm your <strong>DNAC Ops Assistant</strong>.
+                I can help you with:
+              </p>
+              <ul>
+                <li>Alert status and history for specific devices</li>
+                <li>Suppression rate and KPI metrics</li>
+                <li>Live device status from DNAC</li>
+                <li>Charts and visualizations of alert data</li>
+              </ul>
+              <p>Ask me anything about your network operations!</p>
+            </div>
+          </div>
+        )}
+
+        {messages.map((msg, i) => (
+          <div key={i} className={`chat-msg chat-msg-${msg.role}`}>
+            <div className="chat-msg-role">
+              {msg.role === 'user' ? (
+                <><User size={10} /> You</>
+              ) : (
+                <><Bot size={10} /> Assistant</>
+              )}
+            </div>
+            {msg.isError ? (
+              <div className="chat-error-banner">
+                <span style={{ fontSize: '1rem' }}>⚠️</span>
+                <div>
+                  <strong style={{ display: 'block', marginBottom: '2px' }}>API not configured</strong>
+                  <span style={{ fontSize: '0.75rem', opacity: 0.85 }}>{msg.text}</span>
+                </div>
+              </div>
+            ) : (
+              <div className="chat-msg-bubble">
+                {msg.role === 'assistant' ? renderAssistantContent(msg.text) : msg.text}
+              </div>
+            )}
+
+            {/* Charts */}
+            {msg.charts && msg.charts.length > 0 && (
+              msg.charts.map((chart, ci) => (
+                <ChatChart key={ci} spec={chart} />
+              ))
+            )}
+
+            {/* Suggestion chips */}
+            {msg.suggestions && msg.suggestions.length > 0 && (
+              <div className="chat-suggestions">
+                {msg.suggestions.map((s, si) => (
+                  <button
+                    key={si}
+                    className="chat-suggestion-chip"
+                    onClick={() => handleSuggestionClick(s)}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Citations */}
+            {msg.citations && msg.citations.length > 0 && (
+              <Citations citations={msg.citations} />
+            )}
+          </div>
+        ))}
+
+        {/* Active task indicators */}
+        {isLoading && activeTasks.length > 0 && (
+          <div className="chat-msg chat-msg-assistant">
+            <div className="chat-msg-role">
+              <Bot size={10} /> Assistant
+            </div>
+            <TaskIndicators tasks={activeTasks} isLoading={isLoading} />
+          </div>
+        )}
+
+        {/* Loading with no tasks yet */}
+        {isLoading && activeTasks.length === 0 && (
+          <div className="chat-msg chat-msg-assistant">
+            <div className="chat-msg-role">
+              <Bot size={10} /> Assistant
+            </div>
+            <div className="chat-task-pill active">
+              <div className="chat-task-spinner" />
+              Thinking...
+            </div>
+          </div>
+        )}
+
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Input */}
+      <div className="chat-input-area">
+        <label htmlFor="chat-textarea-input" className="sr-only">Message DNAC Ops Assistant</label>
+        <textarea
+          id="chat-textarea-input"
+          ref={textareaRef}
+          value={input}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          placeholder="Ask about alerts, devices, or metrics... (Ctrl+/ to toggle)"
+          rows={1}
+          disabled={isLoading}
+        />
+        <button
+          className="chat-send-btn"
+          onClick={() => sendMessage()}
+          disabled={isLoading || !input.trim()}
+          aria-label="Send message"
+        >
+          <Send size={16} />
+        </button>
+      </div>
+    </aside>
   );
 }
 

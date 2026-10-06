@@ -267,8 +267,22 @@ function App() {
     },
   ];
 
+  const chatToggleRef = useRef(null);
+
+  // Global hotkey: Ctrl+/ or Cmd+/ toggles Ops Assistant chat panel (D-03)
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+        e.preventDefault();
+        setChatOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
+
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${chatOpen ? 'chat-open' : ''}`}>
       {/* Sidebar */}
       <aside className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-brand">
@@ -282,50 +296,50 @@ function App() {
             </div>
           </div>
           <button
-            className="sidebar-collapse-toggle"
+            className="sidebar-collapse-toggle touch-target-expand"
             onClick={handleToggleSidebar}
             title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             {sidebarCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
             {sidebarCollapsed && (
-              <div className="nav-floating-tooltip">Expand sidebar</div>
+              <div className="nav-floating-tooltip" role="tooltip">Expand sidebar</div>
             )}
           </button>
         </div>
 
         <nav className="sidebar-nav">
           {navItems.map(item => (
-            <div
+            <button
+              type="button"
               key={item.id}
               className={`sidebar-nav-item ${activeView === item.id ? 'active' : ''}`}
               onClick={() => setActiveView(item.id)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setActiveView(item.id); }}
+              aria-current={activeView === item.id ? 'page' : undefined}
               aria-label={item.label}
             >
               {item.icon}
               <span className="sidebar-nav-label">{item.label}</span>
-              <div className="nav-floating-tooltip">{item.label}</div>
-            </div>
+              <div className="nav-floating-tooltip" role="tooltip">{item.label}</div>
+            </button>
           ))}
 
-          {/* Chat toggle */}
-          <div
-            className={`sidebar-nav-item ${chatOpen ? 'active' : ''}`}
-            onClick={() => setChatOpen(!chatOpen)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setChatOpen(!chatOpen); }}
-            style={{ marginTop: '0.5rem' }}
+          {/* Chat toggle button */}
+          <button
+            type="button"
+            ref={chatToggleRef}
+            className={`sidebar-nav-item chat-nav-item ${chatOpen ? 'active' : ''}`}
+            onClick={() => setChatOpen(prev => !prev)}
+            aria-expanded={chatOpen}
+            aria-controls="ops-assistant-panel"
             aria-label="Ops Assistant"
+            style={{ marginTop: '0.5rem' }}
           >
             <MessageSquare size={18} />
             <span className="sidebar-nav-label">Ops Assistant</span>
             {!chatOpen && <div className="chat-fab-badge" />}
-            <div className="nav-floating-tooltip">Ops Assistant</div>
-          </div>
+            <div className="nav-floating-tooltip" role="tooltip">Ops Assistant</div>
+          </button>
         </nav>
 
         <div className="sidebar-status">
@@ -505,7 +519,11 @@ function App() {
       </main>
 
       {/* Chat Panel */}
-      <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} />
+      <ChatPanel
+        isOpen={chatOpen}
+        onClose={() => setChatOpen(false)}
+        triggerRef={chatToggleRef}
+      />
     </div>
   );
 }
