@@ -138,27 +138,92 @@ body {
   transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
-/* Modern scrollbars — hidden by default, visible on hover */
+/* Modern scrollbars — always visible for dense data views */
 * {
   scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
-}
-
-*:hover {
   scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
 }
 
-[data-theme="dark"] *:hover {
+[data-theme="dark"] * {
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
 
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: transparent; border-radius: 10px; transition: background 0.3s; }
-*:hover::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.12); }
-*:hover::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }
-[data-theme="dark"] *:hover::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); }
-[data-theme="dark"] *:hover::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); border-radius: 10px; transition: background 0.3s; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.3); }
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); }
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.35); }
+
+/* High-Contrast Table & Drawer Scrollbars (UI-04, D-05, D-06, D-07, D-08) */
+.table-scroll-container,
+.data-table-scroll-wrap,
+.table-scroll-wrapper,
+.detail-panel-body {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.45) rgba(255, 255, 255, 0.04);
+}
+
+.table-scroll-container::-webkit-scrollbar,
+.data-table-scroll-wrap::-webkit-scrollbar,
+.table-scroll-wrapper::-webkit-scrollbar,
+.detail-panel-body::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.table-scroll-container::-webkit-scrollbar-track,
+.data-table-scroll-wrap::-webkit-scrollbar-track,
+.table-scroll-wrapper::-webkit-scrollbar-track,
+.detail-panel-body::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb,
+.data-table-scroll-wrap::-webkit-scrollbar-thumb,
+.table-scroll-wrapper::-webkit-scrollbar-thumb,
+.detail-panel-body::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.45);
+  border-radius: 6px;
+  transition: background 0.2s ease;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb:hover,
+.data-table-scroll-wrap::-webkit-scrollbar-thumb:hover,
+.table-scroll-wrapper::-webkit-scrollbar-thumb:hover,
+.detail-panel-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.75);
+}
+
+[data-theme="light"] .table-scroll-container,
+[data-theme="light"] .data-table-scroll-wrap,
+[data-theme="light"] .table-scroll-wrapper,
+[data-theme="light"] .detail-panel-body {
+  scrollbar-color: rgba(100, 116, 139, 0.40) rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .table-scroll-container::-webkit-scrollbar-track,
+[data-theme="light"] .data-table-scroll-wrap::-webkit-scrollbar-track,
+[data-theme="light"] .table-scroll-wrapper::-webkit-scrollbar-track,
+[data-theme="light"] .detail-panel-body::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .table-scroll-container::-webkit-scrollbar-thumb,
+[data-theme="light"] .data-table-scroll-wrap::-webkit-scrollbar-thumb,
+[data-theme="light"] .table-scroll-wrapper::-webkit-scrollbar-thumb,
+[data-theme="light"] .detail-panel-body::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.40);
+}
+
+[data-theme="light"] .table-scroll-container::-webkit-scrollbar-thumb:hover,
+[data-theme="light"] .data-table-scroll-wrap::-webkit-scrollbar-thumb:hover,
+[data-theme="light"] .table-scroll-wrapper::-webkit-scrollbar-thumb:hover,
+[data-theme="light"] .detail-panel-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(71, 85, 105, 0.70);
+}
 
 /* Freeze body scroll when detail panel is open */
 body.panel-open {

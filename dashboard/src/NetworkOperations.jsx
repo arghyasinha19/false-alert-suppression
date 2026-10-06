@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import AnimatedCounter from './AnimatedCounter';
 import TopologyGraphView from './components/TopologyGraphView';
+import TableScrollWrapper from './components/TableScrollWrapper';
 
 const TIER_METADATA = {
   core: {
@@ -618,6 +619,7 @@ export default function NetworkOperations({
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDevice, setSelectedDevice] = useState(null);
+  const [drawerAlertsExpanded, setDrawerAlertsExpanded] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const [resolvedExpanded, setResolvedExpanded] = useState(false);
   const [secondsAgo, setSecondsAgo] = useState(0);
@@ -1430,6 +1432,12 @@ export default function NetworkOperations({
             </button>
           </div>
 
+          {viewMode === 'table' && (
+            <span className="table-counter-chip" style={{ marginLeft: 'auto' }}>
+              Showing {sortedTableDevices.length} of {devices.length} devices
+            </span>
+          )}
+
           {/* Topology Sub-Mode Switcher: Graph vs Cards */}
           {viewMode === 'topology' && (
             <div className="noc-submode-pill-group" role="radiogroup" aria-label="Topology presentation sub-mode">
@@ -1645,7 +1653,7 @@ export default function NetworkOperations({
 
       {/* ── View 2: SRE High-Density Table View ── */}
       {viewMode === 'table' && (
-        <div className="noc-sre-table-wrap">
+        <TableScrollWrapper className="noc-sre-table-wrap">
           <table className="noc-sre-table">
             <thead>
               <tr>
@@ -1806,7 +1814,7 @@ export default function NetworkOperations({
               })}
             </tbody>
           </table>
-        </div>
+        </TableScrollWrapper>
       )}
 
       {/* ── View 3: Regional Site Matrix View ── */}
@@ -2109,10 +2117,17 @@ export default function NetworkOperations({
                     </div>
 
                     <div className="alert-section active-section">
-                      <h3 className="alert-section-header active">
-                        <span className="alert-section-dot active" />
-                        <AlertTriangle size={15} />
-                        Active Alerts ({activeAlerts.length})
+                      <h3 className="alert-section-header active" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span className="alert-section-dot active" />
+                          <AlertTriangle size={15} />
+                          <span>Active Alerts ({activeAlerts.length})</span>
+                        </div>
+                        {activeAlerts.length > 0 && (
+                          <span className="table-counter-chip">
+                            Showing {Math.min(activeAlerts.length, drawerAlertsExpanded ? activeAlerts.length : 5)} of {activeAlerts.length} active alerts
+                          </span>
+                        )}
                       </h3>
 
                       {activeAlerts.length === 0 ? (
@@ -2122,7 +2137,8 @@ export default function NetworkOperations({
                           <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>All recent anomalies auto-resolved or suppressed at edge.</p>
                         </div>
                       ) : (
-                        activeAlerts.map((alert, i) => {
+                        <>
+                          {(drawerAlertsExpanded ? activeAlerts : activeAlerts.slice(0, 5)).map((alert, i) => {
                           const timeline = deriveMultiAgentTimeline(alert, selectedDevice);
                           return (
                             <div key={i} className="detail-alert-item">
@@ -2166,9 +2182,29 @@ export default function NetworkOperations({
                               </div>
                             </div>
                           );
-                        })
-                      )}
-                    </div>
+                        })}
+                        {activeAlerts.length > 5 && (
+                          <button
+                            type="button"
+                            className="detail-alerts-toggle-btn"
+                            onClick={() => setDrawerAlertsExpanded(prev => !prev)}
+                          >
+                            {drawerAlertsExpanded ? (
+                              <>
+                                <ChevronUp size={14} />
+                                <span>Show fewer alerts</span>
+                              </>
+                            ) : (
+                              <>
+                                <ChevronDown size={14} />
+                                <span>Show {activeAlerts.length - 5} more alerts</span>
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
 
                     {/* Historical Resolved Alerts */}
                     {resolvedAlerts.length > 0 && (

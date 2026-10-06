@@ -4711,4 +4711,138 @@
   color: #ffffff;
 }
 
+/* ==========================================================================
+   Phase 20: Table Visibility, Edge Masks & Vertical Capping (UI-04)
+   ========================================================================== */
+
+.table-scroll-wrapper {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.table-scroll-container {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* 28px Horizontal Edge Masks (D-09, D-10, D-11) */
+.table-scroll-wrapper::before,
+.table-scroll-wrapper::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 8px; /* Leave 8px scrollbar track unblocked (D-09) */
+  width: 28px;
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.table-scroll-wrapper::before {
+  left: 0;
+  background: linear-gradient(to right, var(--card-bg), transparent);
+}
+
+.table-scroll-wrapper::after {
+  right: 0;
+  background: linear-gradient(to left, var(--card-bg), transparent);
+}
+
+.table-scroll-wrapper.has-overflow-left::before {
+  opacity: 1;
+}
+
+.table-scroll-wrapper.has-overflow-right::after {
+  opacity: 1;
+}
+
+/* Sticky Column Headers (D-16) */
+.data-table thead th,
+.rank-table thead th,
+.noc-sre-table thead th,
+.noc-matrix-table thead th,
+.patterns-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg-secondary);
+  backdrop-filter: blur(8px);
+}
+
+/* Header Item Counter Chips (D-14) */
+.table-counter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm, 4px);
+  border: 1px solid var(--card-border);
+}
+
+.table-counter-chip .filter-active-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+  box-shadow: 0 0 4px var(--accent-blue);
+}
+
+/* Vertical Progressive Disclosure Expansion Button (D-13) */
+.table-expand-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 16px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm, 4px);
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all var(--transition-fast);
+}
+
+.table-expand-toggle-btn:hover {
+  color: var(--text-primary);
+  background: var(--card-border);
+}
+
+/* SRE Details Drawer Alerts List Capping (D-15) */
+.detail-alerts-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 7px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm, 4px);
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all var(--transition-fast);
+}
+
+.detail-alerts-toggle-btn:hover {
+  color: var(--text-primary);
+  background: var(--card-border);
+}
+
+
 

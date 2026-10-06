@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Layers, TrendingUp, AlertTriangle, ShieldCheck, Zap,
-  ChevronDown, ChevronRight, Server, Fingerprint, SearchX
+  ChevronDown, ChevronRight, ChevronUp, Server, Fingerprint, SearchX
 } from 'lucide-react';
+import TableScrollWrapper from './components/TableScrollWrapper';
 import {
   ComposedChart, Area, Line,
   XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
@@ -190,6 +191,7 @@ export default function AlertPatterns() {
   const [granularity, setGranularity] = useState('hourly');
   const [selectedCluster, setSelectedCluster] = useState(null);
   const [expandedRows, setExpandedRows] = useState(new Set());
+  const [tableExpanded, setTableExpanded] = useState(false);
 
   // Fetch from API
   useEffect(() => {
@@ -510,8 +512,15 @@ export default function AlertPatterns() {
 
       {/* Pattern Detail Table */}
       <div className="glass-card table-card" style={{ marginTop: '1.5rem' }}>
-        <h3><Layers size={16} /> Pattern Detail Table</h3>
-        <div style={{ overflowX: 'auto', maxHeight: '460px', overflowY: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+          <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Layers size={16} /> Pattern Detail Table
+          </h3>
+          <span className="table-counter-chip">
+            Showing {Math.min(patterns.length, tableExpanded ? patterns.length : 10)} of {patterns.length} patterns
+          </span>
+        </div>
+        <TableScrollWrapper maxHeight={tableExpanded ? null : '480px'}>
           <table className="data-table" style={{ minWidth: '1100px' }}>
             <thead>
               <tr>
@@ -526,7 +535,7 @@ export default function AlertPatterns() {
               </tr>
             </thead>
             <tbody>
-              {patterns.map((p) => {
+              {(tableExpanded ? patterns : patterns.slice(0, 10)).map((p) => {
                 const isExpanded = expandedRows.has(p.cluster_id);
                 return (
                   <React.Fragment key={p.cluster_id}>
@@ -631,7 +640,26 @@ export default function AlertPatterns() {
               )}
             </tbody>
           </table>
-        </div>
+        </TableScrollWrapper>
+        {patterns.length > 10 && (
+          <button
+            type="button"
+            className="table-expand-toggle-btn"
+            onClick={() => setTableExpanded(prev => !prev)}
+          >
+            {tableExpanded ? (
+              <>
+                <ChevronUp size={14} />
+                <span>Show 10 rows</span>
+              </>
+            ) : (
+              <>
+                <ChevronDown size={14} />
+                <span>Show all {patterns.length} rows</span>
+              </>
+            )}
+          </button>
+        )}
       </div>
     </>
   );

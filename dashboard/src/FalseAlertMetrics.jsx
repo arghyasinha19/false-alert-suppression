@@ -3,7 +3,8 @@ import {
   BarChart3, AlertTriangle, CheckCircle, Clock, ShieldCheck,
   Activity, Server, TrendingDown, Ticket, Ban, Filter,
   Zap, Award, FileText, RotateCcw, MessageSquarePlus, PlusCircle, X,
-  Search, ArrowUpDown, ArrowUp, ArrowDown, Calendar, FilterX, ServerOff
+  Search, ArrowUpDown, ArrowUp, ArrowDown, Calendar, FilterX, ServerOff,
+  ChevronDown, ChevronUp
 } from 'lucide-react';
 import {
   AreaChart, Area,
@@ -11,6 +12,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, Legend
 } from 'recharts';
 import AnimatedCounter from './AnimatedCounter';
+import TableScrollWrapper from './components/TableScrollWrapper';
 
 const COLORS = ['#2563eb', '#059669', '#dc2626', '#d97706', '#7c3aed', '#0891b2'];
 const CATEGORY_COLORS = {
@@ -317,6 +319,8 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
   const [matrixSnow, setMatrixSnow] = useState('ALL');
   const [sortColumn, setSortColumn] = useState('timestamp');
   const [sortDirection, setSortDirection] = useState('desc');
+  const [rankingExpanded, setRankingExpanded] = useState(false);
+  const [traceExpanded, setTraceExpanded] = useState(false);
 
   const { tableRef: traceTableRef, onMouseDown: onTraceColResize } = useResizableColumns();
 
@@ -1067,8 +1071,13 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
 
       {/* ===== DEVICE RANKING TABLE ===== */}
       <div className="glass-card table-card">
-        <h3><Award size={16} /> Device Ranking — by Alert Profile</h3>
-        <div style={{ overflowX: 'auto', maxHeight: '440px', overflowY: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+          <h3 style={{ margin: 0 }}><Award size={16} /> Device Ranking — by Alert Profile</h3>
+          <span className="table-counter-chip">
+            Showing {Math.min(deviceRanking.length, rankingExpanded ? deviceRanking.length : 10)} of {deviceRanking.length} devices
+          </span>
+        </div>
+        <TableScrollWrapper maxHeight={rankingExpanded ? null : '480px'}>
           <table className="rank-table" style={{ minWidth: '950px' }}>
             <thead>
               <tr>
@@ -1085,7 +1094,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
               </tr>
             </thead>
             <tbody>
-              {deviceRanking.slice(0, 15).map(d => (
+              {deviceRanking.slice(0, rankingExpanded ? deviceRanking.length : 10).map(d => (
                 <tr key={d.device}>
                   <td><span className={`rank-number ${getRankClass(d.rank)}`}>{d.rank}</span></td>
                   <td
@@ -1140,7 +1149,26 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
               )}
             </tbody>
           </table>
-        </div>
+        </TableScrollWrapper>
+        {deviceRanking.length > 10 && (
+          <button
+            type="button"
+            className="table-expand-toggle-btn"
+            onClick={() => setRankingExpanded(prev => !prev)}
+          >
+            {rankingExpanded ? (
+              <>
+                <ChevronUp size={14} />
+                <span>Show 10 rows</span>
+              </>
+            ) : (
+              <>
+                <ChevronDown size={14} />
+                <span>Show all {deviceRanking.length} rows</span>
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Detailed Traceability Table */}
@@ -1150,8 +1178,9 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
             <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Server size={16} /> Detailed Traceability Matrix
             </h3>
-            <span className="badge" style={{ background: 'rgba(37, 99, 235, 0.1)', color: 'var(--accent-blue)', fontWeight: 600, fontSize: '0.74rem' }}>
-              {matrixAlerts.length} {matrixAlerts.length === 1 ? 'alert' : 'alerts'}
+            <span className={`table-counter-chip ${matrixAlerts.length !== filteredAlerts.length ? 'has-filter' : ''}`}>
+              {matrixAlerts.length !== filteredAlerts.length && <span className="filter-active-dot" title="Filtered results" />}
+              Showing {Math.min(matrixAlerts.length, traceExpanded ? matrixAlerts.length : 10)} of {matrixAlerts.length} alerts
             </span>
             {matrixDevice !== 'ALL' && (
               <span
@@ -1318,7 +1347,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
           </div>
         </div>
 
-        <div style={{ overflowX: 'auto', maxHeight: '480px', overflowY: 'auto' }}>
+        <TableScrollWrapper maxHeight={traceExpanded ? null : '480px'}>
           <table className="data-table resizable-table" ref={traceTableRef} style={{ minWidth: '1410px' }}>
             <thead>
               <tr>
@@ -1360,7 +1389,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
               </tr>
             </thead>
             <tbody>
-              {matrixAlerts.map((alert, i) => {
+              {(traceExpanded ? matrixAlerts : matrixAlerts.slice(0, 10)).map((alert, i) => {
                 const details = alert.alert_details || {};
                 const results = alert.results || {};
                 const isBackdated = results.agent_1?.data?.is_backdated;
@@ -1466,7 +1495,26 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
               )}
             </tbody>
           </table>
-        </div>
+        </TableScrollWrapper>
+        {matrixAlerts.length > 10 && (
+          <button
+            type="button"
+            className="table-expand-toggle-btn"
+            onClick={() => setTraceExpanded(prev => !prev)}
+          >
+            {traceExpanded ? (
+              <>
+                <ChevronUp size={14} />
+                <span>Show 10 rows</span>
+              </>
+            ) : (
+              <>
+                <ChevronDown size={14} />
+                <span>Show all {matrixAlerts.length} rows</span>
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Event Detail Modal */}
