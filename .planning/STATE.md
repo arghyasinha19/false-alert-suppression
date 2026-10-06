@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: UI/UX Audit Remediation
 status: in_progress
-last_updated: "2026-10-06T05:47:00.000Z"
-last_activity: 2026-10-06 -- Phase 22 context gathered (decisions captured for UI-07, UI-08, UI-16, UI-17)
+last_updated: "2026-10-06T05:53:00.000Z"
+last_activity: 2026-10-06 -- Phase 22 planning complete (Plans 22-01 & 22-02 ready)
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 6
+  total_plans: 8
   completed_plans: 6
   percent: 60
 ---
@@ -18,8 +18,19 @@ progress:
 ## Current Position
 
 Phase: Phase 22 - Accessibility & Hit Areas
-Status: Context Gathered ✓ (Ready for UI-SPEC / planning)
-Last activity: 2026-10-06 -- Phase 22 context gathered (decisions captured for UI-07, UI-08, UI-16, UI-17)
+Status: Planned ✓ (2 plans ready: 22-01, 22-02)
+Last activity: 2026-10-06 -- Phase 22 planning complete (Plans 22-01 & 22-02 ready)
+
+## Key Decisions Made (Phase 22)
+
+- Ops Assistant chat panel refactored to non-modal docked layout insetting .content-area, eliminating blocking backdrop overlay (D-01).
+- Keyboard accessibility: Escape closes chat panel and restores focus to sidebar trigger; Ctrl+/ global shortcut toggles panel (D-02).
+- Sidebar nav items refactored from `<div>` to native HTML `<button type="button">` with `aria-current="page"`, `aria-expanded`, and 2px solid `:focus-visible` outline with 2px offset (D-03).
+- Tooltips on collapsed sidebar trigger on both `:hover` and `:focus-visible` (D-04).
+- 32px visible min-height enforced across buttons, filter pills, inputs, and selects (D-05).
+- 44x44px touch target expansion via transparent `::before` pseudo-element on compact icons and action buttons (D-06).
+- Typography scale standardized: 13px body/table data/filters, 12px headers/badges/captions, zero sub-12px CSS declarations (D-07).
+- Accessible form labels (`<label htmlFor="...">`), `scope="col"`, `aria-sort`, and `<caption className="sr-only">` across all data tables (D-08).
 
 ## Key Decisions Made (Phase 21)
 
@@ -33,4 +44,4 @@ Last activity: 2026-10-06 -- Phase 22 context gathered (decisions captured for U
 
 ## Blockers/Concerns
 
-- None. Phase 21 context, UI-SPEC, and plans complete and locked.
+- None. Phase 22 plans verified and ready for execution.
