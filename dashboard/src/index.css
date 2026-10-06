@@ -297,3 +297,16 @@ h1, h2, h3, h4, h5, h6 { font-weight: 600; line-height: 1.3; }
 
 .animate-fade-in { animation: fadeIn 0.5s ease forwards; }
 .animate-slide-in { animation: slideInLeft 0.4s ease forwards; }
+
+/* Accessibility Utility: Visually Hidden for Screen Readers (UI-17) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

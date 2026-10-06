@@ -341,7 +341,7 @@ export default function AlertPatterns() {
               <button
                 className="filter-pill active"
                 onClick={() => setSelectedCluster(null)}
-                style={{ marginLeft: '0.5rem', fontSize: '0.7rem' }}
+                style={{ marginLeft: '0.5rem', fontSize: '0.75rem' }}
               >
                 ✕ Clear filter
               </button>
@@ -524,16 +524,17 @@ export default function AlertPatterns() {
         </div>
         <TableScrollWrapper maxHeight={tableExpanded ? null : '480px'}>
           <table className="data-table" style={{ minWidth: '1100px' }}>
+            <caption className="sr-only">Clustered network alert patterns categorized by recurrence and suppression efficiency</caption>
             <thead>
               <tr>
-                <th style={{ width: '40px' }}></th>
-                <th style={{ width: '380px' }} title="Alert template string with abstracted parameters and dynamic variables">Template Pattern</th>
-                <th style={{ width: '80px' }} title="Total alert count clustered under this template">Count</th>
-                <th style={{ width: '100px' }} title="Number of distinct network devices exhibiting this pattern">Devices</th>
-                <th style={{ width: '180px' }} title="Distribution of alerts across ML classification categories">Category Breakdown</th>
-                <th style={{ width: '100px' }} title="Suppression rate percentage for alerts matching this pattern">Suppression</th>
-                <th style={{ width: '140px' }} title="First and last occurrence timestamp boundary">Time Span</th>
-                <th style={{ width: '140px' }} title="24-hour alert frequency trend sparkline">Distribution</th>
+                <th scope="col" style={{ width: '40px' }}><span className="sr-only">Expand</span></th>
+                <th scope="col" style={{ width: '380px' }} title="Alert template string with abstracted parameters and dynamic variables">Template Pattern</th>
+                <th scope="col" style={{ width: '80px' }} title="Total alert count clustered under this template">Count</th>
+                <th scope="col" style={{ width: '100px' }} title="Number of distinct network devices exhibiting this pattern">Devices</th>
+                <th scope="col" style={{ width: '180px' }} title="Distribution of alerts across ML classification categories">Category Breakdown</th>
+                <th scope="col" style={{ width: '100px' }} title="Suppression rate percentage for alerts matching this pattern">Suppression</th>
+                <th scope="col" style={{ width: '140px' }} title="First and last occurrence timestamp boundary">Time Span</th>
+                <th scope="col" style={{ width: '140px' }} title="24-hour alert frequency trend sparkline">Distribution</th>
               </tr>
             </thead>
             <tbody>
@@ -587,14 +588,15 @@ export default function AlertPatterns() {
                             {p.alerts && p.alerts.length > 0 && (
                               <div className="pattern-expanded-alerts">
                                 <strong>Sample Alerts:</strong>
-                                <table className="data-table" style={{ marginTop: '0.5rem', fontSize: '0.76rem' }}>
+                                <table className="data-table" style={{ marginTop: '0.5rem', fontSize: '0.8125rem' }}>
+                                  <caption className="sr-only">Sample network alerts associated with pattern template</caption>
                                   <thead>
                                     <tr>
-                                      <th>Event ID</th>
-                                      <th>Device</th>
-                                      <th>Severity</th>
-                                      <th>Issue</th>
-                                      <th>Timestamp</th>
+                                      <th scope="col">Event ID</th>
+                                      <th scope="col">Device</th>
+                                      <th scope="col">Severity</th>
+                                      <th scope="col">Issue</th>
+                                      <th scope="col">Timestamp</th>
                                     </tr>
                                   </thead>
                                   <tbody>

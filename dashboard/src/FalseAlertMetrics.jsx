@@ -721,10 +721,12 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
       {/* Filter Bar */}
       <div className="filter-bar">
         <Filter size={15} style={{ color: 'var(--text-tertiary)' }} />
-        <select className="filter-select" value={deviceFilter} onChange={e => setDeviceFilter(e.target.value)}>
+        <label htmlFor="device-filter-select" className="sr-only">Filter by device</label>
+        <select id="device-filter-select" className="filter-select" value={deviceFilter} onChange={e => setDeviceFilter(e.target.value)}>
           {deviceNames.map(d => (<option key={d} value={d}>{d === 'ALL' ? '🖥 All Devices' : d}</option>))}
         </select>
-        <select className="filter-select" value={timeRange} onChange={e => setTimeRange(e.target.value)}>
+        <label htmlFor="time-range-select" className="sr-only">Filter by time range</label>
+        <select id="time-range-select" className="filter-select" value={timeRange} onChange={e => setTimeRange(e.target.value)}>
           <option value="ALL">⏰ All Time</option>
           <option value="24H">Last 24 Hours</option>
           <option value="7D">Last 7 Days</option>
@@ -745,23 +747,27 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
         {timeRange === 'CUSTOM' && (
           <div className="custom-datetime-container">
             <div className="datetime-input-group">
-              <span className="datetime-label">From</span>
+              <label htmlFor="custom-start-time" className="datetime-label">From</label>
               <input
+                id="custom-start-time"
                 type="datetime-local"
                 className="filter-input-datetime"
                 value={customStartTime}
                 onChange={e => setCustomStartTime(e.target.value)}
                 title="Start date and time"
+                aria-label="Start date and time"
               />
             </div>
             <div className="datetime-input-group">
-              <span className="datetime-label">To</span>
+              <label htmlFor="custom-end-time" className="datetime-label">To</label>
               <input
+                id="custom-end-time"
                 type="datetime-local"
                 className="filter-input-datetime"
                 value={customEndTime}
                 onChange={e => setCustomEndTime(e.target.value)}
                 title="End date and time"
+                aria-label="End date and time"
               />
             </div>
             {(customStartTime || customEndTime) && (
@@ -1098,18 +1104,19 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
         </div>
         <TableScrollWrapper maxHeight={rankingExpanded ? null : '480px'}>
           <table className="rank-table" style={{ minWidth: '950px' }}>
+            <caption className="sr-only">Device ranking by alert profile, suppression breakdown, and ServiceNow incident volume</caption>
             <thead>
               <tr>
-                <th style={{ width: '50px' }} title="Device rank based on alert volume">Rank</th>
-                <th style={{ width: '180px', minWidth: '130px' }} title="Device hostname — click to filter Detailed Traceability Matrix">Device</th>
-                <th style={{ width: '70px' }} title="Total alert count recorded for this device">Total</th>
-                <th style={{ width: '120px' }} title="Alerts verified as actionable and genuine">Genuine Alerts</th>
-                <th style={{ width: '130px' }} title="Alerts identified as backdated, redundant, or false positives">False / Suppressed</th>
-                <th style={{ width: '120px' }} title="Alerts expected to clear without human intervention">Auto-Resolving</th>
-                <th style={{ width: '90px' }} title="Alerts with low machine learning confidence requiring investigation">Uncertain</th>
-                <th style={{ width: '110px' }} title="New ServiceNow incident tickets dispatched">SNOW Created</th>
-                <th style={{ width: '110px' }} title="ServiceNow incident tickets reopened due to recurring issues">SNOW Reopened</th>
-                <th style={{ width: '120px', minWidth: '100px' }} title="Relative alert volume distribution across ranked devices">Volume</th>
+                <th scope="col" style={{ width: '50px' }} title="Device rank based on alert volume">Rank</th>
+                <th scope="col" style={{ width: '180px', minWidth: '130px' }} title="Device hostname — click to filter Detailed Traceability Matrix">Device</th>
+                <th scope="col" style={{ width: '70px' }} title="Total alert count recorded for this device">Total</th>
+                <th scope="col" style={{ width: '120px' }} title="Alerts verified as actionable and genuine">Genuine Alerts</th>
+                <th scope="col" style={{ width: '130px' }} title="Alerts identified as backdated, redundant, or false positives">False / Suppressed</th>
+                <th scope="col" style={{ width: '120px' }} title="Alerts expected to clear without human intervention">Auto-Resolving</th>
+                <th scope="col" style={{ width: '90px' }} title="Alerts with low machine learning confidence requiring investigation">Uncertain</th>
+                <th scope="col" style={{ width: '110px' }} title="New ServiceNow incident tickets dispatched">SNOW Created</th>
+                <th scope="col" style={{ width: '110px' }} title="ServiceNow incident tickets reopened due to recurring issues">SNOW Reopened</th>
+                <th scope="col" style={{ width: '120px', minWidth: '100px' }} title="Relative alert volume distribution across ranked devices">Volume</th>
               </tr>
             </thead>
             <tbody>
@@ -1235,7 +1242,9 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
           {/* Table-specific Search & Filter Bar */}
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem' }}>
             {/* Search Scope Selector */}
+            <label htmlFor="matrix-search-scope" className="sr-only">Search scope</label>
             <select
+              id="matrix-search-scope"
               className="filter-select"
               value={searchScope}
               onChange={(e) => setSearchScope(e.target.value)}
@@ -1251,8 +1260,10 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
 
             {/* Search Input */}
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <label htmlFor="matrix-search-input" className="sr-only">Search matrix</label>
               <Search size={13} style={{ position: 'absolute', left: '10px', color: 'var(--text-tertiary)', pointerEvents: 'none' }} />
               <input
+                id="matrix-search-input"
                 type="text"
                 placeholder={searchScope === 'device' ? 'Filter by device...' : searchScope === 'event_id' ? 'Search event ID...' : searchScope === 'issue' ? 'Search issue...' : searchScope === 'snow' ? 'Search incident...' : 'Search matrix...'}
                 value={matrixSearch}
@@ -1289,7 +1300,9 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
             </div>
 
             {/* Dedicated Device Dropdown */}
+            <label htmlFor="matrix-device-filter" className="sr-only">Filter matrix by device</label>
             <select
+              id="matrix-device-filter"
               className="filter-select"
               value={matrixDevice}
               onChange={(e) => setMatrixDevice(e.target.value)}
@@ -1303,7 +1316,9 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
             </select>
 
             {/* Severity Filter */}
+            <label htmlFor="matrix-severity-filter" className="sr-only">Filter matrix by severity</label>
             <select
+              id="matrix-severity-filter"
               className="filter-select"
               value={matrixSeverity}
               onChange={(e) => setMatrixSeverity(e.target.value)}
@@ -1316,7 +1331,9 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
             </select>
 
             {/* Classification Filter */}
+            <label htmlFor="matrix-outcome-filter" className="sr-only">Filter matrix by classification</label>
             <select
+              id="matrix-outcome-filter"
               className="filter-select"
               value={matrixOutcome}
               onChange={(e) => setMatrixOutcome(e.target.value)}
@@ -1330,7 +1347,9 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
             </select>
 
             {/* ServiceNow Filter */}
+            <label htmlFor="matrix-snow-filter" className="sr-only">Filter matrix by ServiceNow action</label>
             <select
+              id="matrix-snow-filter"
               className="filter-select"
               value={matrixSnow}
               onChange={(e) => setMatrixSnow(e.target.value)}
@@ -1368,6 +1387,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
 
         <TableScrollWrapper maxHeight={traceExpanded ? null : '480px'}>
           <table className="data-table resizable-table" ref={traceTableRef} style={{ minWidth: '1410px' }}>
+            <caption className="sr-only">Detailed alert traceability matrix with ML classification, confidence scores, and ServiceNow actions</caption>
             <thead>
               <tr>
                 {TRACE_COLUMNS.map((col, idx) => {
@@ -1375,6 +1395,8 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh }) {
                   return (
                     <th
                       key={col.key}
+                      scope="col"
+                      aria-sort={isSorted ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                       onClick={(e) => {
                         if (e.target.classList.contains('col-resize-handle')) return;
                         handleSort(col.key);

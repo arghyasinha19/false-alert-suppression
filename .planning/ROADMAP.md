@@ -109,7 +109,11 @@ Refer to repository history for prior phase details.
 
 **Goal:** Increase interactive hit areas to 32px minimum, fix sidebar keyboard navigation, add `aria-current`, and ensure tables/forms have accessible names.
 
-**Status:** Not started
+**Status:** Completed ✓
+
+**Plans:**
+- [x] **Plan 22-01**: Semantic Sidebar Buttons, Focus Visible Rings & Non-Modal Docked Chat Panel (UI-08, UI-16)
+- [x] **Plan 22-02**: Interactive Hit Areas, Typography Scale & Form/Table Accessibility (UI-07, UI-17)
 
 **Requirements:**
 - **UI-07**: Increase all interactive element (buttons, pills, selects) minimum heights to 32px with 44px hit areas, and raise table/filter typography to 12-13px.

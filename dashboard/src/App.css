@@ -90,7 +90,7 @@
 }
 
 .sidebar-brand span {
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   color: var(--text-tertiary);
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -324,7 +324,7 @@
   align-items: center;
   gap: 0.35rem;
   padding: 0.25rem 0.5rem;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--accent-blue);
   background: rgba(37, 99, 235, 0.1);
@@ -448,7 +448,7 @@
   border-radius: 999px;
   background: var(--accent-green-light);
   border: 1px solid rgba(5, 150, 105, 0.2);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--accent-green);
   text-transform: uppercase;
@@ -506,7 +506,7 @@
   background: rgba(245, 158, 11, 0.12);
   border: 1px solid rgba(245, 158, 11, 0.3);
   color: #f59e0b;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -523,7 +523,7 @@
   background: rgba(37, 99, 235, 0.12);
   border: 1px solid rgba(37, 99, 235, 0.3);
   color: var(--accent-blue);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -779,7 +779,7 @@
 }
 
 .datetime-label {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -816,7 +816,7 @@
   gap: 0.3rem;
   padding: 0.32rem 0.65rem;
   border-radius: var(--radius-sm);
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
   border: 1px solid var(--card-border);
@@ -847,7 +847,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: #dc2626;
   background: rgba(220, 38, 38, 0.1);
@@ -858,7 +858,7 @@
 .custom-datetime-chip {
   display: inline-flex;
   align-items: center;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--accent-green);
   background: var(--accent-green-light);
@@ -868,7 +868,7 @@
 }
 
 .custom-datetime-hint {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--text-tertiary);
   font-style: italic;
   padding: 0 0.25rem;
@@ -948,7 +948,7 @@
 
 .kpi-content h3 {
   margin: 0;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.07em;
@@ -966,7 +966,7 @@
 
 .kpi-content .sub-value {
   margin: 0.2rem 0 0 0;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--text-tertiary);
   font-weight: 500;
 }
@@ -1053,7 +1053,7 @@
 .data-table th {
   color: var(--text-tertiary);
   font-weight: 700;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   position: sticky;
@@ -1087,7 +1087,7 @@
 .badge {
   padding: 0.2rem 0.6rem;
   border-radius: 999px;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 700;
   white-space: nowrap;
   display: inline-flex;
@@ -1122,7 +1122,7 @@
 .rank-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.82rem; }
 .rank-table th, .rank-table td { padding: 0.65rem 0.75rem; text-align: left; border-bottom: 1px solid var(--card-border); }
 .rank-table th {
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-tertiary);
@@ -1145,7 +1145,7 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 800;
 }
 
@@ -1273,7 +1273,7 @@
 }
 
 .snow-total-badge {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
   padding: 0.2rem 0.6rem;
   border-radius: 999px;
@@ -1338,7 +1338,7 @@
 }
 
 .snow-card-count-badge {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
   padding: 0.15rem 0.5rem;
   border-radius: 999px;
@@ -1398,7 +1398,7 @@
 }
 
 .snow-device-inc {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   color: var(--accent-blue);
   font-weight: 600;
@@ -1472,7 +1472,7 @@
 }
 
 .location-header .device-count {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--text-tertiary);
   padding: 0.2rem 0.6rem;
   background: var(--bg-tertiary);
@@ -1582,7 +1582,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--accent-red);
   margin-top: 0.45rem;
@@ -1745,8 +1745,8 @@
   margin-top: 0.5rem;
 }
 
-.detail-meta-item { font-size: 0.73rem; }
-.detail-meta-item .label { color: var(--text-tertiary); text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.05em; font-weight: 700; }
+.detail-meta-item { font-size: 0.75rem; }
+.detail-meta-item .label { color: var(--text-tertiary); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; font-weight: 700; }
 .detail-meta-item .value { color: var(--text-primary); font-weight: 600; margin-top: 0.1rem; }
 
 /* Section Divider */
@@ -1923,7 +1923,7 @@
 }
 
 .event-modal-section h3 {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--text-tertiary);
   text-transform: uppercase;
@@ -1951,7 +1951,7 @@
 }
 
 .event-modal-field .label {
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--text-tertiary);
   text-transform: uppercase;
@@ -2014,7 +2014,7 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 800;
   background: var(--accent-blue-light);
   color: var(--accent-blue);
@@ -2041,7 +2041,7 @@
   color: #e2e8f0;
   padding: 1rem 1.15rem;
   border-radius: var(--radius-md);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   line-height: 1.55;
   overflow-x: auto;
   max-height: 240px;
@@ -2134,7 +2134,7 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--text-tertiary);
   z-index: 1;
 }
@@ -2172,7 +2172,7 @@
 }
 
 .noc-live-label {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--accent-green);
   text-transform: uppercase;
@@ -2375,7 +2375,7 @@
 
 .noc-kpi-title {
   margin: 0 0 0.35rem 0;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -2413,7 +2413,7 @@
 
 .noc-kpi-subtitle {
   margin: 0;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--text-tertiary);
   font-weight: 500;
   line-height: 1.25;
@@ -2448,7 +2448,7 @@
   background: rgba(16, 185, 129, 0.14);
   color: #10b981;
   border: 1px solid rgba(16, 185, 129, 0.25);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   padding: 0.2rem 0.5rem;
@@ -2459,7 +2459,7 @@
   background: rgba(245, 158, 11, 0.14);
   color: #f59e0b;
   border: 1px solid rgba(245, 158, 11, 0.25);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   padding: 0.2rem 0.5rem;
@@ -2470,7 +2470,7 @@
   background: rgba(239, 68, 68, 0.14);
   color: #ef4444;
   border: 1px solid rgba(239, 68, 68, 0.25);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   padding: 0.2rem 0.5rem;
@@ -2479,7 +2479,7 @@
 
 /* Subtle Badges for KPI Strip */
 .badge.badge-subtle {
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   padding: 0.2rem 0.5rem;
@@ -2527,7 +2527,7 @@
 .badge.dnac-status-active {
   background: rgba(239, 68, 68, 0.12);
   color: #dc2626;
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -2536,7 +2536,7 @@
 .badge.dnac-status-resolved {
   background: rgba(5, 150, 105, 0.12);
   color: #059669;
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -2545,7 +2545,7 @@
 .badge.dnac-status-uncertain {
   background: rgba(217, 119, 6, 0.12);
   color: #d97706;
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -2671,7 +2671,7 @@
 }
 
 .noc-device-count-badge {
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-tertiary);
   white-space: nowrap;
@@ -2804,7 +2804,7 @@
 }
 
 .noc-tier-tag {
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 800;
   padding: 0.15rem 0.45rem;
   border-radius: 999px;
@@ -2859,7 +2859,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
   padding: 0.22rem 0.55rem;
   border-radius: 999px;
@@ -2884,7 +2884,7 @@
 }
 
 .noc-tier-mini-badge {
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   font-weight: 700;
   padding: 0.1rem 0.38rem;
   border-radius: 4px;
@@ -2946,7 +2946,7 @@
   background: var(--bg-tertiary);
   color: var(--text-secondary);
   font-weight: 700;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 0.75rem 1rem;
@@ -3033,7 +3033,7 @@
 }
 
 .noc-device-id-sub {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: var(--text-tertiary);
   font-family: var(--font-mono, monospace);
 }
@@ -3043,7 +3043,7 @@
   align-items: center;
   gap: 0.3rem;
   padding: 0.32rem 0.65rem;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
   border-radius: var(--radius-sm);
   background: var(--bg-secondary);
@@ -3133,7 +3133,7 @@
 }
 
 .noc-site-device-count {
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   color: var(--text-tertiary);
   margin: 0.2rem 0 0.85rem 0;
 }
@@ -3156,7 +3156,7 @@
 }
 
 .noc-site-stat-label {
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   color: var(--text-tertiary);
   text-transform: uppercase;
   font-weight: 600;
@@ -3244,7 +3244,7 @@
 }
 
 .noc-filter-cluster-label {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -3264,7 +3264,7 @@
   align-items: center;
   gap: 0.35rem;
   padding: 0.28rem 0.6rem;
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-secondary);
   background: var(--bg-tertiary);
@@ -3294,7 +3294,7 @@
 }
 
 .noc-chip-count {
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   padding: 0.1rem 0.35rem;
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.08);
@@ -3331,7 +3331,7 @@
   gap: 0.35rem;
   margin-left: auto;
   padding: 0.28rem 0.65rem;
-  font-size: 0.73rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--accent-blue);
   background: var(--accent-blue-light);
@@ -3372,7 +3372,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   line-height: 1;
 }
 
@@ -3447,7 +3447,7 @@
   display: flex;
   align-items: center;
   gap: 0.55rem;
-  font-size: 0.67rem;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
@@ -3545,7 +3545,7 @@
 }
 
 .noc-tab-badge {
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   padding: 0.08rem 0.4rem;
   border-radius: 999px;
   background: rgba(59, 130, 246, 0.15);
@@ -3651,7 +3651,7 @@
 }
 
 .noc-stepper-latency {
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   color: var(--text-tertiary);
   font-family: var(--font-mono, monospace);
   background: var(--bg-tertiary);
@@ -3660,7 +3660,7 @@
 }
 
 .noc-stepper-badge {
-  font-size: 0.64rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -3694,7 +3694,7 @@
 }
 
 .noc-stepper-desc {
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
   line-height: 1.45;
   margin: 0;
@@ -3703,7 +3703,7 @@
 .noc-stepper-toggle {
   background: none;
   border: none;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   color: var(--accent-blue);
   cursor: pointer;
   padding: 0;
@@ -3724,7 +3724,7 @@
   border-radius: var(--radius-sm);
   background: var(--bg-secondary);
   border: 1px solid var(--card-border);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   animation: fadeIn 0.2s ease;
 }
 
@@ -3746,7 +3746,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 700;
   border-radius: 999px;
   padding: 0.15rem 0.55rem;
@@ -3800,7 +3800,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   font-weight: 500;
   padding: 0.5rem 0.75rem;
   border-radius: var(--radius-sm);
@@ -3837,7 +3837,7 @@
   align-items: center;
   gap: 0.3rem;
   padding: 0.2rem 0.55rem;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
   border-radius: var(--radius-sm);
   border: 1px solid currentColor;
@@ -3880,7 +3880,7 @@
 }
 
 .noc-telemetry-card-title {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 700;
@@ -3898,7 +3898,7 @@
 }
 
 .noc-telemetry-card-sub {
-  font-size: 0.69rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
 }
 
@@ -3984,7 +3984,7 @@
   border: 1px solid var(--card-border);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
-  font-size: 0.74rem;
+  font-size: 0.75rem;
 }
 
 .noc-code-block {
@@ -3995,7 +3995,7 @@
   border-radius: var(--radius-sm);
   color: #cbd5e1;
   font-family: var(--font-mono, monospace);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-all;
@@ -4022,7 +4022,7 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.42rem 0.75rem;
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   font-weight: 600;
   border-radius: var(--radius-sm);
   border: 1px solid var(--card-border);
@@ -4099,7 +4099,7 @@
 }
 
 .noc-toast-desc {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
   line-height: 1.4;
 }
@@ -4175,7 +4175,7 @@
   position: absolute;
   top: 0.6rem;
   right: 0.7rem;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 800;
   color: var(--accent-bar-color, var(--accent-blue));
   opacity: 0.6;
@@ -4190,7 +4190,7 @@
 }
 
 .pattern-count-badge {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--text-secondary);
   background: var(--bg-tertiary);
@@ -4219,7 +4219,7 @@
   padding: 0.08rem 0.35rem;
   border-radius: 4px;
   font-weight: 600;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   letter-spacing: 0.02em;
   border: 1px solid rgba(37, 99, 235, 0.12);
 }
@@ -4235,7 +4235,7 @@
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--text-tertiary);
 }
 
@@ -4473,7 +4473,7 @@
   justify-content: center;
   gap: 4px;
   padding: 6px 9px;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-secondary);
   background: transparent;
@@ -4523,7 +4523,7 @@
   align-items: center;
   gap: 4px;
   padding: 4px 8px;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
   border-radius: 4px;
   border: none;
@@ -4553,7 +4553,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--text-tertiary);
   background: rgba(15, 23, 42, 0.7);
@@ -4588,7 +4588,7 @@
 
 .noc-tier-lane-title {
   font-family: inherit;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.06em;
   fill: var(--text-secondary);
@@ -4596,7 +4596,7 @@
 
 .noc-tier-lane-sub {
   font-family: inherit;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 500;
   fill: var(--text-tertiary);
 }
@@ -4657,21 +4657,21 @@
 
 .noc-node-subtitle-text {
   font-family: inherit;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 500;
   fill: var(--text-tertiary);
 }
 
 .noc-node-tier-pill {
   font-family: inherit;
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.04em;
 }
 
 .noc-node-alert-pill-text {
   font-family: inherit;
-  font-size: 9.5px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -4728,7 +4728,7 @@
   color: var(--accent-blue);
   padding: 2px 8px;
   border-radius: var(--radius-sm);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -4873,4 +4873,86 @@
 }
 
 
+/* ==========================================================================
+   ACCESSIBILITY & HIT AREA SPECIFICATION (UI-07, UI-17, D-04, D-05)
+   ========================================================================== */
 
+/* 32px Minimum Height for Interactive Controls */
+.btn,
+.btn-primary,
+.btn-secondary,
+.time-range-btn,
+.refresh-btn,
+.export-btn,
+.demo-banner-reconnect-btn,
+.chat-send-btn,
+.filter-btn,
+.filter-pill,
+.view-mode-btn,
+.category-pill,
+.filter-search,
+.date-picker-input,
+.form-select,
+.time-select,
+.filter-select,
+.filter-input-datetime,
+.datetime-action-btn,
+.noc-view-btn,
+.noc-action-btn,
+.noc-table-action-btn,
+.table-expand-toggle-btn,
+.detail-alerts-toggle-btn {
+  min-height: 32px;
+}
+
+/* 44x44px Touch Target Expansion Utility & Compact Icon Buttons */
+.touch-target-expand {
+  position: relative;
+}
+
+.touch-target-expand::before,
+.sidebar-collapse-toggle::before,
+.chat-close-btn::before,
+.demo-banner-dismiss-btn::before,
+.table-sort-btn::before,
+.table-action-icon::before,
+.drawer-close-btn::before,
+.detail-panel-close::before,
+.event-modal-close::before,
+.noc-toast-close::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 44px;
+  min-height: 44px;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+}
+
+.sidebar-collapse-toggle,
+.chat-close-btn,
+.demo-banner-dismiss-btn,
+.table-sort-btn,
+.table-action-icon,
+.drawer-close-btn,
+.detail-panel-close,
+.event-modal-close,
+.noc-toast-close {
+  position: relative;
+}
+
+/* Screen Reader Only Utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

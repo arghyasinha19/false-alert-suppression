@@ -296,10 +296,12 @@ function App() {
             </div>
           </div>
           <button
+            type="button"
             className="sidebar-collapse-toggle touch-target-expand"
             onClick={handleToggleSidebar}
             title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-expanded={!sidebarCollapsed}
           >
             {sidebarCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
             {sidebarCollapsed && (

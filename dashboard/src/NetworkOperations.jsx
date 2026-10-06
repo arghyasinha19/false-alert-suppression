@@ -1374,8 +1374,10 @@ export default function NetworkOperations({
       <div className="noc-controls-bar">
         {/* Left: Search row */}
         <div className="noc-controls-search-row">
+          <label htmlFor="noc-device-search-input" className="sr-only">Search devices, locations, or tiers</label>
           <Search size={15} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
           <input
+            id="noc-device-search-input"
             className="filter-search"
             type="text"
             placeholder="Search devices, locations, or tiers..."
@@ -1655,56 +1657,57 @@ export default function NetworkOperations({
       {viewMode === 'table' && (
         <TableScrollWrapper className="noc-sre-table-wrap">
           <table className="noc-sre-table">
+            <caption className="sr-only">Network devices inventory with health scores, alert counts, and live DNAC assurance status</caption>
             <thead>
               <tr>
-                <th className="sortable" onClick={() => handleTableSort('name')}>
+                <th scope="col" aria-sort={tableSortCol === 'name' ? (tableSortDir === 'asc' ? 'ascending' : 'descending') : 'none'} className="sortable" onClick={() => handleTableSort('name')}>
                   <div className="th-content">
                     <span>Device Name</span>
                     <ArrowUpDown size={12} className={`sort-icon ${tableSortCol === 'name' ? 'active' : ''}`} />
                   </div>
                 </th>
-                <th className="sortable" onClick={() => handleTableSort('tier')}>
+                <th scope="col" aria-sort={tableSortCol === 'tier' ? (tableSortDir === 'asc' ? 'ascending' : 'descending') : 'none'} className="sortable" onClick={() => handleTableSort('tier')}>
                   <div className="th-content">
                     <span>Tier</span>
                     <ArrowUpDown size={12} className={`sort-icon ${tableSortCol === 'tier' ? 'active' : ''}`} />
                   </div>
                 </th>
-                <th className="sortable" onClick={() => handleTableSort('location')}>
+                <th scope="col" aria-sort={tableSortCol === 'location' ? (tableSortDir === 'asc' ? 'ascending' : 'descending') : 'none'} className="sortable" onClick={() => handleTableSort('location')}>
                   <div className="th-content">
                     <span>Location</span>
                     <ArrowUpDown size={12} className={`sort-icon ${tableSortCol === 'location' ? 'active' : ''}`} />
                   </div>
                 </th>
-                <th className="sortable" onClick={() => handleTableSort('health')}>
+                <th scope="col" aria-sort={tableSortCol === 'health' ? (tableSortDir === 'asc' ? 'ascending' : 'descending') : 'none'} className="sortable" onClick={() => handleTableSort('health')}>
                   <div className="th-content">
                     <span>Health</span>
                     <ArrowUpDown size={12} className={`sort-icon ${tableSortCol === 'health' ? 'active' : ''}`} />
                   </div>
                 </th>
-                <th className="sortable" onClick={() => handleTableSort('alerts')}>
+                <th scope="col" aria-sort={tableSortCol === 'alerts' ? (tableSortDir === 'asc' ? 'ascending' : 'descending') : 'none'} className="sortable" onClick={() => handleTableSort('alerts')}>
                   <div className="th-content">
                     <span>Active Alerts</span>
                     <ArrowUpDown size={12} className={`sort-icon ${tableSortCol === 'alerts' ? 'active' : ''}`} />
                   </div>
                 </th>
-                <th>
+                <th scope="col">
                   <div className="th-content">
                     <span>24h Trend & Severity</span>
                   </div>
                 </th>
-                <th className="sortable" onClick={() => handleTableSort('snow')}>
+                <th scope="col" aria-sort={tableSortCol === 'snow' ? (tableSortDir === 'asc' ? 'ascending' : 'descending') : 'none'} className="sortable" onClick={() => handleTableSort('snow')}>
                   <div className="th-content">
                     <span>ServiceNow</span>
                     <ArrowUpDown size={12} className={`sort-icon ${tableSortCol === 'snow' ? 'active' : ''}`} />
                   </div>
                 </th>
-                <th className="sortable" onClick={() => handleTableSort('last_seen')}>
+                <th scope="col" aria-sort={tableSortCol === 'last_seen' ? (tableSortDir === 'asc' ? 'ascending' : 'descending') : 'none'} className="sortable" onClick={() => handleTableSort('last_seen')}>
                   <div className="th-content">
                     <span>Last Event</span>
                     <ArrowUpDown size={12} className={`sort-icon ${tableSortCol === 'last_seen' ? 'active' : ''}`} />
                   </div>
                 </th>
-                <th style={{ textAlign: 'right' }}>Actions</th>
+                <th scope="col" style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -2374,7 +2377,9 @@ export default function NetworkOperations({
                   return (
                     <div className="noc-json-viewer">
                       <div className="noc-json-toolbar">
+                        <label htmlFor="noc-json-search-input" className="sr-only">Search payload keys or values</label>
                         <input
+                          id="noc-json-search-input"
                           type="text"
                           className="noc-json-search"
                           placeholder="Search payload keys or values..."
