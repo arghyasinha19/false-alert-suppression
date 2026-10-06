@@ -19,8 +19,8 @@ progress:
 
 Phase: Phase 19 - Critical Layout & Status Fixes
 Plan: —
-Status: Ready for planning
-Last activity: 2026-10-06 — Phase 19 context gathered
+Status: UI-SPEC approved, ready for planning
+Last activity: 2026-10-06 — Phase 19 UI-SPEC approved
 
 ## Key Decisions Made
 
