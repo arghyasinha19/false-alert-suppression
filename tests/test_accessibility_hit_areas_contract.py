@@ -32,13 +32,13 @@ def test_hit_area_32px_minimum_in_app_css():
     """Verify App.css declares min-height: 32px for buttons, pills, search, and selects."""
     css_content = APP_CSS.read_text(encoding="utf-8")
 
-    # Match block containing min-height: 32px
+    # Match block containing min-height: 32px for core interactive controls
     min_height_match = re.search(
-        r"([^{]+)\{\s*[^}]*min-height:\s*32px;?[^}]*\}",
+        r"([^}]*\.btn[^}]*)\{\s*[^}]*min-height:\s*32px;?[^}]*\}",
         css_content,
         re.DOTALL,
     )
-    assert min_height_match is not None, "App.css must contain a rule with 'min-height: 32px;'"
+    assert min_height_match is not None, "App.css must contain a rule with 'min-height: 32px;' covering .btn"
 
     matched_selectors = min_height_match.group(1)
     required_selectors = [
@@ -114,12 +114,16 @@ def test_table_typography_standards():
     assert ".rank-table th {" in app_css
     assert ".noc-sre-table thead th {" in app_css
 
-    # Table body cells >= 0.8125rem
-    data_table_size = re.search(r"\.data-table\s*\{[^}]*font-size:\s*([0-9.]+)rem", app_css)
-    assert data_table_size and float(data_table_size.group(1)) >= 0.8125
+    # Table body cells >= 0.8125rem or var(--font-sm) token
+    data_table_size = re.search(r"\.data-table\s*\{[^}]*font-size:\s*(var\(--font-sm\)|([0-9.]+)rem)", app_css)
+    assert data_table_size is not None, ".data-table must declare font-size: var(--font-sm) or rem"
+    if data_table_size.group(2):
+        assert float(data_table_size.group(2)) >= 0.8125
 
-    rank_table_size = re.search(r"\.rank-table\s*\{[^}]*font-size:\s*([0-9.]+)rem", app_css)
-    assert rank_table_size and float(rank_table_size.group(1)) >= 0.8125
+    rank_table_size = re.search(r"\.rank-table\s*\{[^}]*font-size:\s*(var\(--font-sm\)|([0-9.]+)rem)", app_css)
+    assert rank_table_size is not None, ".rank-table must declare font-size: var(--font-sm) or rem"
+    if rank_table_size.group(2):
+        assert float(rank_table_size.group(2)) >= 0.8125
 
 
 # ==============================================================================

@@ -57,6 +57,15 @@
   --radius-lg: 16px;
   --radius-xl: 20px;
   --radius-2xl: 24px;
+
+  /* 6-Step Typography Scale Tokens (UI-09-22) */
+  --font-xs: 0.75rem;     /* 12px / 0.75rem - Badges, table headers, metadata tags, captions, chips */
+  --font-sm: 0.8125rem;   /* 13px / 0.8125rem - Body text, table cells, form controls, filter pills */
+  --font-md: 0.9375rem;   /* 15px / 0.9375rem - Card titles, subheadings, drawer section labels */
+  --font-lg: 1.125rem;    /* 18px / 1.125rem - Section titles, modal headers, major numbers */
+  --font-xl: 1.5rem;      /* 24px / 1.5rem - Primary KPI card values, medium metric counters */
+  --font-2xl: 2.125rem;   /* 34px / 2.125rem - Executive health score & hero numbers */
+
   color-scheme: light;
 }
 

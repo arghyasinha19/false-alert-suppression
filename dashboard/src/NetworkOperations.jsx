@@ -13,6 +13,7 @@ import {
 import AnimatedCounter from './AnimatedCounter';
 import TopologyGraphView from './components/TopologyGraphView';
 import TableScrollWrapper from './components/TableScrollWrapper';
+import EmptyState from './components/EmptyState';
 
 const TIER_METADATA = {
   core: {
@@ -1324,7 +1325,7 @@ export default function NetworkOperations({
             <div className="kpi-icon purple">
               <Timer size={20} />
             </div>
-            <span className="badge badge-subtle purple">DLX BUFFER</span>
+            <span className="badge badge-subtle purple" title="Dead Letter Exchange (RabbitMQ delayed verification queue)">DLX BUFFER</span>
           </div>
           <div className="noc-kpi-body">
             <div className="noc-kpi-main">
@@ -1334,7 +1335,7 @@ export default function NetworkOperations({
               </div>
             </div>
             <div className="noc-kpi-footer">
-              <p className="noc-kpi-subtitle">DLX verification window</p>
+              <p className="noc-kpi-subtitle" title="Dead Letter Exchange (RabbitMQ delayed verification queue)">DLX verification window</p>
             </div>
           </div>
         </div>
@@ -1417,7 +1418,7 @@ export default function NetworkOperations({
               className={`noc-view-btn ${viewMode === 'table' ? 'active' : ''}`}
               onClick={() => handleViewModeChange('table')}
               aria-pressed={viewMode === 'table'}
-              title="SRE High-Density Table View: Compact sortable telemetry"
+              title="SRE (Site Reliability Engineering) High-Density Table View: Compact sortable telemetry"
             >
               <Table size={13} />
               <span>SRE Table</span>
@@ -1888,22 +1889,17 @@ export default function NetworkOperations({
       )}
 
       {filteredDevices.length === 0 && (
-        <div className="empty-state" style={{ padding: '3.5rem 1rem', textAlign: 'center' }}>
-          <Server size={44} style={{ color: 'var(--text-tertiary)', marginBottom: '0.75rem', opacity: 0.6 }} />
-          <h3 style={{ margin: '0 0 0.4rem 0', fontSize: '1rem', color: 'var(--text-primary)' }}>No devices match your active filters</h3>
-          <p style={{ margin: '0 0 1rem 0', color: 'var(--text-tertiary)', fontSize: '0.82rem' }}>
-            {searchQuery
+        <EmptyState
+          icon={<Server size={24} />}
+          title="No devices match your active filters"
+          description={
+            searchQuery
               ? `No devices matched "${searchQuery}" with current role, health, and ticket filters.`
-              : 'No devices matched the selected combination of architectural role, health, and ServiceNow status filters.'}
-          </p>
-          <button
-            className="filter-pill"
-            onClick={resetAllFilters}
-            style={{ margin: '0 auto', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', padding: '0.45rem 1rem' }}
-          >
-            <RotateCcw size={13} /> Reset All Filters
-          </button>
-        </div>
+              : 'No devices matched the selected combination of architectural role, health, and ServiceNow status filters.'
+          }
+          actionLabel="Reset All Filters"
+          onAction={resetAllFilters}
+        />
       )}
 
       {createPortal(
@@ -2134,11 +2130,12 @@ export default function NetworkOperations({
                       </h3>
 
                       {activeAlerts.length === 0 ? (
-                        <div className="empty-state" style={{ padding: '2rem 1.5rem', textAlign: 'center' }}>
-                          <ShieldCheck size={32} style={{ color: 'var(--health-healthy)', marginBottom: '0.5rem' }} />
-                          <p style={{ margin: 0, fontWeight: 600, color: 'var(--text-primary)' }}>No active alerts — node nominal.</p>
-                          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>All recent anomalies auto-resolved or suppressed at edge.</p>
-                        </div>
+                        <EmptyState
+                          icon={<ShieldCheck size={22} style={{ color: 'var(--health-healthy)' }} />}
+                          title="No active alerts recorded for this device"
+                          description="This node is currently operating nominally with zero active or suppressed incidents."
+                          compact
+                        />
                       ) : (
                         <>
                           {(drawerAlertsExpanded ? activeAlerts : activeAlerts.slice(0, 5)).map((alert, i) => {

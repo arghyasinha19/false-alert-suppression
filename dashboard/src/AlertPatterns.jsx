@@ -4,6 +4,7 @@ import {
   ChevronDown, ChevronRight, ChevronUp, Server, Fingerprint, SearchX
 } from 'lucide-react';
 import TableScrollWrapper from './components/TableScrollWrapper';
+import EmptyState from './components/EmptyState';
 import useChartTheme from './hooks/useChartTheme';
 import {
   ComposedChart, Area, Line,
@@ -25,7 +26,7 @@ const TOOLTIP_STYLE = {
   border: '1px solid var(--card-border)',
   borderRadius: '10px',
   boxShadow: 'var(--shadow-md)',
-  fontSize: '0.78rem',
+  fontSize: 'var(--font-xs)',
   color: 'var(--text-primary)',
 };
 
@@ -630,15 +631,11 @@ export default function AlertPatterns() {
               {patterns.length === 0 && (
                 <tr>
                   <td colSpan="8" style={{ padding: 0 }}>
-                    <div className="table-empty-state">
-                      <div className="empty-state-badge">
-                        <SearchX size={22} />
-                      </div>
-                      <div className="empty-state-title">No alert patterns discovered yet</div>
-                      <div className="empty-state-desc">
-                        Recurring pattern clusters will automatically appear here once sufficient alert telemetry is ingested into the system.
-                      </div>
-                    </div>
+                    <EmptyState
+                      icon={<SearchX size={22} />}
+                      title="No alert patterns discovered yet"
+                      description="Recurring pattern clusters will automatically appear here once sufficient alert telemetry is ingested into the system."
+                    />
                   </td>
                 </tr>
               )}
