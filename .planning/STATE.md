@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: UI/UX Audit Remediation
-status: complete
-last_updated: "2026-10-06T04:22:00.000Z"
-last_activity: 2026-10-06 -- Phase 19 execution complete (2/2 plans complete)
+status: ready_to_plan
+last_updated: "2026-10-06T04:34:00.000Z"
+last_activity: 2026-10-06 -- Phase 20 discussion complete (16 decisions locked)
 progress:
   total_phases: 5
   completed_phases: 1
@@ -17,25 +17,30 @@ progress:
 
 ## Current Position
 
-Phase: Phase 19 - Critical Layout & Status Fixes
-Plan: Complete (19-01, 19-02)
-Status: Phase 19 complete — ready for verification or Phase 20 (Data Visibility & Bounds)
-Last activity: 2026-10-06 -- Phase 19 execution complete (2/2 plans complete)
+Phase: Phase 20 - Data Visibility & Bounds
+Plan: Ready to plan
+Status: Phase 20 context captured (16 decisions locked) — ready for UI-SPEC or Plan
+Last activity: 2026-10-06 -- Phase 20 discussion complete
 
-## Key Decisions Made
+## Key Decisions Made (Phase 20)
 
-- Auto-collapse sidebar to 72px icon rail below 1100px while keeping manual toggle available.
-- Enforce flexbox sizing with min-width: 0, max-width: 100% on .content-area, isolating wide tables/cards to prevent viewport overflow.
-- Introduce an explicit @media (max-width: 1100px) responsive block in App.css for compact header padding and grid reflow.
-- Tri-state connection status model: Live (green pulse), Stale (amber dot, 1-2 poll failures after being live), and Offline (red dot, on initial failure or 3+ failures).
-- Freeze lastSuccessfulSync timestamp on fetch failure; display "Last sync: Xm ago (Failed)" rather than false positive refresh times.
-- Pass connectionStatus and lastSync as props to views, synchronizing sub-view indicators like .noc-refresh-bar.
-- Strict payload schema validation: require Array.isArray(alertsRes?.alerts) and devices to prevent corrupted/empty JSON masquerading as Live.
-- Dedicated amber badge in the header ("Mock / Seed Data") plus a subtle dismissible info banner across the content body in offline mode.
-- Align SRE Drawer provenance: display "Simulated Profile" banner and disable "Poll DNAC" button with tooltip when backend is unreachable.
-- Dynamic hot-swap from mock to live data upon reconnect, re-matching selectedDevice by name and preserving active filters.
-- Progressive backoff retry on polling failure (10s -> 20s -> 60s cap) with manual retry buttons in header and sidebar, plus reconnect check on window focus.
+- Require Ctrl / Cmd + scroll to zoom topology canvas, with floating toast hint "Use Ctrl + scroll to zoom" on un-modified scroll to prevent page hijacking (D-01).
+- Viewport-proportional canvas height calc(100vh - 280px) clamped between 560px and 780px (D-02).
+- Soft-boundary clamping ensuring at least 25% of diagram bounding box remains visible in canvas at all times (D-03).
+- Dedicated Fullscreen / Expanded View toggle in topology canvas toolbar with Esc key exit (D-04).
+- 8px thickness rounded pill scrollbars (border-radius: 6px) across data tables and matrices (D-05).
+- High-contrast slate scrollbar thumbs passing WCAG 3:1 non-text contrast in dark and light modes (D-06).
+- Subtle sunken track channels with smooth radius (D-07).
+- Target high-contrast scrollbars to dense data components via dedicated utility classes (D-08).
+- Pseudo-element horizontal edge gradient masks (::before and ::after) on table wrappers with pointer-events: none (D-09).
+- Scroll-position-driven dynamic fade-out dropping edge mask opacity to 0 when scrolled to boundary (D-10).
+- 28px gradient width blending into var(--card-bg) across dark and light themes (D-11).
+- Applied across all 5 wide tables: Traceability Matrix, Device Ranking, SRE Table, Site Matrix, and Patterns (D-12).
+- Explicit max-height with sticky headers + "Showing X of Y" counter badge and progressive expansion toggle (D-13).
+- Header pill badges showing item counts and active filter status (D-14).
+- SRE Details Drawer alert list capped at 5 items with "Show {N - 5} more alerts" button (D-15).
+- Sticky headers locked to top: 0 with backdrop-filter blur across all scrollable table views (D-16).
 
 ## Blockers/Concerns
 
-- None. Phase 19 context gathered and ready for planning.
+- None. Phase 20 context complete and locked.
