@@ -26,8 +26,8 @@
 | 17 | v1.8 | SVG Topology Canvas & Hierarchical Links | Zoomable/pannable SVG graph canvas, hierarchical tier placement, and animated connection links | GRAPH-01 - GRAPH-04 | Complete ✓ |
 | 18 | v1.8 | Health Nodes, Filter Sync & SRE Drawer | Rich micro-cards, pulsing alert indicators, filter reactivity, and drawer integration | GRAPH-05 - GRAPH-07 | Complete ✓ |
 | 19 | v1.9 | Critical Layout & Status Fixes | Fix responsive collapse below 1100px and ensure connection status reflects offline states | UI-01, UI-02 | Complete ✓ |
-| 20 | v1.9 | Data Visibility & Bounds | Implement persistent scrollbars, table edge masks, and strict independent scroll bounds for the topology graph | UI-03, UI-04 | Not started |
-| 21 | v1.9 | Trust & Contrast Remediation | Fix text-tertiary contrast ratios and route chart colors through CSS tokens for dark mode reliability | UI-05, UI-06 | Not started |
+| 20 | v1.9 | Data Visibility & Bounds | Implement persistent scrollbars, table edge masks, and strict independent scroll bounds for the topology graph | UI-03, UI-04 | Complete ✓ |
+| 21 | v1.9 | Trust & Contrast Remediation | Fix text-tertiary contrast ratios and route chart colors through CSS tokens for dark mode reliability | UI-05, UI-06 | Complete ✓ |
 | 22 | v1.9 | Accessibility & Hit Areas | Increase hit areas to 32px minimum, fix sidebar keyboard navigation, add aria-current, ensure accessible names | UI-07, UI-08, UI-16, UI-17 | Not started |
 | 23 | v1.9 | Craft & Consistency Polish | Standardize typography scale, KPI cards, empty states, and eliminate demo scaffolding | UI-09-UI-22 | Not started |
 
