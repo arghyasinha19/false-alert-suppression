@@ -1,145 +1,101 @@
 # Roadmap: False Alert Suppression Pipeline
 
-**Milestone:** v1.9 UI/UX Audit Remediation  
-**Status:** Planning  
+**Milestone:** v2.0 Multi-Site Hierarchical Topology & WAN Observability  
+**Status:** In Progress (Planning Phases)  
 
 ## Overview
 
 | Phase | Milestone | Name | Goal | Requirements | Status |
 |-------|-----------|------|------|--------------|--------|
-| 1 | v1.0 | False Alert Metrics Alignment | Verify and update "Total Processed" calculation and category filtering | METRIC-01 - METRIC-05 | Complete ✓ |
-| 2 | v1.1 | Application Bring-Up | Launch Dashboard backend API and Vite frontend, verify live connectivity, and create start orchestration | UP-01 - UP-04 | Complete ✓ |
-| 3 | v1.2 | Custom Date & Time Range Filtering | Implement start and end date-time range selection, dynamic scope filtering, and KPI recalculations | TIME-01 - TIME-04 | Complete ✓ |
-| 4 | v1.4 | Network Operations Responsive Redesign | Multi-column responsive device grid, eliminate whitespace waste, location grouping | NETOPS-01, NETOPS-02 | Complete ✓ |
-| 5 | v1.4 | Collapsible Sidebar Rail & Breadcrumbs | 72px icon rail collapse toggle with tooltips & top header route breadcrumbs | NAV-01, NAV-02 | Complete ✓ |
-| 6 | v1.4 | Micro-Interactions & Animated Counters | Animated KPI number count-up (`0 → N`), page crossfades, SNOW divider styling | ANIM-01, ANIM-02, STATE-02 | Complete ✓ |
-| 7 | v1.4 | Sticky Tables, Tooltips & Empty States | Sticky table headers, cell tooltips, rich zero-match empty state views | TABLE-01, TABLE-02, STATE-01 | Complete ✓ |
-| 8 | v1.4 | Comprehensive Dark & Light Theme System | System-wide theme toggle (Sun/Moon), CSS tokens, localStorage persistence | THEME-01, THEME-02 | Complete ✓ |
-| 9 | v1.5 | Executive Telemetry & Health KPI Strip | Fleet Health Score %, Noise Suppression Ratio, Blast Radius, MTTR, and Site Resilience | NOC-KPI-01 - NOC-KPI-05 | Complete ✓ |
-| 10 | v1.5 | Multi-Mode Representation Engine | Executive Topology, SRE High-Density Sortable Table, and Regional Site Matrix | NOC-VIEW-01 - NOC-VIEW-04 | Complete ✓ |
-| 11 | v1.5 | Multi-Dimensional Filters & Micro-Visualizations | Role & Health filter chips, 24h activity sparklines, severity mini-bars, and status pulses | NOC-VIZ-01 - NOC-VIZ-04 | Complete ✓ |
-| 12 | v1.5 | Interactive SRE Drawer & Incident Timeline | Multi-agent decision timeline, Assurance telemetry tabs, and one-click quick triage actions | NOC-DRAWER-01 - NOC-DRAWER-03 | Complete ✓ |
-| 13 | v1.6 | DNAC Client Assurance & Device Extensions | Implement `/network-device` and `/device-health` query methods in `DNACClient` | DNAC-01, DNAC-02 | Complete ✓ |
-| 14 | v1.6 | Backend Live Polling & Telemetry Endpoints | Add `/api/devices/{name}/telemetry` and `/api/devices/{name}/live-poll` endpoints | DNAC-03, DNAC-04 | Complete ✓ |
-| 15 | v1.6 | Frontend SRE Drawer Live Wire-Up | Connect drawer telemetry/inventory tabs and Poll DNAC button to live API with fallback | DNAC-05, DNAC-06 | Complete ✓ |
-| 16 | v1.7 | Details Drawer Scrollbar & Viewport Layout | Accessible, visible, theme-aware scrollbars and fixed-header flex layout for device details drawer | DRAWER-01 - DRAWER-03 | Complete ✓ |
-| 17 | v1.8 | SVG Topology Canvas & Hierarchical Links | Zoomable/pannable SVG graph canvas, hierarchical tier placement, and animated connection links | GRAPH-01 - GRAPH-04 | Complete ✓ |
-| 18 | v1.8 | Health Nodes, Filter Sync & SRE Drawer | Rich micro-cards, pulsing alert indicators, filter reactivity, and drawer integration | GRAPH-05 - GRAPH-07 | Complete ✓ |
-| 19 | v1.9 | Critical Layout & Status Fixes | Fix responsive collapse below 1100px and ensure connection status reflects offline states | UI-01, UI-02 | Complete ✓ |
-| 20 | v1.9 | Data Visibility & Bounds | Implement persistent scrollbars, table edge masks, and strict independent scroll bounds for the topology graph | UI-03, UI-04 | Complete ✓ |
-| 21 | v1.9 | Trust & Contrast Remediation | Fix text-tertiary contrast ratios and route chart colors through CSS tokens for dark mode reliability | UI-05, UI-06 | Complete ✓ |
-| 22 | v1.9 | Accessibility & Hit Areas | Increase hit areas to 32px minimum, fix sidebar keyboard navigation, add aria-current, ensure accessible names | UI-07, UI-08, UI-16, UI-17 | Complete ✓ |
-| 23 | v1.9 | Craft & Consistency Polish | Standardize typography scale, KPI cards, empty states, and eliminate demo scaffolding | UI-09-UI-22 | Not started |
+| 24 | v2.0 | Global Multi-Site WAN Interconnect Canvas | Render interactive macro site nodes, aggregated site health badges, blast radius indicators, and inter-site WAN links | SITE-01, SITE-02, SITE-03 | Not started |
+| 25 | v2.0 | Site-Specific LAN Topology Drill-Down & Breadcrumbs | Drill down into site LAN graphs with intuitive breadcrumbs and site-switcher navigation | SITE-04, SITE-05, SITE-06 | Not started |
+| 26 | v2.0 | Cross-View Site Synchronization & Filter Alignment | Synchronize site selection and location filtering bi-directionally across Site Matrix, SRE Table, and Topology | SITE-07, SITE-08 | Not started |
+
+---
+
+## Phase 24: Global Multi-Site WAN Interconnect Canvas
+
+**Goal:** Implement Level 1 Global Multi-Site WAN topology map rendering interactive macro site nodes, aggregated site health badges, blast radius indicators, and inter-site WAN links.
+
+**Status:** Not started
+
+**Requirements:**
+- **SITE-01**: User can view an interactive Global Multi-Site WAN topology map displaying all registered physical locations/sites as interactive macro nodes interconnected by WAN links.
+- **SITE-02**: User can view site-level health rollup badges (`nominal`, `degraded`, `critical`), active alert counts, avoided ticket totals, and blast radius indicators on each macro site node.
+- **SITE-03**: User can view inter-site WAN connection links with live health status, latency, and animated packet/flow indicators between interconnected sites.
+
+**Success Criteria:**
+1. Operators can view all geographic locations (London, Singapore, New York, Mumbai, etc.) as interactive macro nodes on an SVG WAN interconnect canvas.
+2. Each site macro node displays aggregated health status, active alert volume, avoided ticket counts, and blast radius metrics.
+3. Inter-site WAN connection links show link health, latency metrics, and animated pulse flows for active data paths.
+
+---
+
+## Phase 25: Site-Specific LAN Topology Drill-Down & Breadcrumbs
+
+**Goal:** Implement Level 2 Site LAN tier graph drill-down with intuitive breadcrumb navigation and site switcher selector.
+
+**Status:** Not started
+
+**Requirements:**
+- **SITE-04**: User can drill down into any site from the Global WAN map (via click or site-switcher selector) to view that site's local Core ↔ Distribution ↔ Access tier topology graph.
+- **SITE-05**: User can navigate between the Global WAN overview and local site views using responsive breadcrumbs (`Global WAN Interconnect > UK-LON (London)`) with single-click return to global.
+- **SITE-06**: User can filter devices within a site's LAN topology while preserving site boundaries and context.
+
+**Success Criteria:**
+1. Clicking any site macro node or selecting a site in the site selector drills down into that site's local Core ↔ Distribution ↔ Access LAN graph.
+2. Operators can navigate between Global WAN and Site LAN via persistent breadcrumbs with single-click return to the global overview.
+3. Filtering by role, health, or search operates cleanly within the active site scope without losing site context.
+
+---
+
+## Phase 26: Cross-View Site Synchronization & Filter Alignment
+
+**Goal:** Synchronize site selection and location filtering bi-directionally across Regional Site Matrix, SRE High-Density Table, and Multi-Site Topology views.
+
+**Status:** Not started
+
+**Requirements:**
+- **SITE-07**: Selecting a site in the Regional Site Matrix automatically filters or transitions the Topology view to that site's LAN graph.
+- **SITE-08**: Filtering by location in the SRE Table or multi-dimensional filter bar synchronizes with the Topology view's active site scope.
+
+**Success Criteria:**
+1. Clicking "Inspect Site" in the Regional Site Matrix automatically switches to the Topology view and drills into that site's LAN graph.
+2. Changing the location filter in the SRE Table or filter bar updates the Topology view's active site scope.
+3. Automated regression and contract test suite verifies multi-site hierarchy, breadcrumb routing, and cross-view sync.
 
 ---
 
 <details>
-<summary>✅ v1.0 - v1.7 Past Milestones</summary>
+<summary>✅ Past Milestones (v1.0 - v1.9)</summary>
 
-Refer to repository history for prior phase details.
+### v1.0 - v1.7 Foundations, Metrics & Observability
+- **Phase 1 (v1.0)**: False Alert Metrics Alignment (`METRIC-01` - `METRIC-05`) — Complete ✓
+- **Phase 2 (v1.1)**: Application Bring-Up (`UP-01` - `UP-04`) — Complete ✓
+- **Phase 3 (v1.2)**: Custom Date & Time Range Filtering (`TIME-01` - `TIME-04`) — Complete ✓
+- **Phase 4 (v1.4)**: Network Operations Responsive Redesign (`NETOPS-01`, `NETOPS-02`) — Complete ✓
+- **Phase 5 (v1.4)**: Collapsible Sidebar Rail & Breadcrumbs (`NAV-01`, `NAV-02`) — Complete ✓
+- **Phase 6 (v1.4)**: Micro-Interactions & Animated Counters (`ANIM-01`, `ANIM-02`, `STATE-02`) — Complete ✓
+- **Phase 7 (v1.4)**: Sticky Tables, Tooltips & Empty States (`TABLE-01`, `TABLE-02`, `STATE-01`) — Complete ✓
+- **Phase 8 (v1.4)**: Comprehensive Dark & Light Theme System (`THEME-01`, `THEME-02`) — Complete ✓
+- **Phase 9 (v1.5)**: Executive Telemetry & Health KPI Strip (`NOC-KPI-01` - `NOC-KPI-05`) — Complete ✓
+- **Phase 10 (v1.5)**: Multi-Mode Representation Engine (`NOC-VIEW-01` - `NOC-VIEW-04`) — Complete ✓
+- **Phase 11 (v1.5)**: Multi-Dimensional Filters & Micro-Visualizations (`NOC-VIZ-01` - `NOC-VIZ-04`) — Complete ✓
+- **Phase 12 (v1.5)**: Interactive SRE Drawer & Incident Timeline (`NOC-DRAWER-01` - `NOC-DRAWER-03`) — Complete ✓
+- **Phase 13 (v1.6)**: DNAC Client Assurance & Device Extensions (`DNAC-01`, `DNAC-02`) — Complete ✓
+- **Phase 14 (v1.6)**: Backend Live Polling & Telemetry Endpoints (`DNAC-03`, `DNAC-04`) — Complete ✓
+- **Phase 15 (v1.6)**: Frontend SRE Drawer Live Wire-Up (`DNAC-05`, `DNAC-06`) — Complete ✓
+- **Phase 16 (v1.7)**: Details Drawer Scrollbar & Viewport Layout (`DRAWER-01` - `DRAWER-03`) — Complete ✓
+
+### v1.8 Interactive Network Topology Graph Diagram
+- **Phase 17**: SVG Topology Canvas & Hierarchical Links (`GRAPH-01` - `GRAPH-04`) — Complete ✓
+- **Phase 18**: Health Nodes, Filter Sync & SRE Drawer (`GRAPH-05` - `GRAPH-07`) — Complete ✓
+
+### v1.9 UI/UX Audit Remediation
+- **Phase 19**: Critical Layout & Status Fixes (`UI-01`, `UI-02`) — Complete ✓
+- **Phase 20**: Data Visibility & Bounds (`UI-03`, `UI-04`) — Complete ✓
+- **Phase 21**: Trust & Contrast Remediation (`UI-05`, `UI-06`) — Complete ✓
+- **Phase 22**: Accessibility & Hit Areas (`UI-07`, `UI-08`, `UI-16`, `UI-17`) — Complete ✓
+- **Phase 23**: Craft & Consistency Polish (`UI-09-22`) — Complete ✓
+
 </details>
-
-<details>
-<summary>✅ v1.8 Interactive Network Topology Graph Diagram (Phases 17-18) — SHIPPED 2026-10-05</summary>
-
-- [x] **Phase 17: SVG Topology Canvas & Hierarchical Links** (1/1 plan) — completed 2026-10-05
-- [x] **Phase 18: Health Nodes, Filter Sync & SRE Drawer** (1/1 plan) — completed 2026-10-05
-</details>
-
----
-
-## Phase 19: Critical Layout & Status Fixes
-
-**Goal:** Fix the 1100px breakpoint collapse in `.content-area` and ensure the API connection status correctly reflects offline states instead of returning false positives.
-
-**Status:** Complete ✓ (2/2 plans complete)
-- [x] **Plan 19-01**: Fluid Flexbox Layout & 1100px Breakpoint Stabilization (UI-01)
-- [x] **Plan 19-02**: Authoritative Connection State Machine, Polling Resiliency & Mock Demarcation (UI-02)
-
-**Requirements:**
-- **UI-01**: Fix responsive collapse below 1100px in the `.content-area` by removing `calc(100vw - ...)` constraints and letting flexbox size it correctly.
-- **UI-02**: Sidebar connection status must accurately reflect API failures by explicitly handling fetch errors, updating the "LIVE" badge to "Stale" on failure, and properly separating mock data from live status.
-
-**Success Criteria:**
-1. The `.content-area` scales fluidly below 1100px without shrinking to a sliver.
-2. The connection status explicitly displays "Offline" when the API is down and handles empty JSON correctly.
-3. The dashboard clearly demarcates mock data from live telemetry when in offline mode.
-
----
-
-## Phase 20: Data Visibility & Bounds
-
-**Goal:** Implement persistent scrollbars, table edge masks, and strict independent scroll bounds for the topology graph canvas.
-
-**Status:** Complete ✓ (2/2 plans complete)
-- [x] **Plan 20-01**: Topology Canvas Viewport Bounds, Wheel Zoom Guard & Fullscreen Mode (UI-03)
-- [x] **Plan 20-02**: High-Contrast Scrollbars, Horizontal Edge Masks & Vertical List Capping (UI-04)
-
-**Requirements:**
-- **UI-03**: Constrain the topology graph canvas to its own bounds with independent scroll and zoom containers to prevent overflowing the main window.
-- **UI-04**: Add permanently visible scrollbars to data tables, implement right-edge gradient masks on horizontally scrolling tables, and explicitly cap vertical lists.
-
-**Success Criteria:**
-1. All scrollable regions have persistently visible scrollbars (not just on hover).
-2. Overflowing tables clearly show edge masking indicating more content.
-3. The topology graph is bounded to its container and does not create an inaccessible horizontal/vertical overflow on the entire window.
-
----
-
-## Phase 21: Trust & Contrast Remediation
-
-**Goal:** Fix `text-tertiary` contrast ratios, route chart colours through CSS tokens for dark mode reliability, and ensure text contrast passes minimums.
-
-**Status:** Complete ✓ (2/2 plans complete)
-- [x] **Plan 21-01**: CSS Token Contrast Remediation & Blue Badge Legibility (UI-05)
-- [x] **Plan 21-02**: Dynamic Chart Theme Integration via useChartTheme (UI-06)
-
-**Requirements:**
-- **UI-05**: Adjust `text-tertiary` to meet contrast minimums (`#64748b` in light mode, `#94a3b8` in dark mode) and darken blue pill text to pass AA contrast.
-- **UI-06**: Refactor charts to use CSS tokens from `index.css` via `getComputedStyle` or a theme palette object, ensuring chart legends, grids, and axes integrate with dark mode.
-
-**Success Criteria:**
-1. Secondary text throughout the application passes AA contrast limits.
-2. SVG charts dynamically pull their colors from the CSS variables to match active themes properly.
-3. Contrast errors highlighted in UI-05 and UI-06 are fully resolved.
-
----
-
-## Phase 22: Accessibility & Hit Areas
-
-**Goal:** Increase interactive hit areas to 32px minimum, fix sidebar keyboard navigation, add `aria-current`, and ensure tables/forms have accessible names.
-
-**Status:** Completed ✓
-
-**Plans:**
-- [x] **Plan 22-01**: Semantic Sidebar Buttons, Focus Visible Rings & Non-Modal Docked Chat Panel (UI-08, UI-16)
-- [x] **Plan 22-02**: Interactive Hit Areas, Typography Scale & Form/Table Accessibility (UI-07, UI-17)
-
-**Requirements:**
-- **UI-07**: Increase all interactive element (buttons, pills, selects) minimum heights to 32px with 44px hit areas, and raise table/filter typography to 12-13px.
-- **UI-08**: Update the Ops Assistant chat panel to be non-modal (inset the content area) or properly manage focus and dim the backdrop.
-- **UI-16**: Update sidebar navigation to use real `<button>` elements, add `aria-current="page"`, add a `:focus-visible` ring, and trigger tooltips on focus.
-- **UI-17**: Ensure all form controls have visible labels, add `scope="col"` to table headers, and provide visually-hidden captions per table.
-
-**Success Criteria:**
-1. Interactive hit areas conform to WCAG limits.
-2. Sidebar navigation is accessible entirely via keyboard (Tab and Enter).
-3. The chat panel either shifts content seamlessly or implements strict modal focus trapping + backdrop dimming.
-4. Screen readers announce clear accessible names for forms and tables.
-
----
-
-## Phase 23: Craft & Consistency Polish
-
-**Goal:** Standardize typography scale, KPI card designs, empty states, and eliminate demo scaffolding from the chrome.
-
-**Status:** Complete ✓ (Plans 23-01 & 23-02 verified)
-
-**Requirements:**
-- **UI-09-22**: Address medium-priority inconsistencies including scaling typography (12/13/15/18/24/34), standardizing KPI cards to the NOC card design, clarifying domain shorthand, unifying empty states, and removing demo simulation scaffolding.
-
-**Success Criteria:**
-1. App uses 6 strict typography font sizes.
-2. Unified KPI card design utilized universally across NOC and Metric views.
-3. Unneeded demo buttons removed.
-4. Empty states standardized across all tables and charts.
