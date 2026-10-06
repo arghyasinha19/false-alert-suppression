@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Activity, BarChart3, Monitor, Database, MessageSquare, Layers,
   ChevronRight, PanelLeftClose, PanelLeftOpen, Sun, Moon,
@@ -38,8 +38,12 @@ function App() {
   const [apiConnected, setApiConnected] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(null);
   const [chatOpen, setChatOpen] = useState(false);
+  const userToggledSidebar = useRef(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     try {
+      if (typeof window !== 'undefined' && window.innerWidth <= 1100) {
+        return true;
+      }
       return localStorage.getItem('sidebar_collapsed') === 'true';
     } catch {
       return false;
@@ -54,6 +58,25 @@ function App() {
       return 'light';
     }
   });
+
+  // Auto-collapse sidebar below 1100px unless user manually toggled it in this session (D-01)
+  useEffect(() => {
+    const handleResize = () => {
+      const isNarrow = window.innerWidth <= 1100;
+      if (isNarrow && !userToggledSidebar.current) {
+        setSidebarCollapsed(true);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleToggleSidebar = () => {
+    userToggledSidebar.current = true;
+    setSidebarCollapsed(prev => !prev);
+  };
 
   useEffect(() => {
     try {
@@ -80,8 +103,14 @@ function App() {
   const fetchData = useCallback(async () => {
     try {
       const [alertsRes, devicesRes] = await Promise.all([
-        fetch(`${API_BASE}/api/alerts`).then(r => r.json()).catch(() => ({ alerts: [] })),
-        fetch(`${API_BASE}/api/devices`).then(r => r.json()).catch(() => ({ devices: [] })),
+        fetch(`${API_BASE}/api/alerts`).then(r => {
+          if (!r.ok) throw new Error('Alerts fetch failed');
+          return r.json();
+        }),
+        fetch(`${API_BASE}/api/devices`).then(r => {
+          if (!r.ok) throw new Error('Devices fetch failed');
+          return r.json();
+        }),
       ]);
 
       if (alertsRes.alerts) setAlerts(alertsRes.alerts);
@@ -144,7 +173,7 @@ function App() {
           </div>
           <button
             className="sidebar-collapse-toggle"
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            onClick={handleToggleSidebar}
             title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
@@ -234,13 +263,13 @@ function App() {
               </span>
               <span className="theme-toggle-label">{theme === 'dark' ? 'Light' : 'Dark'}</span>
             </button>
-            <div className="live-badge">
-              <span className="dot" />
-              Live
+            <div className={`live-badge ${!apiConnected ? 'stale' : ''}`}>
+              <span className={`dot ${!apiConnected ? 'error' : ''}`} />
+              {apiConnected ? 'Live' : 'Stale'}
             </div>
             {!loading && (
               <span style={{ fontSize: '0.78rem', color: 'var(--text-tertiary)' }}>
-                {alerts.length > 0 ? `${alerts.length} alerts` : '48 alerts (demo)'}
+                {apiConnected && alerts.length > 0 ? `${alerts.length} alerts` : 'Mock Data (Demo)'}
               </span>
             )}
           </div>

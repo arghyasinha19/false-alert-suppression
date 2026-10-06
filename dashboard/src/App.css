@@ -291,20 +291,18 @@
 
 /* Content */
 .content-area {
-  flex: 1;
+  flex: 1 1 0%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   margin-left: var(--sidebar-width);
-  width: calc(100vw - var(--sidebar-width));
-  max-width: calc(100vw - var(--sidebar-width));
   min-height: 100vh;
   background: var(--bg-color);
-  transition: margin-left var(--transition-normal), width var(--transition-normal), max-width var(--transition-normal);
-  box-sizing: border-box;
+  transition: margin-left var(--transition-normal);
 }
 
 .content-area.sidebar-collapsed {
   margin-left: 72px;
-  width: calc(100vw - 72px);
-  max-width: calc(100vw - 72px);
 }
 
 .content-header {
@@ -374,7 +372,10 @@
 .content-body {
   padding: 1.5rem 2rem 3rem;
   overflow-x: hidden;
+  width: 100%;
   max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 /* Live Badge */
@@ -399,6 +400,17 @@
   border-radius: 50%;
   background: var(--accent-green);
   animation: pulse-dot 1.5s infinite;
+}
+
+.live-badge.stale {
+  background: var(--accent-red-light);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  color: var(--accent-red);
+}
+
+.live-badge.stale .dot {
+  background: var(--accent-red);
+  animation: none;
 }
 
 /* Theme Toggle Button */
@@ -787,6 +799,11 @@
 .table-card {
   padding: 1.25rem;
   margin-bottom: 1.5rem;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .table-card h3 {
@@ -1830,6 +1847,26 @@
   .device-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.85rem; }
 }
 
+@media (max-width: 1100px) {
+  .content-header {
+    padding: 1rem 1.25rem;
+  }
+  .content-body {
+    padding: 1rem 1.25rem 2.5rem;
+  }
+  .charts-grid-3 {
+    grid-template-columns: 1fr;
+  }
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+  .table-card {
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+  }
+}
+
 @media (max-width: 900px) {
   .sidebar { width: 56px; overflow: hidden; }
   .sidebar-brand h2, .sidebar-brand span, .sidebar-nav-item span { display: none; }
@@ -2355,6 +2392,52 @@
    NOC Phase 10: Multi-Mode Representation Engine
    ========================================================================== */
 
+/* ── NOC Controls Bar (Search + View Switcher) ── */
+.noc-controls-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+  min-width: 0;
+}
+
+.noc-controls-search-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+  max-width: 560px;
+}
+
+.noc-controls-search-row .filter-search {
+  flex: 1;
+  min-width: 0;
+}
+
+.noc-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.noc-device-count-badge {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  padding: 0.25rem 0.6rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
 /* ── Segmented View Switcher ── */
 .noc-view-switcher {
   display: inline-flex;
@@ -2364,7 +2447,6 @@
   border-radius: var(--radius-md);
   padding: 3px;
   gap: 2px;
-  margin-left: auto;
 }
 
 .noc-view-btn {
