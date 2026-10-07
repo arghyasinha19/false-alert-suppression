@@ -41,6 +41,32 @@ def get_empty_telemetry_dict() -> Dict[str, Any]:
     }
 
 
+def extract_site_from_location_path(location_path: Optional[str]) -> Optional[str]:
+    """
+    Extract a clean geographical site name from a DNAC hierarchical location path.
+    Example: 'Global/EMEA/TR Istanbul/Umut Street' -> 'Istanbul'
+    """
+    if not location_path or not isinstance(location_path, str):
+        return None
+    parts = [p.strip() for p in location_path.split("/") if p.strip()]
+    if not parts:
+        return None
+
+    # Often hierarchy is: Global / Region / Country City / Building
+    # e.g., parts[2] = 'TR Istanbul'
+    candidate = None
+    if len(parts) >= 3:
+        candidate = parts[2]
+    elif len(parts) == 2:
+        candidate = parts[1]
+    else:
+        candidate = parts[0]
+
+    # Strip country code prefix (e.g. 'TR Istanbul' -> 'Istanbul', 'US New York' -> 'New York')
+    candidate = re.sub(r"^[A-Z]{2}\s+", "", candidate).strip()
+    return candidate or parts[-1]
+
+
 def extract_device_info_from_raw(
     raw_response: Optional[Dict[str, Any]],
     fallback_info: Optional[Dict[str, Any]] = None,
@@ -58,8 +84,22 @@ def extract_device_info_from_raw(
         "mac": "Unknown",
         "os_version": "Unknown",
         "ip_address": "Unknown",
+        "hostname": None,
+        "role": None,
+        "site_name": None,
+        "location_path": None,
+        "diagnostics": {
+            "reachability_status": None,
+            "reachability_failure_reason": None,
+            "error_code": None,
+            "diagnostic_message": None,
+            "uptime_seconds": None,
+            "is_management_plane_isolated": False,
+        },
     }
     info = dict(fallback_info) if fallback_info else dict(default_info)
+    if "diagnostics" not in info or not isinstance(info["diagnostics"], dict):
+        info["diagnostics"] = dict(default_info["diagnostics"])
     
     if not raw_response or not isinstance(raw_response, dict):
         return info
@@ -152,6 +192,54 @@ def extract_device_info_from_raw(
         if _is_valid(r) and not _is_valid(info.get("role")):
             info["role"] = str(r).strip()
             break
+
+    # 8. Location & Site Name (DNAC-05)
+    location_candidates = [
+        det.get("location"),
+        inv.get("locationName"),
+        inv.get("location"),
+    ]
+    for loc in location_candidates:
+        if _is_valid(loc):
+            loc_str = str(loc).strip()
+            info["location_path"] = loc_str
+            info["site_name"] = extract_site_from_location_path(loc_str)
+            break
+
+    # 9. Management Plane Diagnostics (DNAC-04)
+    fail_reason = inv.get("reachabilityFailureReason") or det.get("communicationState") or None
+    err_code = inv.get("errorCode") or None
+    if not err_code and fail_reason and "snmp" in str(fail_reason).lower():
+        err_code = "NCIM12013"
+
+    diag_desc = None
+    if (fail_reason and "snmp" in str(fail_reason).lower()) or err_code == "NCIM12013":
+        err_code = err_code or "NCIM12013"
+        diag_desc = (
+            "SNMP request timeout. Device may be unreachable or SNMP credentials configured "
+            "on device may be different from Catalyst Center credentials."
+        )
+
+    raw_uptime = inv.get("uptimeSeconds")
+    uptime_secs = None
+    if raw_uptime is not None:
+        try:
+            uptime_secs = int(float(raw_uptime))
+        except (ValueError, TypeError):
+            uptime_secs = None
+
+    reach_status = str(inv.get("reachabilityStatus") or det.get("communicationState") or "").lower()
+    is_unreachable = reach_status in ("unreachable", "disconnected", "false")
+    is_isolated = bool(uptime_secs and uptime_secs > 300 and is_unreachable)
+
+    info["diagnostics"] = {
+        "reachability_status": inv.get("reachabilityStatus") or det.get("communicationState") or None,
+        "reachability_failure_reason": inv.get("reachabilityFailureReason") or (fail_reason if is_unreachable else None),
+        "error_code": err_code,
+        "diagnostic_message": diag_desc,
+        "uptime_seconds": uptime_secs,
+        "is_management_plane_isolated": is_isolated,
+    }
 
     return info
 

@@ -209,3 +209,24 @@ def test_network_operations_authoritative_spec_resolution_contract():
     assert "vitals.model || '—'" in src, "Model spec row must have honest null fallback"
     assert "vitals.serial || '—'" in src, "Serial spec row must have honest null fallback"
 
+
+def test_management_plane_diagnostics_and_site_observability_contract():
+    """DNAC-04 & DNAC-05: Verify SRE drawer renders management plane diagnostics and site identity."""
+    with open(NETWORK_OPERATIONS_PATH, "r", encoding="utf-8") as f:
+        src = f.read()
+
+    # 1. Management Plane Diagnostics card
+    assert "noc-diagnostic-card" in src, "Missing noc-diagnostic-card in NetworkOperations.jsx"
+    assert "Management Plane Diagnostics" in src, "Missing Management Plane Diagnostics title"
+    assert "NCIM12013" in src, "Missing NCIM12013 error code handling"
+    assert "Management Plane Isolated" in src, "Missing Management Plane Isolated state display"
+
+    # 2. Authoritative Hostname and Site Location
+    assert "Authoritative Hostname" in src, "Missing Authoritative Hostname row in Inventory card"
+    assert "resolvedHostname" in src, "Missing resolvedHostname resolution logic"
+    assert "resolvedSite" in src, "Missing resolvedSite resolution logic"
+    assert "Location Path" in src, "Missing Location Path row in Inventory card"
+    assert "selectedDevice.device_name !== resolvedHostname" in src, \
+        "Drawer header must display resolved hostname alongside IP device name"
+
+

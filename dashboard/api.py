@@ -252,6 +252,28 @@ def get_devices():
                 entry["active_alerts"].append(alert_obj)
 
         devices = list(device_map.values())
+
+        # Enrich devices with cached telemetry metadata (hostname, site_name, model)
+        if mongo:
+            try:
+                coll = mongo.get_collection("device_telemetry")
+                if coll:
+                    cached_records = {doc.get("device_name"): doc for doc in coll.find({}, {"device_name": 1, "device_info": 1})}
+                    for d in devices:
+                        cached = cached_records.get(d.get("device_name"))
+                        if cached and cached.get("device_info"):
+                            info = cached["device_info"]
+                            if info.get("hostname"):
+                                d["hostname"] = info["hostname"]
+                            if info.get("site_name"):
+                                d["site_name"] = info["site_name"]
+                                if d.get("location") in ("Global Network", "Unknown", None):
+                                    d["location"] = info["site_name"]
+                            if info.get("model") and info.get("model") != "Unknown":
+                                d["model"] = info["model"]
+            except Exception as enrich_err:
+                logger.debug(f"Telemetry cache enrichment in get_devices skipped: {enrich_err}")
+
         return {"devices": devices}
     except Exception as e:
         logger.error(f"Error fetching devices: {e}")

@@ -2061,6 +2061,20 @@ export default function NetworkOperations({
 
           const resolvedRole = liveDeviceInfo?.role || rawInv.role || rawDet.nwDeviceRole || null;
 
+          // Site and authoritative hostname resolution (DNAC-05)
+          const rawLocation = liveDeviceInfo?.location_path || rawDet.location || null;
+          const resolvedSite = liveDeviceInfo?.site_name
+            || (selectedDevice.site_name)
+            || (rawLocation ? (rawLocation.split('/').filter(Boolean)[2] || rawLocation.split('/').filter(Boolean)[1] || '').replace(/^[A-Z]{2}\s+/, '') : null)
+            || selectedDevice.location
+            || deriveLocation(selectedDevice.device_name);
+
+          const resolvedHostname = liveDeviceInfo?.hostname
+            || (selectedDevice.hostname)
+            || rawInv.hostname
+            || rawDet.nwDeviceName
+            || null;
+
           // Spec extraction: never bleed synthetic switch defaults if live/cached DNAC is active
           const displayModel = extractedModel || (isDnacActive ? 'Unknown' : proceduralVitals.model);
           const displayOs = extractedOs || (isDnacActive ? 'Unknown' : proceduralVitals.osVer);
@@ -2094,6 +2108,20 @@ export default function NetworkOperations({
             ? (rawDet.location || rawInv.snmpLocation || selectedDevice.location || 'Site Placement')
             : proceduralVitals.rack;
 
+          // Management plane diagnostics (DNAC-04)
+          const diag = liveDeviceInfo?.diagnostics || {};
+          const rawFailureReason = diag.reachability_failure_reason || rawInv.reachabilityFailureReason;
+          const failureReason = rawFailureReason || (liveTelemetry && !isReachable ? 'Unreachable' : null);
+          const errorCode = diag.error_code
+            || rawInv.errorCode
+            || ((rawFailureReason && String(rawFailureReason).toLowerCase().includes('snmp')) ? 'NCIM12013' : null);
+          const isIsolated = diag.is_management_plane_isolated
+            || (Boolean(displayUptime && displayUptime !== '—') && !isReachable);
+          const diagMessage = diag.diagnostic_message
+            || (errorCode === 'NCIM12013' || (rawFailureReason && String(rawFailureReason).toLowerCase().includes('snmp'))
+              ? 'SNMP request timeout. Device may be unreachable or SNMP credentials configured on device may be different from Catalyst Center credentials.'
+              : null);
+
           const vitals = {
             ...proceduralVitals,
             cpu: displayCpu,
@@ -2114,6 +2142,9 @@ export default function NetworkOperations({
             ip: displayIp,
             rack: displayRack,
             uptime: displayUptime,
+            hostname: resolvedHostname,
+            site: resolvedSite,
+            diagnostics: diag,
           };
 
 
@@ -2183,7 +2214,14 @@ export default function NetworkOperations({
               <div className="detail-panel-header">
                 <h2>
                   <span className={`device-tile-status-dot ${health}`} style={{ display: 'inline-block', marginRight: '8px', verticalAlign: 'middle' }} />
-                  {selectedDevice.device_name}
+                  {resolvedHostname && selectedDevice.device_name !== resolvedHostname ? (
+                    <>
+                      <span>{resolvedHostname}</span>
+                      <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginLeft: '6px', fontFamily: 'monospace' }}>({selectedDevice.device_name})</span>
+                    </>
+                  ) : (
+                    selectedDevice.device_name
+                  )}
                   <span style={{ marginLeft: '10px' }}>
                     {telemetrySource === 'dnac_live' ? (
                       <span className="noc-provenance-pill live">
@@ -2477,6 +2515,41 @@ export default function NetworkOperations({
                 {drawerTab === 'inventory' && (
                   <div>
                     {renderProvenanceBanner()}
+
+                    {/* Management Plane Diagnostics (DNAC-04) */}
+                    {failureReason && (
+                      <div className="noc-inventory-card noc-diagnostic-card" style={{ borderColor: 'var(--health-warning, #f59e0b)', background: 'rgba(245, 158, 11, 0.05)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                          <h4 style={{ margin: 0, color: 'var(--health-warning, #f59e0b)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <AlertTriangle size={14} /> Management Plane Diagnostics
+                          </h4>
+                          {errorCode && (
+                            <span className="badge" style={{ background: 'rgba(245, 158, 11, 0.15)', color: 'var(--health-warning, #f59e0b)', border: '1px solid rgba(245, 158, 11, 0.3)', fontWeight: 600, fontSize: '11px' }}>
+                              {errorCode}
+                            </span>
+                          )}
+                        </div>
+                        <div className="noc-spec-row">
+                          <span className="noc-spec-label">Failure Reason</span>
+                          <span className="noc-spec-val" style={{ color: 'var(--health-warning, #f59e0b)', fontWeight: 600 }}>{failureReason}</span>
+                        </div>
+                        {isIsolated && (
+                          <div className="noc-spec-row">
+                            <span className="noc-spec-label">Operating State</span>
+                            <span className="noc-spec-val noc-isolation-badge" style={{ color: 'var(--accent-green-bright, #10b981)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              ● Node Active (Uptime: {vitals.uptime || 'Active'}) • Management Plane Isolated
+                            </span>
+                          </div>
+                        )}
+                        {diagMessage && (
+                          <div style={{ marginTop: '8px', padding: '8px', background: 'rgba(0,0,0,0.2)', borderRadius: '6px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                            <span style={{ fontWeight: 600, color: 'var(--text-primary)', display: 'block', marginBottom: '2px' }}>Controller Diagnostic:</span>
+                            <p style={{ margin: 0, lineHeight: 1.4 }}>{diagMessage}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     <div className="noc-inventory-card">
                       <h4><Server size={14} /> Hardware Specifications</h4>
                       <div className="noc-spec-row"><span className="noc-spec-label">Model</span><span className="noc-spec-val">{vitals.model || '—'}</span></div>
@@ -2488,10 +2561,25 @@ export default function NetworkOperations({
 
                     <div className="noc-inventory-card">
                       <h4><Globe size={14} /> Network Location & Placement</h4>
-                      <div className="noc-spec-row"><span className="noc-spec-label">Site</span><span className="noc-spec-val">{getLocationLabel(selectedDevice.location || deriveLocation(selectedDevice.device_name))}</span></div>
+                      <div className="noc-spec-row">
+                        <span className="noc-spec-label">Site</span>
+                        <span className="noc-spec-val" title={rawLocation || ''}>{getLocationLabel(resolvedSite)}</span>
+                      </div>
+                      {rawLocation && (
+                        <div className="noc-spec-row">
+                          <span className="noc-spec-label">Location Path</span>
+                          <span className="noc-spec-val" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{rawLocation}</span>
+                        </div>
+                      )}
+                      {resolvedHostname && (
+                        <div className="noc-spec-row">
+                          <span className="noc-spec-label">Authoritative Hostname</span>
+                          <span className="noc-spec-val" style={{ fontFamily: 'monospace' }}>{resolvedHostname}</span>
+                        </div>
+                      )}
                       <div className="noc-spec-row"><span className="noc-spec-label">Management IP</span><span className="noc-spec-val">{vitals.ip || '—'}</span></div>
                       <div className="noc-spec-row"><span className="noc-spec-label">Rack Placement</span><span className="noc-spec-val">{vitals.rack || '—'}</span></div>
-                      <div className="noc-spec-row"><span className="noc-spec-label">Architectural Tier</span><span className="noc-spec-val">{TIER_METADATA[deriveDeviceTier(selectedDevice.device_name)].name}</span></div>
+                      <div className="noc-spec-row"><span className="noc-spec-label">Architectural Tier</span><span className="noc-spec-val">{TIER_METADATA[deriveDeviceTier(resolvedHostname || selectedDevice.device_name)].name}</span></div>
                       <div className="noc-spec-row"><span className="noc-spec-label">Device Role</span><span className="noc-spec-val">{ROLE_METADATA[deriveDeviceRole(selectedDevice, resolvedRole)].label}</span></div>
                     </div>
 

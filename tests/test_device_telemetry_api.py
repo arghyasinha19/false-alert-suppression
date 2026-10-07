@@ -332,3 +332,97 @@ def test_telemetry_raw_response_hardware_extraction():
     assert set_doc["device_info"]["model"] == "Cisco 4331 Integrated Services Router"
     assert set_doc["device_info"]["serial"] == "FDO2517M1EG"
 
+
+def test_extract_site_from_location_path():
+    """DNAC-05: Verify site name extraction strips country prefixes from hierarchy paths."""
+    from dashboard.device_service import extract_site_from_location_path
+
+    assert extract_site_from_location_path("Global/EMEA/TR Istanbul/Umut Street") == "Istanbul"
+    assert extract_site_from_location_path("Global/AMER/US New York/Building 4") == "New York"
+    assert extract_site_from_location_path("Global/APAC/London") == "London"
+    assert extract_site_from_location_path(None) is None
+
+
+def test_telemetry_diagnostics_and_site_extraction():
+    """DNAC-04 & DNAC-05: Verify diagnostics and site identity extraction from raw response."""
+    mock_dnac = MagicMock()
+    mock_dnac.get_device_by_name_or_ip.return_value = [{
+        "device_id": "59db4c3b-874e-424c-a7fa-10746577486c",
+        "device_name": "tr-ist-rtr01",
+        "model": "Unknown",
+        "serial": "Unknown",
+        "mac": "Unknown",
+        "os_version": "Unknown",
+        "ip_address": "10.254.0.93",
+        "reachable": False,
+    }]
+
+    production_raw_response = {
+        "device_detail": {
+            "overallHealth": -2,
+            "managementIpAddr": "10.254.0.93",
+            "communicationState": "UNREACHABLE",
+            "nwDeviceRole": "BORDER ROUTER",
+            "nwDeviceType": "Cisco 4331 Integrated Services Router",
+            "platformId": "ISR4331/K9",
+            "serialNumber": "FDO2517M1EG",
+            "macAddress": "6C:13:D5:BE:91:F0",
+            "softwareVersion": "17.12.8",
+            "nwDeviceName": "tr-ist-rtr01",
+            "location": "Global/EMEA/TR Istanbul/Umut Street",
+        },
+        "network_device": {
+            "family": "Routers",
+            "softwareVersion": "17.12.8",
+            "macAddress": "6c:13:d5:be:91:f0",
+            "serialNumber": "FDO2517M1EG",
+            "managementIpAddress": "10.254.0.93",
+            "platformId": "ISR4331/K9",
+            "type": "Cisco 4331 Integrated Services Router",
+            "hostname": "tr-ist-rtr01",
+            "reachabilityStatus": "Unreachable",
+            "reachabilityFailureReason": "SNMP Connectivity Failed",
+            "errorCode": "DEV-UNREACHED",
+            "uptimeSeconds": 692019,
+        }
+    }
+
+    mock_health = {
+        "cpu": None,
+        "memory": None,
+        "packet_drop": None,
+        "health_score": -2,
+        "uptime_seconds": 692019,
+        "reachable": False,
+        "raw_response": production_raw_response,
+    }
+    mock_dnac.get_device_health.return_value = mock_health
+
+    mock_mongo = MagicMock()
+    mock_coll = MagicMock()
+    mock_coll.find_one.return_value = None
+    mock_mongo.get_collection.return_value = mock_coll
+
+    with patch("dashboard.api.get_dnac_client", return_value=mock_dnac), \
+         patch("dashboard.api.mongo", mock_mongo):
+        res = client.get("/api/devices/10.254.0.93/telemetry")
+
+    assert res.status_code == 200
+    data = res.json()
+    info = data["device_info"]
+
+    # Site and location mapping (DNAC-05)
+    assert info["site_name"] == "Istanbul"
+    assert info["location_path"] == "Global/EMEA/TR Istanbul/Umut Street"
+    assert info["hostname"] == "tr-ist-rtr01"
+
+    # Deep management plane diagnostics (DNAC-04)
+    diag = info["diagnostics"]
+    assert diag["reachability_failure_reason"] == "SNMP Connectivity Failed"
+    assert diag["error_code"] in ("NCIM12013", "DEV-UNREACHED")
+    assert "SNMP request timeout" in diag["diagnostic_message"]
+    assert diag["uptime_seconds"] == 692019
+    # Device is alive (uptime > 7 days) but management plane SNMP is unreachable
+    assert diag["is_management_plane_isolated"] is True
+
+

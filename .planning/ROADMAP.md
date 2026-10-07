@@ -9,7 +9,7 @@
 |-------|-----------|------|------|--------------|--------|
 | 27 | v2.1 | Authoritative DNAC Hardware & Spec Resolution | Parse hardware specs directly from DNAC raw inventory, eliminate synthetic procedural mock bleed-through in SRE drawer | DNAC-01, DNAC-02 | Complete |
 | 28 | v2.1 | Live Reachability Cross-Referencing in Alert Verification | Cross-reference live device reachability state in delayed verification, acknowledging UNREACHABLE states instead of premature UNCERTAIN fallback | DNAC-03 | Complete |
-| 29 | v2.1 | Diagnostic Root-Cause Observability & Identity Mapping | Surface deep SNMP failure reasons (NCIM12013) in SRE drawer, map IP identifiers to DNAC hostnames and geographical sites | DNAC-04, DNAC-05 | Planned |
+| 29 | v2.1 | Diagnostic Root-Cause Observability & Identity Mapping | Surface deep SNMP failure reasons (NCIM12013) in SRE drawer, map IP identifiers to DNAC hostnames and geographical sites | DNAC-04, DNAC-05 | Complete |
 
 ---
 
@@ -50,7 +50,7 @@
 
 **Goal:** Surface deep DNAC management plane failure reasons in the SRE drawer (SNMP timeouts, credential errors, uptime) and propagate authoritative hostnames and geographical site locations across the dashboard.
 
-**Status:** Not Started
+**Status:** Complete
 
 **Requirements:**
 - **DNAC-04**: SRE drawer and NOC device cards surface deep DNAC management-plane failure reasons (`reachabilityFailureReason: SNMP Connectivity Failed`, error code `NCIM12013`, and description), distinguishing SNMP timeouts/credential failures on running devices (uptime > 7 days) from physical node outages.
