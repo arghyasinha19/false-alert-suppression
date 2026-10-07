@@ -1,3 +1,10 @@
+---
+phase: 27-authoritative-dnac-hardware-spec-resolution
+plan: 27-01
+requirements_completed:
+  - DNAC-01
+---
+
 # Plan 27-01 Summary: Backend Authoritative Hardware Spec Extraction & Persistence
 
 **Execution Date:** 2026-10-07  

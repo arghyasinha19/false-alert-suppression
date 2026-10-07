@@ -1,3 +1,10 @@
+---
+phase: 27-authoritative-dnac-hardware-spec-resolution
+plan: 27-02
+requirements_completed:
+  - DNAC-02
+---
+
 # Plan 27-02 Summary: Frontend SRE Drawer Authoritative Specs Prioritization & Honest Null States
 
 **Execution Date:** 2026-10-07  
