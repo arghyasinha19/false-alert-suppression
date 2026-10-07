@@ -15,6 +15,8 @@ import TopologyGraphView from './components/TopologyGraphView';
 import TableScrollWrapper from './components/TableScrollWrapper';
 import EmptyState from './components/EmptyState';
 
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8004';
+
 const TIER_METADATA = {
   core: {
     id: 'core',
@@ -674,7 +676,7 @@ export default function NetworkOperations({
     telemetryAbortRef.current = controller;
     setLoadingTelemetry(true);
 
-    fetch(`/api/devices/${encodeURIComponent(deviceName)}/telemetry`, { signal: controller.signal })
+    fetch(`${API_BASE}/api/devices/${encodeURIComponent(deviceName)}/telemetry`, { signal: controller.signal })
       .then(res => {
         if (!res.ok) {
           throw new Error(`HTTP error ${res.status}`);
@@ -708,7 +710,7 @@ export default function NetworkOperations({
     setPollingHealth(true);
     try {
       const resp = await fetch(
-        `/api/devices/${encodeURIComponent(selectedDevice.device_name)}/live-poll`,
+        `${API_BASE}/api/devices/${encodeURIComponent(selectedDevice.device_name)}/live-poll`,
         { method: 'POST' }
       );
       if (!resp.ok) {
