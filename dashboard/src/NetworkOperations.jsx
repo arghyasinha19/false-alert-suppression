@@ -220,7 +220,24 @@ const ROLE_METADATA = {
   security: { id: 'security', label: 'Security & FW', icon: Shield, color: 'var(--accent-orange)' }
 };
 
-function deriveDeviceRole(device) {
+function deriveDeviceRole(device, liveRole = null) {
+  const roleStr = (liveRole || device.role || device.device_role || '').toLowerCase();
+  if (roleStr.includes('border') || roleStr.includes('core') || roleStr.includes('router') || roleStr.includes('wan') || roleStr.includes('hub')) {
+    return 'core';
+  }
+  if (roleStr.includes('dist')) {
+    return 'distribution';
+  }
+  if (roleStr.includes('access')) {
+    return 'access';
+  }
+  if (roleStr.includes('wireless') || roleStr.includes('ap')) {
+    return 'wireless';
+  }
+  if (roleStr.includes('firewall') || roleStr.includes('sec')) {
+    return 'security';
+  }
+
   const name = (device.device_name || '').toLowerCase();
   const cat = (device.category || '').toLowerCase();
 
@@ -2017,11 +2034,39 @@ export default function NetworkOperations({
           const displayPoe = liveTelemetry ? (liveTelemetry.poe_status || null) : (loadingTelemetry ? null : proceduralVitals.poeUsage);
           const displayPsu = liveTelemetry ? 'Dual Redundant (OK)' : proceduralVitals.psuState;
 
-          const displayModel = liveDeviceInfo?.model && liveDeviceInfo.model !== 'Unknown' ? liveDeviceInfo.model : proceduralVitals.model;
-          const displayOs = liveDeviceInfo?.os_version && liveDeviceInfo.os_version !== 'Unknown' ? liveDeviceInfo.os_version : proceduralVitals.osVer;
-          const displaySerial = liveDeviceInfo?.serial && liveDeviceInfo.serial !== 'Unknown' ? liveDeviceInfo.serial : proceduralVitals.serial;
-          const displayMac = liveDeviceInfo?.mac && liveDeviceInfo.mac !== 'Unknown' ? liveDeviceInfo.mac : proceduralVitals.mac;
-          const displayIp = liveDeviceInfo?.ip_address && liveDeviceInfo.ip_address !== 'Unknown' ? liveDeviceInfo.ip_address : (selectedDevice.ip_address || proceduralVitals.ip);
+          const isDnacActive = telemetrySource === 'dnac_live' || telemetrySource === 'cached_offline';
+          const rawInv = liveTelemetry?.raw_response?.network_device || {};
+          const rawDet = liveTelemetry?.raw_response?.device_detail || {};
+
+          // Extract authentic specs from liveDeviceInfo or direct raw_response
+          const extractedModel = (liveDeviceInfo?.model && liveDeviceInfo.model !== 'Unknown')
+            ? liveDeviceInfo.model
+            : (rawInv.type || rawInv.platformId || rawInv.series || rawDet.nwDeviceType || rawDet.platformId || null);
+
+          const extractedOs = (liveDeviceInfo?.os_version && liveDeviceInfo.os_version !== 'Unknown')
+            ? liveDeviceInfo.os_version
+            : (rawInv.softwareVersion || rawDet.softwareVersion || null);
+
+          const extractedSerial = (liveDeviceInfo?.serial && liveDeviceInfo.serial !== 'Unknown')
+            ? liveDeviceInfo.serial
+            : (rawInv.serialNumber || rawDet.serialNumber || null);
+
+          const extractedMac = (liveDeviceInfo?.mac && liveDeviceInfo.mac !== 'Unknown')
+            ? liveDeviceInfo.mac
+            : (rawInv.macAddress || rawDet.macAddress || null);
+
+          const extractedIp = (liveDeviceInfo?.ip_address && liveDeviceInfo.ip_address !== 'Unknown')
+            ? liveDeviceInfo.ip_address
+            : (rawInv.managementIpAddress || rawDet.managementIpAddr || rawDet.ip_addr_managementIpAddr || selectedDevice.ip_address || null);
+
+          const resolvedRole = liveDeviceInfo?.role || rawInv.role || rawDet.nwDeviceRole || null;
+
+          // Spec extraction: never bleed synthetic switch defaults if live/cached DNAC is active
+          const displayModel = extractedModel || (isDnacActive ? 'Unknown' : proceduralVitals.model);
+          const displayOs = extractedOs || (isDnacActive ? 'Unknown' : proceduralVitals.osVer);
+          const displaySerial = extractedSerial || (isDnacActive ? 'Unknown' : proceduralVitals.serial);
+          const displayMac = extractedMac || (isDnacActive ? 'Unknown' : proceduralVitals.mac);
+          const displayIp = extractedIp || (isDnacActive ? (selectedDevice.ip_address || selectedDevice.device_name) : proceduralVitals.ip);
 
           const formatUptimeSeconds = (secs) => {
             if (secs == null || isNaN(secs) || secs <= 0) return null;
@@ -2029,15 +2074,36 @@ export default function NetworkOperations({
             const h = Math.floor((secs % 86400) / 3600);
             return `${d} days, ${h} hours`;
           };
-          const displayUptime = (liveTelemetry && formatUptimeSeconds(liveTelemetry.uptime_seconds)) || liveDeviceInfo?.uptime || proceduralVitals.uptime;
+          const displayUptime = (liveTelemetry && formatUptimeSeconds(liveTelemetry.uptime_seconds))
+            || rawInv.upTime
+            || liveDeviceInfo?.uptime
+            || (isDnacActive ? null : proceduralVitals.uptime);
+
+          // For unreachable devices or active DNAC, do not contaminate with procedural RAM/latency
+          const isReachable = liveTelemetry ? liveTelemetry.reachable : true;
+          const displayRamAllocated = isDnacActive
+            ? (isReachable && displayRam != null ? `${displayRam}%` : null)
+            : proceduralVitals.ramAllocated;
+          const displayRamTotal = isDnacActive
+            ? (isReachable && displayRam != null ? '100%' : null)
+            : proceduralVitals.ramTotal;
+          const displayLatency = isDnacActive
+            ? (isReachable ? '24ms' : null)
+            : proceduralVitals.latency;
+          const displayRack = isDnacActive
+            ? (rawDet.location || rawInv.snmpLocation || selectedDevice.location || 'Site Placement')
+            : proceduralVitals.rack;
 
           const vitals = {
             ...proceduralVitals,
             cpu: displayCpu,
             ramPct: displayRam,
+            ramAllocated: displayRamAllocated,
+            ramTotal: displayRamTotal,
             packetLoss: displayPacketLoss,
             crcErrors: displayCrcErrors,
             reachability: displayReachable,
+            latency: displayLatency,
             temp: displayTemp,
             poeUsage: displayPoe,
             psuState: displayPsu,
@@ -2046,8 +2112,10 @@ export default function NetworkOperations({
             serial: displaySerial,
             mac: displayMac,
             ip: displayIp,
+            rack: displayRack,
             uptime: displayUptime,
           };
+
 
           const renderProvenanceBanner = () => {
             const timeStr = deviceTelemetry?.synced_at ? formatTimestamp(deviceTelemetry.synced_at) : (lastRefresh ? formatTimestamp(lastRefresh) : 'Just now');
@@ -2411,20 +2479,20 @@ export default function NetworkOperations({
                     {renderProvenanceBanner()}
                     <div className="noc-inventory-card">
                       <h4><Server size={14} /> Hardware Specifications</h4>
-                      <div className="noc-spec-row"><span className="noc-spec-label">Model</span><span className="noc-spec-val">{vitals.model}</span></div>
-                      <div className="noc-spec-row"><span className="noc-spec-label">OS / Firmware</span><span className="noc-spec-val">{vitals.osVer}</span></div>
-                      <div className="noc-spec-row"><span className="noc-spec-label">Serial Number</span><span className="noc-spec-val">{vitals.serial}</span></div>
-                      <div className="noc-spec-row"><span className="noc-spec-label">MAC Address</span><span className="noc-spec-val">{vitals.mac}</span></div>
-                      <div className="noc-spec-row"><span className="noc-spec-label">System Uptime</span><span className="noc-spec-val">{vitals.uptime}</span></div>
+                      <div className="noc-spec-row"><span className="noc-spec-label">Model</span><span className="noc-spec-val">{vitals.model || '—'}</span></div>
+                      <div className="noc-spec-row"><span className="noc-spec-label">OS / Firmware</span><span className="noc-spec-val">{vitals.osVer || '—'}</span></div>
+                      <div className="noc-spec-row"><span className="noc-spec-label">Serial Number</span><span className="noc-spec-val">{vitals.serial || '—'}</span></div>
+                      <div className="noc-spec-row"><span className="noc-spec-label">MAC Address</span><span className="noc-spec-val">{vitals.mac || '—'}</span></div>
+                      <div className="noc-spec-row"><span className="noc-spec-label">System Uptime</span><span className="noc-spec-val">{vitals.uptime || '—'}</span></div>
                     </div>
 
                     <div className="noc-inventory-card">
                       <h4><Globe size={14} /> Network Location & Placement</h4>
                       <div className="noc-spec-row"><span className="noc-spec-label">Site</span><span className="noc-spec-val">{getLocationLabel(selectedDevice.location || deriveLocation(selectedDevice.device_name))}</span></div>
-                      <div className="noc-spec-row"><span className="noc-spec-label">Management IP</span><span className="noc-spec-val">{vitals.ip}</span></div>
-                      <div className="noc-spec-row"><span className="noc-spec-label">Rack Placement</span><span className="noc-spec-val">{vitals.rack}</span></div>
+                      <div className="noc-spec-row"><span className="noc-spec-label">Management IP</span><span className="noc-spec-val">{vitals.ip || '—'}</span></div>
+                      <div className="noc-spec-row"><span className="noc-spec-label">Rack Placement</span><span className="noc-spec-val">{vitals.rack || '—'}</span></div>
                       <div className="noc-spec-row"><span className="noc-spec-label">Architectural Tier</span><span className="noc-spec-val">{TIER_METADATA[deriveDeviceTier(selectedDevice.device_name)].name}</span></div>
-                      <div className="noc-spec-row"><span className="noc-spec-label">Device Role</span><span className="noc-spec-val">{ROLE_METADATA[deriveDeviceRole(selectedDevice)].label}</span></div>
+                      <div className="noc-spec-row"><span className="noc-spec-label">Device Role</span><span className="noc-spec-val">{ROLE_METADATA[deriveDeviceRole(selectedDevice, resolvedRole)].label}</span></div>
                     </div>
 
                     <div className="noc-inventory-card">

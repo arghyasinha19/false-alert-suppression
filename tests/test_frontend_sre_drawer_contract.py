@@ -181,3 +181,31 @@ def test_live_poll_endpoint_schema_contract():
     assert "telemetry" in data
     assert "device_info" in data
     assert "timestamp" in data
+
+
+def test_network_operations_authoritative_spec_resolution_contract():
+    """Verify NetworkOperations.jsx prioritizes authentic DNAC specs over procedural switch mock."""
+    with open(NETWORK_OPERATIONS_PATH, "r", encoding="utf-8") as f:
+        src = f.read()
+
+    # 1. Verify extractedModel/Serial/Mac/Os/Ip logic exists
+    assert "extractedModel" in src, "Missing extractedModel resolution in NetworkOperations.jsx"
+    assert "extractedSerial" in src, "Missing extractedSerial resolution in NetworkOperations.jsx"
+    assert "extractedMac" in src, "Missing extractedMac resolution in NetworkOperations.jsx"
+    assert "extractedOs" in src, "Missing extractedOs resolution in NetworkOperations.jsx"
+    assert "extractedIp" in src, "Missing extractedIp resolution in NetworkOperations.jsx"
+
+    # 2. Verify isDnacActive gates procedural fallbacks
+    assert "isDnacActive" in src, "Missing isDnacActive guard in NetworkOperations.jsx"
+    assert "extractedModel || (isDnacActive ? 'Unknown' : proceduralVitals.model)" in src, \
+        "displayModel must gate proceduralVitals.model when DNAC is active"
+
+    # 3. Verify deriveDeviceRole detects border routers and supports live role
+    assert "roleStr.includes('border')" in src, "deriveDeviceRole must support border router role"
+    assert "ROLE_METADATA[deriveDeviceRole(selectedDevice, resolvedRole)].label" in src, \
+        "Inventory card must pass resolvedRole to deriveDeviceRole"
+
+    # 4. Verify honest null placeholders in inventory card
+    assert "vitals.model || '—'" in src, "Model spec row must have honest null fallback"
+    assert "vitals.serial || '—'" in src, "Serial spec row must have honest null fallback"
+

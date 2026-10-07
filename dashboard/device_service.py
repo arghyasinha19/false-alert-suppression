@@ -41,6 +41,121 @@ def get_empty_telemetry_dict() -> Dict[str, Any]:
     }
 
 
+def extract_device_info_from_raw(
+    raw_response: Optional[Dict[str, Any]],
+    fallback_info: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """
+    Extract authentic hardware specifications from DNAC raw_response.
+    
+    raw_response contains:
+      - "network_device": inventory dict from GET /network-device/{id}
+      - "device_detail": assurance dict from GET /device-detail?identifier=uuid&searchBy={id}
+    """
+    default_info = {
+        "model": "Unknown",
+        "serial": "Unknown",
+        "mac": "Unknown",
+        "os_version": "Unknown",
+        "ip_address": "Unknown",
+    }
+    info = dict(fallback_info) if fallback_info else dict(default_info)
+    
+    if not raw_response or not isinstance(raw_response, dict):
+        return info
+
+    inv = raw_response.get("network_device") or {}
+    if not isinstance(inv, dict):
+        inv = {}
+
+    det = raw_response.get("device_detail") or {}
+    if not isinstance(det, dict):
+        det = {}
+
+    def _is_valid(val):
+        if val is None:
+            return False
+        s = str(val).strip()
+        return s != "" and s.lower() not in ("unknown", "none", "null", "na")
+
+    # 1. Model / Platform ID
+    model_candidates = [
+        inv.get("type"),
+        inv.get("platformId"),
+        inv.get("series"),
+        det.get("nwDeviceType"),
+        det.get("platformId"),
+        det.get("deviceSeries"),
+    ]
+    for m in model_candidates:
+        if _is_valid(m) and (not _is_valid(info.get("model")) or info.get("model") == "Unknown"):
+            info["model"] = str(m).strip()
+            break
+
+    # 2. Serial Number
+    serial_candidates = [
+        inv.get("serialNumber"),
+        det.get("serialNumber"),
+    ]
+    for s in serial_candidates:
+        if _is_valid(s) and (not _is_valid(info.get("serial")) or info.get("serial") == "Unknown"):
+            info["serial"] = str(s).strip()
+            break
+
+    # 3. MAC Address
+    mac_candidates = [
+        inv.get("macAddress"),
+        det.get("macAddress"),
+    ]
+    for mc in mac_candidates:
+        if _is_valid(mc) and (not _is_valid(info.get("mac")) or info.get("mac") == "Unknown"):
+            info["mac"] = str(mc).strip()
+            break
+
+    # 4. OS Version
+    os_candidates = [
+        inv.get("softwareVersion"),
+        det.get("softwareVersion"),
+    ]
+    for o in os_candidates:
+        if _is_valid(o) and (not _is_valid(info.get("os_version")) or info.get("os_version") == "Unknown"):
+            info["os_version"] = str(o).strip()
+            break
+
+    # 5. Management IP
+    ip_candidates = [
+        inv.get("managementIpAddress"),
+        det.get("managementIpAddr"),
+        det.get("ip_addr_managementIpAddr"),
+    ]
+    for ip_c in ip_candidates:
+        if _is_valid(ip_c) and (not _is_valid(info.get("ip_address")) or info.get("ip_address") == "Unknown"):
+            info["ip_address"] = str(ip_c).strip()
+            break
+
+    # 6. Hostname
+    hostname_candidates = [
+        inv.get("hostname"),
+        det.get("nwDeviceName"),
+    ]
+    for h in hostname_candidates:
+        if _is_valid(h) and not _is_valid(info.get("hostname")):
+            info["hostname"] = str(h).strip()
+            break
+
+    # 7. Device Role
+    role_candidates = [
+        inv.get("role"),
+        det.get("nwDeviceRole"),
+    ]
+    for r in role_candidates:
+        if _is_valid(r) and not _is_valid(info.get("role")):
+            info["role"] = str(r).strip()
+            break
+
+    return info
+
+
 def get_or_resolve_device_id(
     device_name: str,
     mongo_client=None,
@@ -92,7 +207,12 @@ def get_or_resolve_device_id(
                     found_id = details.get("device_id")
                     if found_id:
                         device_id = found_id
-                        return device_id, None
+                        # Cross-check device_telemetry for cached specs using found_id
+                        if telemetry_coll is not None:
+                            cached_dev = telemetry_coll.find_one({"device_id": found_id})
+                            if cached_dev and cached_dev.get("device_info"):
+                                device_info = cached_dev.get("device_info")
+                        return device_id, device_info
         except Exception as e:
             logger.warning(f"Error checking MongoDB cache for device {device_name}: {e}")
 
@@ -149,6 +269,10 @@ def fetch_device_telemetry(
         try:
             raw_health = dnac_client.get_device_health(device_id)
             if raw_health and isinstance(raw_health, dict):
+                raw_resp = raw_health.get("raw_response")
+                if raw_resp and isinstance(raw_resp, dict):
+                    device_info = extract_device_info_from_raw(raw_resp, fallback_info=device_info)
+
                 telemetry = {
                     "cpu": raw_health.get("cpu"),
                     "memory": raw_health.get("memory"),
@@ -158,7 +282,7 @@ def fetch_device_telemetry(
                     "poe_status": raw_health.get("poe_status"),
                     "uptime_seconds": raw_health.get("uptime_seconds"),
                     "reachable": raw_health.get("reachable", True),
-                    "raw_response": raw_health.get("raw_response"),
+                    "raw_response": raw_resp,
                 }
 
                 # Update / cache in MongoDB
@@ -201,20 +325,29 @@ def fetch_device_telemetry(
             telemetry_coll = mongo_client.get_collection("device_telemetry")
             if telemetry_coll is not None:
                 cached = telemetry_coll.find_one({"device_name": device_name})
+                if not cached and device_id:
+                    cached = telemetry_coll.find_one({"device_id": device_id})
                 if cached and cached.get("telemetry"):
                     cached_telemetry = cached.get("telemetry")
                     if isinstance(cached_telemetry, dict):
                         cached_telemetry["reachable"] = False
+                        raw_resp = cached_telemetry.get("raw_response")
+                        if raw_resp and isinstance(raw_resp, dict):
+                            device_info = extract_device_info_from_raw(
+                                raw_resp,
+                                fallback_info=cached.get("device_info") or device_info
+                            )
                     return {
                         "device_name": device_name,
                         "device_id": cached.get("device_id") or device_id,
                         "source": "cached_offline",
                         "timestamp": cached.get("last_updated") or now_iso,
                         "telemetry": cached_telemetry,
-                        "device_info": cached.get("device_info") or device_info or default_info,
+                        "device_info": device_info or cached.get("device_info") or default_info,
                     }
         except Exception as e:
             logger.warning(f"Failed to read cached telemetry for {device_name}: {e}")
+
 
     # 4. Total fallback: return null/empty vitals
     return {

@@ -244,3 +244,91 @@ def test_post_live_poll_dnac_offline_graceful():
     assert data["status"] == "warning"
     assert data["dnac_reachable"] is False
     assert data["telemetry"]["reachable"] is False
+
+
+def test_telemetry_raw_response_hardware_extraction():
+    """Verify hardware specs (model, serial, mac, os_version, ip) are extracted from raw_response."""
+    mock_dnac = MagicMock()
+    # Simulate inventory lookup returning only UUID without detailed device_info
+    mock_dnac.get_device_by_name_or_ip.return_value = [{
+        "device_id": "59db4c3b-874e-424c-a7fa-10746577486c",
+        "device_name": "tr-ist-rtr01",
+        "model": "Unknown",
+        "serial": "Unknown",
+        "mac": "Unknown",
+        "os_version": "Unknown",
+        "ip_address": "Unknown",
+        "reachable": False,
+    }]
+
+    # Real production raw_response structure from captured DNAC response
+    production_raw_response = {
+        "device_detail": {
+            "overallHealth": -2,
+            "managementIpAddr": "10.254.0.93",
+            "communicationState": "UNREACHABLE",
+            "nwDeviceRole": "BORDER ROUTER",
+            "osType": "IOS-XE",
+            "nwDeviceType": "Cisco 4331 Integrated Services Router",
+            "platformId": "ISR4331/K9",
+            "serialNumber": "FDO2517M1EG",
+            "macAddress": "6C:13:D5:BE:91:F0",
+            "softwareVersion": "17.12.8",
+            "nwDeviceName": "tr-ist-rtr01",
+            "location": "Global/EMEA/TR Istanbul/Umut Street",
+        },
+        "network_device": {
+            "family": "Routers",
+            "softwareVersion": "17.12.8",
+            "macAddress": "6c:13:d5:be:91:f0",
+            "serialNumber": "FDO2517M1EG",
+            "managementIpAddress": "10.254.0.93",
+            "platformId": "ISR4331/K9",
+            "type": "Cisco 4331 Integrated Services Router",
+            "hostname": "tr-ist-rtr01",
+            "reachabilityStatus": "Unreachable",
+            "reachabilityFailureReason": "SNMP Connectivity Failed",
+            "errorCode": "DEV-UNREACHED",
+        }
+    }
+
+    mock_health = {
+        "cpu": None,
+        "memory": None,
+        "packet_drop": None,
+        "health_score": -2,
+        "interface_error_count": None,
+        "poe_status": "UNKNOWN",
+        "uptime_seconds": 692019,
+        "reachable": False,
+        "raw_response": production_raw_response,
+    }
+    mock_dnac.get_device_health.return_value = mock_health
+
+    mock_mongo = MagicMock()
+    mock_coll = MagicMock()
+    mock_coll.find_one.return_value = None
+    mock_mongo.get_collection.return_value = mock_coll
+
+    with patch("dashboard.api.get_dnac_client", return_value=mock_dnac), \
+         patch("dashboard.api.mongo", mock_mongo):
+        res = client.get("/api/devices/10.254.0.93/telemetry")
+
+    assert res.status_code == 200
+    data = res.json()
+    assert data["source"] == "dnac_live"
+    info = data["device_info"]
+    assert info["model"] == "Cisco 4331 Integrated Services Router"
+    assert info["serial"] == "FDO2517M1EG"
+    assert info["mac"] in ("6c:13:d5:be:91:f0", "6C:13:D5:BE:91:F0")
+    assert info["os_version"] == "17.12.8"
+    assert info["ip_address"] == "10.254.0.93"
+    assert info.get("hostname") == "tr-ist-rtr01"
+
+    # Verify MongoDB cache was updated with the extracted specs
+    assert mock_coll.update_one.called
+    upsert_call = mock_coll.update_one.call_args[0]
+    set_doc = upsert_call[1]["$set"]
+    assert set_doc["device_info"]["model"] == "Cisco 4331 Integrated Services Router"
+    assert set_doc["device_info"]["serial"] == "FDO2517M1EG"
+
