@@ -17,10 +17,10 @@ progress:
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-10-07 — Milestone v2.1 started
+Phase: 27 — Authoritative DNAC Hardware & Spec Resolution
+Plan: 27-01, 27-02 ready for execution
+Status: Planned
+Last activity: 2026-10-07 — Phase 27 planned (2 plans created)
 
 ## Key Decisions Made (Milestone v2.0)
 
