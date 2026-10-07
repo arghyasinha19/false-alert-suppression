@@ -8,15 +8,15 @@ An intelligent, multi-agent network alert triage and suppression platform for Ci
 
 Accurately identify false or transient network alerts to prevent unnecessary ServiceNow ticket creation and reduce operational noise without missing genuine network degradation.
 
-## Current Milestone: v2.0 Multi-Site Hierarchical Topology & WAN Observability
+## Current Milestone: v2.1 Real DNAC Telemetry & Production Hardening
 
-**Goal:** Deliver an intuitive, 2-level hierarchical topology architecture allowing network operators to visualize multi-site WAN interconnects at the macro level and drill down into site-specific LAN graphs with real-time site health rollups and blast radius metrics.
+**Goal:** Harden device inventory resolution and SRE drawer vitals against real Cisco DNA Center payloads, cross-reference live reachability during alert status verification, surface deep SNMP diagnostic root causes, and propagate authoritative DNAC hostnames and geographical locations.
 
 **Target features:**
-- **2-Level Hierarchical Topology Engine**: Global Multi-Site WAN interconnect overview with drill-down into site-specific LAN graphs (Core ↔ Distribution ↔ Access).
-- **Site-Level Health Rollup & Blast Radius**: Macro site nodes showing aggregated health, active alert volume, degraded link counts, and blast radius indicators.
-- **Interactive Multi-Site Navigation & Breadcrumbs**: Breadcrumb and site-switcher navigation between Global WAN canvas and site-level LAN views with quick return.
-- **Cross-View Site Synchronization**: Bi-directional synchronization between the Regional Site Matrix, SRE High-Density Table, and Multi-Site Topology views.
+- **Real DNAC Device Metadata Resolution**: Extract device specifications (model, serial, MAC, OS version, management IP) directly from DNAC `raw_response` (`network_device` and `device_detail`), eliminating procedural synthetic mock data bleed-through.
+- **Live Reachability Cross-Referencing in Alert Verification**: Enhance alert verification in `workflow/tools/dnac_status.py` to cross-reference device inventory and assurance `communicationState` / `reachabilityStatus` with Assurance issue state, preventing premature UNCERTAIN fallback when DNAC explicitly reports UNREACHABLE.
+- **SNMP Diagnostic & Root-Cause Observability**: Surface DNAC diagnostic failure reason codes (such as `NCIM12013: SNMP Connectivity Failed`, error code, and detailed description) directly in the SRE Investigation Drawer and NOC device cards.
+- **Authoritative Site & Hostname Propagation**: Automatically resolve IP device identifiers to real DNAC hostnames (`tr-ist-rtr01`) and extract structured geographical hierarchy from DNAC location metadata (`Global/EMEA/TR Istanbul/Umut Street`).
 
 ## Requirements
 
@@ -77,10 +77,14 @@ Accurately identify false or transient network alerts to prevent unnecessary Ser
 
 ### Active
 
-*None — Milestone v2.0 complete and verified.*
+- [ ] **DNAC-01**: Backend and device service parse hardware specifications (platformId, serial, MAC, software version, IP) directly from DNAC `raw_response` (`network_device` / `device_detail`) when available.
+- [ ] **DNAC-02**: Frontend SRE drawer prioritizes live/cached DNAC hardware specs over synthetic procedural fallback values, ensuring honest nulls or live router specs are rendered.
+- [ ] **DNAC-03**: Alert verification (`workflow/tools/dnac_status.py`) cross-references live device reachability (`reachabilityStatus` / `communicationState`) so devices explicitly reported as Unreachable are acknowledged rather than defaulting to UNCERTAIN.
+- [ ] **DNAC-04**: SRE drawer displays diagnostic root-cause panel showing SNMP failure reasons, error codes (`NCIM12013`), and operational resync details.
+- [ ] **DNAC-05**: Device naming and site mapping resolve IP addresses to DNAC hostnames (`tr-ist-rtr01`) and geographical site hierarchy paths (`Istanbul`).
 
+### Out of Scope
 
-- Bypassing DNAC RBAC or making unauthenticated calls.
 - Storing unencrypted DNAC passwords in source code (always load from env vars or `config.yaml`).
 - Daemon supervisor bundling (`start_dashboard.py` auto-starting `dnac_sync.py`) and standalone CLI diagnostic script — Removed per user decision; existing independent `dnac_sync.py` and pytest test suites satisfy operational and testing needs.
 - External database querying for historical data beyond currently ingested/cached pipeline alerts.
@@ -123,4 +127,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-06 after Milestone v2.0 initialization*
+*Last updated: 2026-10-07 after Milestone v2.1 initialization*

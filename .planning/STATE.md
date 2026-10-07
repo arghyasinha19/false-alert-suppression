@@ -1,33 +1,32 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: Multi-Site Hierarchical Topology & WAN Observability
-status: complete
-last_updated: "2026-10-06T10:10:00.000Z"
-last_activity: 2026-10-06 -- Phase 26 completed (Cross-View Site Synchronization & Filter Alignment)
+milestone: v2.1
+milestone_name: Real DNAC Telemetry & Production Hardening
+status: planning
+last_updated: "2026-10-07T13:40:16.330Z"
+last_activity: 2026-10-07
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 4
-  completed_plans: 4
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Current Position
 
-Phase: All Milestone v2.0 Phases Complete (Phases 24, 25, 26)
-Plan: 26-01 complete
-Status: Milestone complete & verified
-Last activity: 2026-10-06 — Phase 26 complete, Milestone v2.0 ready for completion
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-10-07 — Milestone v2.1 started
 
 ## Key Decisions Made (Milestone v2.0)
 
 - Adopt 2-level hierarchical topology model: Level 1 Global Multi-Site WAN interconnect map with site-level health rollups and blast radius metrics; Level 2 drill-down into site-specific LAN graphs (Core ↔ Dist ↔ Access).
 - Provide site switcher dropdown / pill selector and breadcrumb navigation between Global WAN overview and local site topology.
 - Bi-directionally sync site selection and filtering across Regional Site Matrix, SRE High-Density Table, and Multi-Site Topology views.
-
 
 ## Key Decisions Made (Phase 23)
 
