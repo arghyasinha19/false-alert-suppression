@@ -8,15 +8,15 @@ An intelligent, multi-agent network alert triage and suppression platform for Ci
 
 Accurately identify false or transient network alerts to prevent unnecessary ServiceNow ticket creation and reduce operational noise without missing genuine network degradation.
 
-## Current Milestone: v2.1 Real DNAC Telemetry & Production Hardening
+## Milestones Shipped
 
-**Goal:** Harden device inventory resolution and SRE drawer vitals against real Cisco DNA Center payloads, cross-reference live reachability during alert status verification, surface deep SNMP diagnostic root causes, and propagate authoritative DNAC hostnames and geographical locations.
+- ✓ **v2.1 Real DNAC Telemetry & Production Hardening** (Shipped 2026-10-07)
+- ✓ **v2.0 Multi-Site Hierarchical Topology & WAN Observability** (Shipped 2026-10-06)
+- ✓ **v1.0 - v1.9 Observability, Telemetry & UI/UX Foundations** (Shipped 2026-09-30 – 2026-10-06)
 
-**Target features:**
-- **Real DNAC Device Metadata Resolution**: Extract device specifications (model, serial, MAC, OS version, management IP) directly from DNAC `raw_response` (`network_device` and `device_detail`), eliminating procedural synthetic mock data bleed-through.
-- **Live Reachability Cross-Referencing in Alert Verification**: Enhance alert verification in `workflow/tools/dnac_status.py` to cross-reference device inventory and assurance `communicationState` / `reachabilityStatus` with Assurance issue state, preventing premature UNCERTAIN fallback when DNAC explicitly reports UNREACHABLE.
-- **SNMP Diagnostic & Root-Cause Observability**: Surface DNAC diagnostic failure reason codes (such as `NCIM12013: SNMP Connectivity Failed`, error code, and detailed description) directly in the SRE Investigation Drawer and NOC device cards.
-- **Authoritative Site & Hostname Propagation**: Automatically resolve IP device identifiers to real DNAC hostnames (`tr-ist-rtr01`) and extract structured geographical hierarchy from DNAC location metadata (`Global/EMEA/TR Istanbul/Umut Street`).
+## Next Milestone Goals
+
+To be defined via `/gsd-new-milestone`.
 
 ## Requirements
 
@@ -74,17 +74,19 @@ Accurately identify false or transient network alerts to prevent unnecessary Ser
 - ✓ **SITE-06**: User can filter devices within a site's LAN topology while preserving site boundaries and context. — v2.0
 - ✓ **SITE-07**: Selecting a site in the Regional Site Matrix automatically filters or transitions the Topology view to that site's LAN graph. — v2.0
 - ✓ **SITE-08**: Filtering by location in the SRE Table or multi-dimensional filter bar synchronizes with the Topology view's active site scope. — v2.0
+- ✓ **DNAC-01**: Backend `device_service.py` extracts hardware specifications directly from DNAC raw response (`network_device` and `device_detail`) with MongoDB persistence caching. — v2.1
+- ✓ **DNAC-02**: Frontend SRE drawer prioritizes live/cached specs, gates procedural switch mocks via `isDnacActive`, and renders honest null states. — v2.1
+- ✓ **DNAC-03**: Alert verification (`workflow/tools/dnac_status.py`) cross-references live reachability (`get_device_health()`), acknowledging unreached nodes as `ACTIVE` and resolving restored nodes. — v2.1
+- ✓ **DNAC-04**: SRE drawer displays dedicated Management Plane Diagnostics card with `NCIM12013`, `reachabilityFailureReason`, and operating state isolation indicator. — v2.1
+- ✓ **DNAC-05**: Authoritative hostname propagation (`tr-ist-rtr01`) and geographical site extraction (`Istanbul` from `Global/EMEA/TR Istanbul/Umut Street`). — v2.1
 
 ### Active
 
-- [ ] **DNAC-01**: Backend and device service parse hardware specifications (platformId, serial, MAC, software version, IP) directly from DNAC `raw_response` (`network_device` / `device_detail`) when available.
-- [ ] **DNAC-02**: Frontend SRE drawer prioritizes live/cached DNAC hardware specs over synthetic procedural fallback values, ensuring honest nulls or live router specs are rendered.
-- [ ] **DNAC-03**: Alert verification (`workflow/tools/dnac_status.py`) cross-references live device reachability (`reachabilityStatus` / `communicationState`) so devices explicitly reported as Unreachable are acknowledged rather than defaulting to UNCERTAIN.
-- [ ] **DNAC-04**: SRE drawer displays diagnostic root-cause panel showing SNMP failure reasons, error codes (`NCIM12013`), and operational resync details.
-- [ ] **DNAC-05**: Device naming and site mapping resolve IP addresses to DNAC hostnames (`tr-ist-rtr01`) and geographical site hierarchy paths (`Istanbul`).
+(None currently active — run `/gsd-new-milestone` to plan next milestone)
 
 ### Out of Scope
 
+- Retraining ML classification model for controller unreachability — explicitly excluded per user constraints; ML model and alert category logic remain unchanged.
 - Storing unencrypted DNAC passwords in source code (always load from env vars or `config.yaml`).
 - Daemon supervisor bundling (`start_dashboard.py` auto-starting `dnac_sync.py`) and standalone CLI diagnostic script — Removed per user decision; existing independent `dnac_sync.py` and pytest test suites satisfy operational and testing needs.
 - External database querying for historical data beyond currently ingested/cached pipeline alerts.
@@ -108,6 +110,11 @@ Accurately identify false or transient network alerts to prevent unnecessary Ser
 | Non-blocking HTTP 200 fallbacks on offline DNAC | Prevents UI crashes and preserves offline demoability. | ✓ Good |
 | Dual provenance badges in header and tab banners | SREs know data origin at a glance. | ✓ Good |
 | Fleet-wide `onRefresh()` after live poll | Synchronizes device state across all 3 representation modes. | ✓ Good |
+| Direct raw response hardware spec extraction | Avoids `Unknown` defaults and eliminates synthetic procedural mock bleed-through. | ✓ Good |
+| `isDnacActive` gating and honest nulls in SRE Drawer | Bypasses procedural switch mock fallbacks when viewing live or cached devices, reflecting authentic degraded states. | ✓ Good |
+| Live reachability cross-referencing in `dnac_status.py` | Acknowledges alerts as `ACTIVE` when DNAC confirms device is unreachable, preventing premature `UNCERTAIN` fallbacks. | ✓ Good |
+| Operating state isolation indicator (`uptime > 300s` with SNMP failure) | Clearly distinguishes management plane credential/timeout issues (`NCIM12013`) from physical router power or link failures. | ✓ Good |
+| Hierarchical site extraction stripping country prefixes | Parses Cisco DNAC location paths (`Global/EMEA/TR Istanbul/Umut Street` -> `Istanbul`) accurately without hardcoding. | ✓ Good |
 
 ## Evolution
 
@@ -127,4 +134,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-07 after Milestone v2.1 initialization*
+*Last updated: 2026-10-07 after Milestone v2.1 completion*

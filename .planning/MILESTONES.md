@@ -1,8 +1,20 @@
 # Project Milestones
 
+### v2.1 Real DNAC Telemetry & Production Hardening (Completed 2026-10-07)
+
+- **Goal:** Harden device inventory resolution and SRE drawer vitals against real Cisco DNA Center payloads, cross-reference live reachability during alert status verification, surface deep SNMP diagnostic root causes (`NCIM12013`), and propagate authoritative DNAC hostnames and geographical locations.
+- **Shipped:**
+  - **Authoritative Hardware Spec Harvester (`DNAC-01`, `DNAC-02`)**: Extracted authentic Cisco 4331 ISR hardware specs (`model: Cisco 4331 Integrated Services Router`, `serial: FDO2517M1EG`, `mac: 6C:13:D5:BE:91:F0`, `os_version: 17.12.8`, `ip: 10.254.0.93`, `hostname: tr-ist-rtr01`, and `"border"` router role) directly from Cisco DNA Center `network_device` and `device_detail` responses with MongoDB `device_telemetry` persistence caching. Eliminated synthetic Catalyst 9300 switch mock bleed-through via `isDnacActive` gating and rendered honest null states (`—`).
+  - **Live Reachability Alert Status Verification (`DNAC-03`)**: Added `_REACHABILITY_KEYWORDS` recognizer, hostname/IP auto-resolution via `get_device_by_name_or_ip()`, and cross-referenced `get_device_health()`. When DNAC explicitly reports a device as unreachable (`communicationState: UNREACHABLE` / `reachabilityStatus: Unreachable`), alerts are acknowledged as `ACTIVE` instead of prematurely falling back to `UNCERTAIN`.
+  - **Delayed Verification Pipeline & Production Hardening**: Normalized parameter forwarding (`device_name`, `issue_id`), escalated unreached devices as `"Non-Auto Resolving"` straight to ServiceNow, and eliminated test ordering pollution in `tests/test_prod_hardening.py` with isolated credentials.
+  - **Management-Plane Root-Cause Diagnostics & Isolation Observability (`DNAC-04`)**: Harvester extracted `NCIM12013`, `reachabilityFailureReason: SNMP Connectivity Failed`, and `is_management_plane_isolated`. Rendered dedicated "Management Plane Diagnostics" card in SRE Drawer with operating state indicator (`● Node Active (Uptime 7d 18h) • Management Plane Isolated`) distinguishing management timeouts on running routers from physical outages.
+  - **Authoritative Identity & Location Mapping (`DNAC-05`)**: Parsed Cisco DNAC hierarchical location paths (`Global/EMEA/TR Istanbul/Umut Street` -> `Istanbul`), and populated authoritative hostname `tr-ist-rtr01` across `/api/devices`, drawer headers, and placement cards.
+  - **100% Automated Quality Gates**: 57 automated tests passing with zero failures; clean production build with 870ms compilation.
+
 ## Completed Milestones
 
 ### v1.0 False Alert Metrics Alignment (Completed 2026-09-30)
+
 - **Goal:** Verify and align Total Processed KPI calculation, category filtering, and backend endpoints.
 - **Shipped:**
   - `Total Processed` defined as strictly `Suppressed + Auto-Resolving + Non-Auto-Resolving + Uncertain`.
@@ -12,6 +24,7 @@
   - Aligned `/api/kpi/summary` endpoints in `api.py` and `chat_agent.py`.
 
 ### v1.1 Application Bring-Up & Local Orchestration (Completed 2026-09-30)
+
 - **Goal:** Launch, orchestrate, and verify all core services of the False Alert Suppression pipeline locally, ensuring the backend API, React dashboard, and health checks are fully operational and reachable.
 - **Shipped:**
   - Created [`start_dashboard.py`](file:///c:/Users/Arghya/Desktop/Solutions/false-alert-suppression/start_dashboard.py) launcher.
@@ -20,6 +33,7 @@
   - Verified live data connection and polling.
 
 ### v1.2 Custom Date & Time Range Filtering (Completed 2026-09-30)
+
 - **Goal:** Allow users to specify custom start and end date/time ranges in the False Alert Metrics filter bar to inspect alert volume and KPIs within exact historical windows.
 - **Shipped:**
   - Added "Custom Range" button and dropdown selector option in `FalseAlertMetrics.jsx`.
@@ -28,6 +42,7 @@
   - Verified with Vite build and browser subagent end-to-end testing.
 
 ### v1.3 Layout Overflow Fixes, Skeleton Shimmers & Linter Cleanup (Completed 2026-09-30)
+
 - **Goal:** Resolve viewport overflows, add shimmer skeletons, and clean up dead code.
 - **Shipped:**
   - Fixed horizontal scrollbars on dashboard layout.
@@ -35,6 +50,7 @@
   - Fixed location pin emoji redundancy and cleaned up 18 dead linter warnings.
 
 ### v1.4 Complete UI/UX Expert Audit Implementation (Completed 2026-09-30)
+
 - **Goal:** Implement audit recommendations for responsive layouts, micro-interactions, dark/light themes, and tables.
 - **Shipped:**
   - Responsive multi-column device grid in Network Operations.
@@ -45,6 +61,7 @@
   - Complete dark/light mode theme system with CSS variables and header toggle switch.
 
 ### v1.5 Executive & Observability Network Operations Center (NOC) Overhaul (Completed 2026-10-01)
+
 - **Goal:** Transform Network Operations Center into a world-class executive & observability command center featuring enterprise telemetry KPIs, multi-view representation hierarchy, micro-visualizations, and an interactive incident timeline drawer.
 - **Shipped:**
   - Executive Telemetry & Health KPI Strip (Fleet Health Score %, Noise Suppression Rate %, Blast Radius, MTTR, Site Resilience).
@@ -53,6 +70,7 @@
   - Interactive SRE Investigation Drawer (5-stage chronological multi-agent decision timeline, Assurance telemetry cards, inventory specs, formatted JSON payload viewer, and sticky action bar).
 
 ### v1.6 Live DNAC Assurance Telemetry & Asset Integration (Completed 2026-10-05)
+
 - **Goal:** Bridge the Network Operations Center directly with live Cisco DNA Center Assurance and Device Inventory APIs, replace client-side simulated drawer vitals and artificial poll timeouts with real backend endpoints, add live provenance indicators, and deliver an interactive SRE workstation with zero-delay fleet synchronization.
 - **Shipped:**
   - DNAC API Client Extensions (`app/dnac_client.py`): Query methods `get_device_by_name_or_ip` and `get_device_health`, automated 401 token authentication retries, and typed exception hierarchy (`app/exceptions.py`).
@@ -62,6 +80,7 @@
   - Real Live Poll & Fleet-Wide Synchronization: Replaced simulated timeouts with real HTTP live-poll calls, dynamic toast notifications, and `onRefresh()` propagation across Executive Topology, SRE Table, and Regional Site Matrix.
 
 ### v1.7 NOC Details Drawer Scrollbar & Usability Polish (Completed 2026-10-05)
+
 - **Goal:** Ensure the device details pane across Executive Topology (and other NOC views) features an accessible, clearly visible, theme-aware scrollbar with a cleanly separated fixed header/tabs, independently scrollable content container, and pinned action bar.
 - **Shipped:**
   - Dedicated Theme-Aware Scrollbar: High-contrast scrollbar styling for `.detail-panel-body` in both dark and light modes, eliminating invisible/transparent scrollbars so operators immediately perceive scrollability.
@@ -69,6 +88,7 @@
   - Cross-Tab Viewport Verification: Smooth scrolling across all 4 workspaces (Alert Triage, Assurance Telemetry, Device Inventory, Raw Payloads) with automated contract tests in `tests/test_drawer_scrollbar_contract.py`.
 
 ### v1.8 Interactive Network Topology Graph Diagram (Completed 2026-10-05)
+
 - **Goal:** Provide an interactive SVG network topology graph diagram mapping Core, Distribution, and Access tier infrastructure with pan/zoom canvas, live health status nodes, dynamic interconnects, and seamless integration with the SRE details drawer.
 - **Shipped:**
   - SVG Topology Canvas & Hierarchical Links (`TopologyGraphView.jsx`): Pan, zoom, reset, fit-to-view, and fullscreen mode. Core backbone mesh, Core-to-Dist, and Dist-to-Access links with animated pulse indicators on degraded paths.
@@ -76,6 +96,7 @@
   - SRE Drawer Integration: Clicking any node opens the slide-out SRE inspection drawer with real-time telemetry and triage actions.
 
 ### v1.9 UI/UX Audit Remediation (Completed 2026-10-06)
+
 - **Goal:** Address all critical, high, and medium UI/UX audit findings to deliver a robust, accessible, high-contrast, and responsive NOC dashboard.
 - **Shipped:**
   - Responsive Layout & Breakpoint Stabilization: Fixed 1100px breakpoint collapse in `.content-area` with fluid flexbox architecture.
@@ -86,11 +107,10 @@
   - Craft & Consistency Polish: Established 6-step strict typography scale (`--font-xs` through `--font-2xl`), converged KPI cards to executive NOC architecture with active filter glows, eliminated prototype simulation buttons, unified empty states with `EmptyState.jsx`, and expanded domain shorthand tooltips.
 
 ### v2.0 Multi-Site Hierarchical Topology & WAN Observability (Completed 2026-10-06)
+
 - **Goal:** Enable global enterprise observability by providing a 2-level hierarchical network topology canvas featuring an interactive Level 1 Global Multi-Site WAN interconnect map and a Level 2 Site-Specific LAN tier graph with seamless cross-view synchronization.
 - **Shipped:**
   - Level 1 Global Multi-Site WAN Interconnect Canvas (`SITE-01`, `SITE-02`, `SITE-03`): Interactive macro site cards clustered across EMEA, Americas, and APAC; dynamic blast radius calculation with pulsing perimeter halos (`.blast-radius-halo`); smooth cubic bezier WAN cables with animated packet transit flows (`@keyframes wanFlow`) and latency badges (`24ms`, `115ms`, etc.).
   - Level 2 Site LAN Drill-Down & Breadcrumbs (`SITE-04`, `SITE-05`, `SITE-06`): Local 3-tier hierarchy (Core ↔ Distribution ↔ Access) scoped strictly to the selected site fleet; responsive breadcrumbs (`Global WAN Interconnect > [Site Name]`) with single-click return; accessible site-switcher dropdown (`.noc-site-switcher-select`) for instant site hopping; site-scoped device filtering.
   - Cross-View Site Synchronization & Filter Alignment (`SITE-07`, `SITE-08`): Deep-linking between Regional Site Matrix cards and topology drill-down with `.active-site` border glow; interactive SRE High-Density Table location buttons (`.noc-table-loc-btn`); dedicated multi-dimensional `Site:` filter cluster with live device count chips and global reset.
   - 100% Automated Quality Gates: 106 automated tests passing with zero failures; clean production build with 894ms compilation.
-
-

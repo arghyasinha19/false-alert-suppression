@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Real DNAC Telemetry & Production Hardening
-status: complete
-last_updated: "2026-10-07T14:38:00.000Z"
-last_activity: 2026-10-07
+status: Awaiting next milestone
+last_updated: "2026-10-07T15:01:30.137Z"
+last_activity: 2026-10-07 — Milestone v2.1 completed and archived
 progress:
   total_phases: 3
   completed_phases: 3
   total_plans: 5
-  completed_plans: 5
+  completed_plans: 8
   percent: 100
 ---
 
@@ -17,10 +17,18 @@ progress:
 
 ## Current Position
 
-Phase: 29 — Diagnostic Root-Cause Observability & Identity Mapping
-Plan: 29-01 (Complete), 29-02 (Complete)
-Status: Milestone v2.1 Complete (All 3 phases verified: Phase 27, 28, 29)
-Last activity: 2026-10-07 — Phase 29 executed and verified (DNAC-04, DNAC-05)
+Phase: Milestone v2.1 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-10-07 — Milestone v2.1 completed and archived
+
+## Key Decisions Made (Milestone v2.1)
+
+- Harvest hardware attributes directly from DNAC `raw_response.network_device` and `raw_response.device_detail` to eliminate synthetic procedural mock bleed-through.
+- Gate procedural switch mocks strictly to offline mode via `isDnacActive` and render honest nulls (`—`) for unreachable nodes in SRE Drawer.
+- Cross-reference live device reachability (`get_device_health()`) in `dnac_status.py` so explicitly unreachable devices return `ACTIVE` rather than falling through to `UNCERTAIN`.
+- Surface deep management plane diagnostics (`NCIM12013`, `SNMP Connectivity Failed`, `is_management_plane_isolated`) in SRE Drawer to distinguish credential/timeout blips from physical hardware down events.
+- Strip country code prefixes (`TR Istanbul` -> `Istanbul`) to extract geographical site locations cleanly from Cisco DNAC location hierarchy paths.
 
 ## Key Decisions Made (Milestone v2.0)
 
@@ -60,3 +68,7 @@ Last activity: 2026-10-07 — Phase 29 executed and verified (DNAC-04, DNAC-05)
 ## Blockers/Concerns
 
 - None. Milestone v2.0 requirements defined and ready for roadmap.
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone
