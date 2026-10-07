@@ -8,7 +8,7 @@
 | Phase | Milestone | Name | Goal | Requirements | Status |
 |-------|-----------|------|------|--------------|--------|
 | 27 | v2.1 | Authoritative DNAC Hardware & Spec Resolution | Parse hardware specs directly from DNAC raw inventory, eliminate synthetic procedural mock bleed-through in SRE drawer | DNAC-01, DNAC-02 | Complete |
-| 28 | v2.1 | Live Reachability Cross-Referencing in Alert Verification | Cross-reference live device reachability state in delayed verification, acknowledging UNREACHABLE states instead of premature UNCERTAIN fallback | DNAC-03 | Planned |
+| 28 | v2.1 | Live Reachability Cross-Referencing in Alert Verification | Cross-reference live device reachability state in delayed verification, acknowledging UNREACHABLE states instead of premature UNCERTAIN fallback | DNAC-03 | Complete |
 | 29 | v2.1 | Diagnostic Root-Cause Observability & Identity Mapping | Surface deep SNMP failure reasons (NCIM12013) in SRE drawer, map IP identifiers to DNAC hostnames and geographical sites | DNAC-04, DNAC-05 | Not Started |
 
 ---
@@ -34,7 +34,7 @@
 
 **Goal:** Enhance alert status verification in `workflow/tools/dnac_status.py` so that alerts on devices with explicit unreachability status are acknowledged directly rather than falling through to UNCERTAIN.
 
-**Status:** Not Started
+**Status:** Complete
 
 **Requirements:**
 - **DNAC-03**: Alert status verification (`workflow/tools/dnac_status.py`) cross-references live device reachability state (`communicationState: UNREACHABLE` / `reachabilityStatus: Unreachable` from `/device-detail` and `/network-device/{id}`) so alerts on unreachable devices are acknowledged rather than defaulting to `UNCERTAIN` when DNAC explicitly confirms the device is unreached.

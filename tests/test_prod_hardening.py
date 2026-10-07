@@ -79,6 +79,10 @@ def _isolate(monkeypatch):
     import workflow.tools.email_client as ec
     monkeypatch.setattr(ec.EmailClient, "send_email", lambda self, s, b: True)
     monkeypatch.setenv("SNOW_PUSH_ENABLED", "yes")
+    monkeypatch.setenv("DNAC_USERNAME", "u")
+    monkeypatch.setenv("DNAC_PASSWORD", "p")
+    monkeypatch.setenv("RABBITMQ_USERNAME", "u")
+    monkeypatch.setenv("RABBITMQ_PASSWORD", "p")
     FakeSnow.instances.clear()
     yield fake_mongo
 

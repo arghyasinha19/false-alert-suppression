@@ -28,9 +28,9 @@ def run_delayed_check(alert: Dict[str, Any]) -> Dict[str, Any]:
     state: Dict[str, Any] = {"alert": alert, "results": {}, "errors": [], "remarks": {}}
 
     dnac_status = check_alert_status(
-        issue_id=alert.get("issue_id"),
+        issue_id=alert.get("issue_id") or alert.get("instance_id"),
         device_id=alert.get("device_id"),
-        device_name=alert.get("device_name"),
+        device_name=alert.get("device_name") or alert.get("device"),
         issue_name=alert.get("issue_name"),
     )
     state["results"]["delayed_check"] = {
