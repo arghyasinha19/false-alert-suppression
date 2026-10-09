@@ -14,9 +14,14 @@ Accurately identify false or transient network alerts to prevent unnecessary Ser
 - ✓ **v2.0 Multi-Site Hierarchical Topology & WAN Observability** (Shipped 2026-10-06)
 - ✓ **v1.0 - v1.9 Observability, Telemetry & UI/UX Foundations** (Shipped 2026-09-30 – 2026-10-06)
 
-## Next Milestone Goals
+## Current Milestone: v2.2 Production Readiness & Mock Data Elimination
 
-To be defined via `/gsd-new-milestone`.
+**Goal:** Clean all mock data and synthetic data fallbacks as the solution will be deployed into production.
+
+**Target features:**
+- Remove all simulated/synthetic alerts and metric data generators.
+- Strip all fallback offline mocks in both the frontend (e.g., SRE Drawer fallbacks) and backend services.
+- Enforce strict reliance on live Cisco DNA Center API data and MongoDB persistent storage.
 
 ## Requirements
 
@@ -134,4 +139,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-07 after Milestone v2.1 completion*
+*Last updated: 2026-10-09 after starting Milestone v2.2*
