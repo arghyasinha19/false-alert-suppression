@@ -122,7 +122,7 @@ def test_get_telemetry_offline_with_cached_state():
 
 
 def test_get_telemetry_offline_without_cache():
-    """Verify total fallback to null vitals and source: 'offline' when no cache exists."""
+    """Verify total fallback raises 503 instead of returning mock offline templates."""
     mock_dnac = MagicMock()
     mock_dnac.get_device_by_name_or_ip.side_effect = DNACConnectionError("Network timeout")
 
@@ -135,16 +135,12 @@ def test_get_telemetry_offline_without_cache():
          patch("dashboard.api.mongo", mock_mongo):
         res = client.get("/api/devices/unseen-switch-99/telemetry")
 
-    assert res.status_code == 200
-    data = res.json()
-    assert data["source"] == "offline"
-    assert data["telemetry"]["cpu"] is None
-    assert data["telemetry"]["memory"] is None
-    assert data["telemetry"]["reachable"] is False
+    assert res.status_code == 503
+    assert "Cisco DNA Center or telemetry cache unreachable" in res.json()["detail"]
 
 
 def test_get_telemetry_device_not_found():
-    """Verify handling when DNAC raises DeviceNotFoundError."""
+    """Verify handling when DNAC raises DeviceNotFoundError raises 503."""
     mock_dnac = MagicMock()
     mock_dnac.get_device_by_name_or_ip.side_effect = DeviceNotFoundError("missing-device")
 
@@ -157,10 +153,8 @@ def test_get_telemetry_device_not_found():
          patch("dashboard.api.mongo", mock_mongo):
         res = client.get("/api/devices/missing-device/telemetry")
 
-    assert res.status_code == 200
-    data = res.json()
-    assert data["source"] == "offline"
-    assert data["telemetry"]["reachable"] is False
+    assert res.status_code == 503
+    assert "unreachable" in res.json()["detail"]
 
 
 def test_post_live_poll_success():
@@ -225,7 +219,7 @@ def test_post_live_poll_singular_alias():
 
 
 def test_post_live_poll_dnac_offline_graceful():
-    """Verify live-poll returns warning without raising 500 when DNAC is offline."""
+    """Verify live-poll returns 503 when DNAC is offline."""
     mock_dnac = MagicMock()
     mock_dnac.get_device_by_name_or_ip.side_effect = DNACConnectionError("DNAC connection refused")
 
@@ -239,11 +233,8 @@ def test_post_live_poll_dnac_offline_graceful():
          patch("dashboard.api.mongo", mock_mongo):
         res = client.post("/api/devices/cat9300-access-01/live-poll")
 
-    assert res.status_code == 200
-    data = res.json()
-    assert data["status"] == "warning"
-    assert data["dnac_reachable"] is False
-    assert data["telemetry"]["reachable"] is False
+    assert res.status_code == 503
+    assert "Cisco DNA Center unreachable" in res.json()["detail"]
 
 
 def test_telemetry_raw_response_hardware_extraction():

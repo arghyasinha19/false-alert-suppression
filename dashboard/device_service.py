@@ -437,15 +437,8 @@ def fetch_device_telemetry(
             logger.warning(f"Failed to read cached telemetry for {device_name}: {e}")
 
 
-    # 4. Total fallback: return null/empty vitals
-    return {
-        "device_name": device_name,
-        "device_id": device_id,
-        "source": "offline",
-        "timestamp": now_iso,
-        "telemetry": get_empty_telemetry_dict(),
-        "device_info": device_info or default_info,
-    }
+    # 4. Total fallback: raise exception instead of returning mock data
+    raise DNACConnectionError(f"Cisco DNA Center unreachable and no cached telemetry exists for {device_name}")
 
 
 def poll_device_live(
@@ -529,6 +522,9 @@ def poll_device_live(
     # 2. Fetch fresh telemetry
     telemetry_res = fetch_device_telemetry(device_name, mongo_client, dnac_client)
     dnac_reachable = telemetry_res.get("source") == "dnac_live"
+    
+    if not dnac_reachable:
+        raise DNACConnectionError(f"Cisco DNA Center unreachable during live poll for {device_name}")
 
     return {
         "status": "success" if dnac_reachable else "warning",

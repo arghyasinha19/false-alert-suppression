@@ -94,87 +94,7 @@ function TemplateText({ text }) {
   );
 }
 
-/* ── Mock data generator ── */
-function generateMockPatterns() {
-  const templates = [
-    { template: 'AP {DEVICE} has flapped', category: 'Auto Resolving', count: 14 },
-    { template: 'This network device {FQDN} is unreachable from Cisco Catalyst Center. The device role is {DEVICE}.', category: 'Non-Auto Resolving', count: 11 },
-    { template: 'BGP peer {IP} on {DEVICE} is down', category: 'Non-Auto Resolving', count: 8 },
-    { template: 'Device {DEVICE} CPU utilization is at {PCT}', category: 'Auto Resolving', count: 7 },
-    { template: 'Interface {IFACE} on {DEVICE} has gone down', category: 'Auto Resolving', count: 6 },
-    { template: 'OSPF neighbor {IP} on {DEVICE} is down', category: 'Non-Auto Resolving', count: 5 },
-    { template: 'Memory utilization is consistently above {PCT}', category: 'Auto Resolving', count: 4 },
-    { template: 'Power Supply {NUM} on {DEVICE} has failed', category: 'Non-Auto Resolving', count: 3 },
-    { template: 'AP {DEVICE} is unreachable', category: 'Non-Auto Resolving', count: 2 },
-  ];
 
-  const devices = [
-    'UK-MAL-DEV-AP02', 'Core-Router-01', 'Access-Switch-05',
-    'Switch-12', 'US-NY-HQ-AP05', 'SG-SIN-FW01', 'UK-LON-SW01',
-    'US-CHI-RT03', 'DE-FRA-AP01', 'JP-TKY-SW02'
-  ];
-
-  const now = Date.now();
-  const patterns = templates.map((t, idx) => {
-    const hourly = [];
-    for (let h = 0; h < 48; h++) {
-      const ts = new Date(now - h * 3600000);
-      const count = Math.random() < 0.4 ? 0 : Math.floor(Math.random() * (t.count / 3 + 1));
-      if (count > 0) {
-        hourly.push({ time: ts.toISOString().slice(0, 13) + ':00', count });
-      }
-    }
-    hourly.reverse();
-
-    const selectedDevices = devices.slice(idx % devices.length, idx % devices.length + Math.min(3, t.count));
-    const categoryBreakdown = {};
-    categoryBreakdown[t.category] = Math.ceil(t.count * 0.6);
-    categoryBreakdown['Backdated'] = Math.floor(t.count * 0.2);
-    categoryBreakdown['Uncertain'] = t.count - categoryBreakdown[t.category] - categoryBreakdown['Backdated'];
-
-    const suppressed = (categoryBreakdown['Backdated'] || 0) + (categoryBreakdown['Auto Resolving'] || 0);
-    
-    return {
-      cluster_id: idx,
-      template: t.template,
-      alert_count: t.count,
-      devices: selectedDevices,
-      category_breakdown: categoryBreakdown,
-      suppression_rate: t.count > 0 ? Math.round(suppressed / t.count * 100 * 10) / 10 : 0,
-      time_span: {
-        first: new Date(now - 168 * 3600000).toISOString(),
-        last: new Date(now - 1800000).toISOString(),
-      },
-      hourly_distribution: hourly,
-      noise: false,
-      alerts: [],
-    };
-  });
-
-  // Volume series
-  const volume = [];
-  for (let h = 0; h < 48; h++) {
-    const ts = new Date(now - h * 3600000);
-    volume.push({
-      time: ts.toISOString().slice(0, 13) + ':00',
-      Backdated: Math.floor(Math.random() * 3),
-      'Auto Resolving': Math.floor(Math.random() * 5),
-      'Non-Auto Resolving': Math.floor(Math.random() * 3),
-      Uncertain: Math.floor(Math.random() * 2),
-      total: 0,
-      cumulative: 0,
-    });
-  }
-  volume.reverse();
-  let cumulative = 0;
-  volume.forEach(v => {
-    v.total = v.Backdated + v['Auto Resolving'] + v['Non-Auto Resolving'] + v.Uncertain;
-    cumulative += v.total;
-    v.cumulative = cumulative;
-  });
-
-  return { patterns, volume_series: volume, total_alerts: 60, total_patterns: patterns.length, noise_count: 0 };
-}
 
 
 /* ============================================================================
@@ -199,10 +119,10 @@ export default function AlertPatterns() {
         if (json.patterns && json.patterns.length > 0) {
           setData(json);
         } else {
-          setData(generateMockPatterns());
+          setData({ patterns: [], volume_series: [], total_alerts: 0, total_patterns: 0, noise_count: 0 });
         }
       } catch {
-        setData(generateMockPatterns());
+        setData({ patterns: [], volume_series: [], total_alerts: 0, total_patterns: 0, noise_count: 0 });
       } finally {
         setLoading(false);
       }

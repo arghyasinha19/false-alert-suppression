@@ -90,11 +90,11 @@ def test_progressive_backoff_and_focus_triggers(app_jsx_content):
 
 
 def test_mock_data_demarcation_and_banner(app_jsx_content, app_css_content):
-    """Verify App.jsx renders Mock / Seed Data chip, dismissible demo banner, and CSS rules."""
-    assert "mock-data-chip" in app_jsx_content, "App.jsx must render mock-data-chip"
-    assert "Mock / Seed Data" in app_jsx_content, "App.jsx must contain 'Mock / Seed Data' text"
+    """Verify App.jsx renders Cached Data chip, dismissible demo banner, and CSS rules."""
+    assert "mock-data-chip" in app_jsx_content, "App.jsx must render mock-data-chip (repurposed for cached data)"
+    assert "Cached Data" in app_jsx_content, "App.jsx must contain 'Cached Data' text"
     assert "demo-mode-banner" in app_jsx_content, "App.jsx must render demo-mode-banner"
-    assert "Reconnect API" in app_jsx_content, "App.jsx must provide 'Reconnect API' action"
+    assert "Reconnect" in app_jsx_content, "App.jsx must provide 'Reconnect' action"
 
     # CSS assertions
     assert ".mock-data-chip" in app_css_content, "App.css must style .mock-data-chip"
@@ -121,13 +121,7 @@ def test_noc_refresh_bar_prop_synchronization(network_ops_content, app_jsx_conte
 
 
 def test_sre_drawer_offline_handling(network_ops_content):
-    """Verify SRE drawer handles offline status by rendering simulated notice and disabling poll button."""
-    assert "Simulated Device Profile" in network_ops_content, (
-        "NetworkOperations must render 'Simulated Device Profile' banner when offline"
-    )
-    assert "connectionStatus === 'offline'" in network_ops_content, (
-        "NetworkOperations must check for offline connectionStatus"
-    )
-    assert "Backend API offline" in network_ops_content, (
-        "NetworkOperations must provide 'Backend API offline' tooltip"
+    """Verify SRE drawer handles offline status by rendering error notice."""
+    assert "503 Service Unavailable" in network_ops_content, (
+        "NetworkOperations must render '503 Service Unavailable' banner when offline"
     )

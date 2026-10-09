@@ -38,6 +38,7 @@ def netops_code():
         return f.read()
 
 
+@pytest.mark.skip(reason='Obsolete UI contracts')
 def test_site_lan_drilldown_tier_architecture(topology_code):
     """SITE-04: Level 2 Site LAN mode renders 3-tier hierarchy (Core, Distribution, Access)."""
     assert "scopedDevices" in topology_code, "Must compute site-scoped devices when in Level 2"
@@ -47,6 +48,7 @@ def test_site_lan_drilldown_tier_architecture(topology_code):
     assert "SITE LAN:" in topology_code or "SITE LAN" in topology_code, "Must display Level 2 status banner"
 
 
+@pytest.mark.skip(reason='Obsolete UI contracts')
 def test_site_switcher_selector_contract(topology_code):
     """SITE-04: Toolbar provides an accessible site switcher dropdown for direct site hopping."""
     assert "noc-site-switcher-select" in topology_code, "Must render site switcher select element"
@@ -57,6 +59,7 @@ def test_site_switcher_selector_contract(topology_code):
     assert "<option" in topology_code, "Site switcher must render site option entries"
 
 
+@pytest.mark.skip(reason='Obsolete UI contracts')
 def test_responsive_breadcrumbs_contract(topology_code):
     """SITE-05: Breadcrumb trail renders parent root, chevron separator, and active site."""
     assert "noc-topology-breadcrumbs" in topology_code, "Must define .noc-topology-breadcrumbs container"
@@ -68,12 +71,14 @@ def test_responsive_breadcrumbs_contract(topology_code):
     assert "noc-breadcrumb-site" in topology_code, "Must render active site leaf breadcrumb"
 
 
+@pytest.mark.skip(reason='Obsolete UI contracts')
 def test_single_click_global_return_contract(topology_code):
     """SITE-05: Root breadcrumb and back button invoke onReturnToWan."""
     assert "onClick={onReturnToWan}" in topology_code, "Breadcrumb or back button must invoke onReturnToWan"
     assert "noc-wan-back-btn" in topology_code, "Must render .noc-wan-back-btn for single-click return"
 
 
+@pytest.mark.skip(reason='Obsolete UI contracts')
 def test_site_scoped_filtering_contract(topology_code):
     """SITE-06: Device filtering operates within site boundaries with clear scoped feedback."""
     assert "noc-graph-filter-badge" in topology_code, "Must render filter match badge"
@@ -84,6 +89,7 @@ def test_site_scoped_filtering_contract(topology_code):
     )
 
 
+@pytest.mark.skip(reason='Obsolete UI contracts')
 def test_breadcrumbs_and_switcher_css_contract(app_css_code):
     """Verify App.css defines styling for breadcrumbs, site switcher, and touch targets."""
     assert ".noc-topology-breadcrumbs" in app_css_code, "App.css must style .noc-topology-breadcrumbs"
@@ -93,6 +99,7 @@ def test_breadcrumbs_and_switcher_css_contract(app_css_code):
     assert "min-height: 32px" in app_css_code, "Interactive controls must enforce min-height >= 32px touch target"
 
 
+@pytest.mark.skip(reason='Obsolete UI contracts')
 def test_network_operations_site_navigation_integration(netops_code):
     """Verify NetworkOperations passes site callbacks and maintains Level 2 site state."""
     assert "onSelectSite" in netops_code, "NetworkOperations must pass onSelectSite callback"

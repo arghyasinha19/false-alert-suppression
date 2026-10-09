@@ -2,7 +2,7 @@ import os
 import sys
 import json
 import asyncio
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 import logging
@@ -56,9 +56,6 @@ app = FastAPI(title="False Alert Suppression API")
 # Allowed browser origins (comma-separated). Default: local Vite dev server only.
 CORS_ORIGINS = [o.strip() for o in os.getenv("DASHBOARD_CORS_ORIGINS", "http://localhost:5173").split(",") if o.strip()]
 
-# Simulated/demo data must never be shown in production by accident.
-ALLOW_SIMULATED_DATA = os.getenv("DASHBOARD_ALLOW_SIMULATED", "false").lower() in ("1", "true", "yes")
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
@@ -79,47 +76,25 @@ def safe_get(d, *keys, default=None):
         if curr is None:
             return default
     return curr
-
-
-
-SIMULATED_FILE = os.path.join(project_root, "data", "simulated_alerts.json")
-
-
-def load_simulated_alerts():
-    if not ALLOW_SIMULATED_DATA:
-        return []
-    if os.path.exists(SIMULATED_FILE):
-        try:
-            with open(SIMULATED_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception as e:
-            logger.error(f"Error loading simulated alerts: {e}")
-    try:
-        from simulate_data import generate_simulated_alerts, save_simulated_alerts
-        alerts = generate_simulated_alerts(60)
-        save_simulated_alerts(alerts)
-        return alerts
-    except Exception as e:
-        logger.error(f"Error generating fallback simulated alerts: {e}")
-        return []
-
-
 def get_alert_records():
-    """Fetch alerts from MongoDB, falling back to simulated data when MongoDB is offline."""
+    """Fetch alerts from MongoDB."""
     collection = mongo.get_collection("alert_results")
-    if collection is not None:
-        try:
-            alerts = list(collection.find({}, {"_id": 0}))
-            if alerts:
-                return alerts
-        except Exception as e:
-            logger.warning(f"MongoDB query failed, falling back to simulated data: {e}")
-    return load_simulated_alerts()
+    if collection is None:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+    try:
+        alerts = list(collection.find({}, {"_id": 0}))
+        return alerts if alerts else []
+    except Exception as e:
+        logger.error(f"MongoDB query failed: {e}")
+        raise HTTPException(status_code=503, detail="Database unavailable")
 
 
 @app.get("/api/alerts")
-def get_alerts():
+def get_alerts(response: Response):
     """Fetch all processed alerts from MongoDB or local simulated repository."""
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
     alerts = get_alert_records()
 
     # Enrich with live ServiceNow statuses (best-effort — never blocks alerts)
@@ -143,41 +118,25 @@ def get_alerts():
     except Exception as e:
         logger.warning(f"ServiceNow enrichment failed (alerts still returned): {e}")
 
-    if mongo.get_collection("alert_results") is not None:
-        source = "mongodb"
-    else:
-        source = "simulated" if ALLOW_SIMULATED_DATA else "unavailable"
-    return {"alerts": alerts, "source": source}
+    return {"alerts": alerts, "source": "mongodb"}
 
 
 @app.post("/api/alerts/simulate")
 def simulate_alert(count: int = 1, reset: bool = False):
-    """Generate and inject new simulated alert(s) into the system (disabled unless DASHBOARD_ALLOW_SIMULATED=true)."""
-    if not ALLOW_SIMULATED_DATA:
-        return {"status": "disabled", "message": "Simulation is disabled in this environment."}
-    try:
-        from simulate_data import generate_simulated_alerts, save_simulated_alerts
-        new_alerts = generate_simulated_alerts(count)
-        all_alerts = save_simulated_alerts(new_alerts, append=(not reset))
-        logger.info(f"Simulated {count} new alerts (total now: {len(all_alerts)})")
-        return {
-            "status": "success",
-            "added": count,
-            "total_alerts": len(all_alerts),
-            "new_alerts": new_alerts,
-        }
-    except Exception as e:
-        logger.error(f"Failed to simulate alerts: {e}")
-        return {"status": "error", "message": str(e)}
+    """Simulation disabled in production."""
+    raise HTTPException(status_code=403, detail="Simulation disabled in production")
 
 
 @app.get("/api/devices")
-def get_devices():
+def get_devices(response: Response):
     """
     Return a unique list of devices with aggregated stats:
     latest status, total alert count, location (derived from name),
     active alerts, resolved alerts (split by dnac_live_status), etc.
     """
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
     try:
         alerts = get_alert_records()
         device_map = {}
@@ -284,27 +243,21 @@ def get_devices():
 def get_device_history(device_name: str):
     """Return all historical alert records for a specific device."""
     collection = mongo.get_collection("alert_results")
-    if collection is not None:
-        try:
-            # Query by device_name in alert_details
-            query = {
-                "$or": [
-                    {"alert_details.device_name": device_name},
-                    {"alert_details.device": device_name},
-                ]
-            }
-            alerts = list(collection.find(query, {"_id": 0}).sort("alert_details.timestamp", -1))
-            return {"device_name": device_name, "alerts": alerts}
-        except Exception as e:
-            logger.error(f"Error fetching history for {device_name}: {e}")
-
-    # Fallback to simulated data
-    alerts = [
-        a for a in get_alert_records()
-        if (safe_get(a, "alert_details", "device_name") == device_name or
-            safe_get(a, "alert_details", "device") == device_name)
-    ]
-    return {"device_name": device_name, "alerts": alerts}
+    if collection is None:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+    try:
+        # Query by device_name in alert_details
+        query = {
+            "$or": [
+                {"alert_details.device_name": device_name},
+                {"alert_details.device": device_name},
+            ]
+        }
+        alerts = list(collection.find(query, {"_id": 0}).sort("alert_details.timestamp", -1))
+        return {"device_name": device_name, "alerts": alerts}
+    except Exception as e:
+        logger.error(f"Error fetching history for {device_name}: {e}")
+        raise HTTPException(status_code=503, detail="Database unavailable")
 
 
 _dnac_client_instance = None
@@ -330,20 +283,7 @@ def get_device_telemetry(device_name: str):
         return fetch_device_telemetry(device_name, mongo_client=mongo, dnac_client=client)
     except Exception as e:
         logger.error(f"Error handling telemetry endpoint for {device_name}: {e}")
-        return {
-            "device_name": device_name,
-            "device_id": None,
-            "source": "offline",
-            "timestamp": utc_now_iso(),
-            "telemetry": get_empty_telemetry_dict(),
-            "device_info": {
-                "model": "Unknown",
-                "serial": "Unknown",
-                "mac": "Unknown",
-                "os_version": "Unknown",
-                "ip_address": "Unknown",
-            },
-        }
+        raise HTTPException(status_code=503, detail="Cisco DNA Center or telemetry cache unreachable")
 
 
 @app.post("/api/devices/{device_name}/live-poll")
@@ -359,23 +299,7 @@ def live_poll_device(device_name: str):
         return poll_device_live(device_name, mongo_client=mongo, dnac_client=client)
     except Exception as e:
         logger.error(f"Error handling live-poll endpoint for {device_name}: {e}")
-        return {
-            "status": "warning",
-            "device_name": device_name,
-            "device_id": None,
-            "dnac_reachable": False,
-            "alerts_updated": 0,
-            "telemetry": get_empty_telemetry_dict(),
-            "device_info": {
-                "model": "Unknown",
-                "serial": "Unknown",
-                "mac": "Unknown",
-                "os_version": "Unknown",
-                "ip_address": "Unknown",
-            },
-            "source": "offline",
-            "timestamp": utc_now_iso(),
-        }
+        raise HTTPException(status_code=503, detail="Cisco DNA Center unreachable")
 
 
 @app.get("/api/kpi/summary")

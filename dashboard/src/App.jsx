@@ -154,7 +154,7 @@ function App() {
         consecutiveFailures: 0,
       });
     } catch (error) {
-      console.warn('API fetch failed, using mock data:', error);
+      console.warn('API fetch failed, retaining cached data:', error);
       consecutiveFailuresRef.current += 1;
       const failures = consecutiveFailuresRef.current;
 
@@ -417,10 +417,10 @@ function App() {
             {connectionState.status !== 'connected' && (
               <span
                 className="mock-data-chip"
-                title="Displaying simulated test telemetry because backend API is disconnected."
+                title="Backend API is disconnected. Displaying cached data."
               >
                 <Database size={12} />
-                <span>Mock / Seed Data</span>
+                <span>Cached Data</span>
               </span>
             )}
             <div
@@ -445,7 +445,7 @@ function App() {
               <span style={{ fontSize: '0.78rem', color: 'var(--text-tertiary)' }}>
                 {connectionState.status === 'connected' && alerts.length > 0
                   ? `${alerts.length} alerts`
-                  : 'Mock Data (Demo)'}
+                  : 'Cached Data'}
               </span>
             )}
           </div>
@@ -453,14 +453,14 @@ function App() {
 
         <div className="content-body">
           {connectionState.status !== 'connected' && !bannerDismissed && (
-            <div className="demo-mode-banner" role="alert">
+            <div className="demo-mode-banner error" role="alert">
               <div className="demo-mode-banner-content">
                 <div className="demo-mode-banner-title">
                   <Database size={15} />
-                  <strong>Operating in Demo / Offline Mode</strong>
+                  <strong>Backend API Unreachable (503)</strong>
                 </div>
                 <p>
-                  Displaying simulated test telemetry. Real-time Cisco DNA Center updates will resume automatically once backend connection is restored.
+                  Connection to backend failed. Retaining cached data from last successful sync. Real-time Cisco DNA Center updates will resume automatically once backend connection is restored.
                   {connectionState.lastSuccessfulSync && (
                     <span className="demo-mode-sync-time">
                       {' '}Last valid sync: {connectionState.lastSuccessfulSync.toLocaleTimeString()} (Failed).

@@ -45,59 +45,7 @@ function formatTimestamp(ts, fallback = '—') {
   return d ? d.toLocaleString() : fallback;
 }
 
-function generateMockData() {
-  const devices = [
-    'UK-MAL-DEV-AP02', 'Core-Router-01', 'Access-Switch-05',
-    'Switch-12', 'Dist-Router', 'Core-Switch-02', 'US-NY-HQ-AP05',
-    'SG-SIN-FW01', 'UK-LON-SW01', 'US-CHI-RT03', 'DE-FRA-AP01', 'JP-TKY-SW02'
-  ];
-  const categories = ['Auto resolving', 'Non-Auto Resolving', 'Auto resolving', 'Auto resolving', 'Non-Auto Resolving'];
-  const issueNames = [
-    'AP has flapped', 'BGP Peer is Down', 'High CPU Utilization',
-    'Interface State Down', 'OSPF Neighbor Down', 'High Memory Utilization',
-    'Power Supply Failure', 'AP is Offline'
-  ];
-  const severities = [1, 2, 3, 3, 1, 2, 1, 1];
-  const alerts = [];
-  const now = Date.now();
 
-  for (let i = 0; i < 48; i++) {
-    const deviceIdx = i % devices.length;
-    const catIdx = i % categories.length;
-    const issueIdx = i % issueNames.length;
-    const isBackdated = i % 7 === 0;
-    const predicted = isBackdated ? null : categories[catIdx];
-    const ts = new Date(now - (i * 1800000 + Math.random() * 600000)).toISOString();
-    const snowAction = predicted === 'Non-Auto Resolving'
-      ? (i % 3 === 0 ? 'incident_created' : i % 3 === 1 ? 'comment_appended' : 'incident_reopened')
-      : null;
-    const snowInc = snowAction ? `INC00${12345 + i}` : null;
-
-    alerts.push({
-      alert_details: {
-        event_id: `EVT-${String(i + 1).padStart(3, '0')}`,
-        device_name: devices[deviceIdx],
-        device_id: `dev-${String(deviceIdx + 1).padStart(3, '0')}`,
-        timestamp: ts,
-        severity: severities[issueIdx],
-        category: severities[issueIdx] <= 1 ? 'ERROR' : 'WARN',
-        status: i % 5 === 0 ? 'resolved' : 'active',
-        issue_name: issueNames[issueIdx],
-        issue_details: `${issueNames[issueIdx]} detected on ${devices[deviceIdx]}`,
-      },
-      results: {
-        agent_1: { data: { is_backdated: isBackdated }, status: 'success' },
-        ...(isBackdated ? {} : {
-          agent_2: { data: { predicted_category: predicted, confidence: (0.65 + Math.random() * 0.3).toFixed(2) }, status: 'success' },
-        }),
-        ...(predicted === 'Auto resolving' ? { agent_3: { data: { queue_status: 'delayed' }, status: 'success' } } : {}),
-        ...(snowAction ? { agent_4: { data: { action: snowAction, incident: snowInc }, status: 'success' } } : {}),
-      },
-      live_snow_status: snowAction === 'incident_created' ? 'New' : snowAction === 'comment_appended' ? 'In Progress' : snowAction === 'incident_reopened' ? 'Re-opened' : null,
-    });
-  }
-  return alerts;
-}
 
 /* ── Resizable column hook ── */
 function useResizableColumns() {
@@ -327,8 +275,7 @@ export default function FalseAlertMetrics({ alerts: rawAlerts, onRefresh: _onRef
   const { tableRef: traceTableRef, onMouseDown: onTraceColResize } = useResizableColumns();
 
   const alerts = useMemo(() => {
-    if (rawAlerts && rawAlerts.length > 0) return rawAlerts;
-    return generateMockData();
+    return rawAlerts || [];
   }, [rawAlerts]);
 
   const handleSort = (columnKey) => {

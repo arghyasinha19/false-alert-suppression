@@ -195,10 +195,9 @@ def test_network_operations_authoritative_spec_resolution_contract():
     assert "extractedOs" in src, "Missing extractedOs resolution in NetworkOperations.jsx"
     assert "extractedIp" in src, "Missing extractedIp resolution in NetworkOperations.jsx"
 
-    # 2. Verify isDnacActive gates procedural fallbacks
-    assert "isDnacActive" in src, "Missing isDnacActive guard in NetworkOperations.jsx"
-    assert "extractedModel || (isDnacActive ? 'Unknown' : proceduralVitals.model)" in src, \
-        "displayModel must gate proceduralVitals.model when DNAC is active"
+    # 2. Verify mock proceduralVitals fallbacks have been removed (Phase 31)
+    assert "proceduralVitals" not in src, "Mock proceduralVitals must be entirely eradicated"
+    assert "isDnacActive" not in src, "isDnacActive flag should no longer exist as fallback is removed"
 
     # 3. Verify deriveDeviceRole detects border routers and supports live role
     assert "roleStr.includes('border')" in src, "deriveDeviceRole must support border router role"

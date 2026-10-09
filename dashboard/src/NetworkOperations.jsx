@@ -155,61 +155,7 @@ function formatTimeOnly(ts, fallback = '—') {
 }
 
 
-function generateMockDevices() {
-  const templates = [
-    { name: 'UK-MAL-DEV-AP02', alerts: 3, nonAuto: 1, severity: 3 },
-    { name: 'UK-LON-SW01', alerts: 0, nonAuto: 0, severity: null },
-    { name: 'UK-LON-FW01', alerts: 1, nonAuto: 1, severity: 1 },
-    { name: 'US-NY-HQ-AP05', alerts: 2, nonAuto: 2, severity: 1 },
-    { name: 'US-NY-RT02', alerts: 0, nonAuto: 0, severity: null },
-    { name: 'US-CHI-RT03', alerts: 1, nonAuto: 0, severity: 3 },
-    { name: 'SG-SIN-FW01', alerts: 0, nonAuto: 0, severity: null },
-    { name: 'SG-SIN-SW02', alerts: 1, nonAuto: 1, severity: 2 },
-    { name: 'Core-Router-01', alerts: 4, nonAuto: 3, severity: 1 },
-    { name: 'Core-Switch-02', alerts: 0, nonAuto: 0, severity: null },
-    { name: 'Access-Switch-05', alerts: 2, nonAuto: 0, severity: 2 },
-    { name: 'Switch-12', alerts: 0, nonAuto: 0, severity: null },
-    { name: 'Dist-Router', alerts: 1, nonAuto: 1, severity: 1 },
-    { name: 'DE-FRA-AP01', alerts: 0, nonAuto: 0, severity: null },
-    { name: 'JP-TKY-SW02', alerts: 1, nonAuto: 0, severity: 3 },
-  ];
-  const issueNames = [
-    'BGP Peer is Down', 'AP is Offline', 'High CPU Utilization',
-    'OSPF Neighbor Down', 'Power Supply Failure', 'AP has flapped',
-    'High Memory Utilization', 'Interface State Down',
-  ];
-  const now = Date.now();
 
-  return templates.map((t, idx) => {
-    const activeAlerts = [];
-    for (let i = 0; i < t.alerts; i++) {
-      const sev = i === 0 && t.severity ? t.severity : (i % 2 === 0 ? 2 : 3);
-      activeAlerts.push({
-        event_id: `EVT-${String(idx * 10 + i + 1).padStart(3, '0')}`,
-        severity: sev,
-        issue_name: issueNames[(idx + i) % issueNames.length],
-        issue_details: `${issueNames[(idx + i) % issueNames.length]} detected on ${t.name}`,
-        category: sev <= 1 ? 'ERROR' : 'WARN',
-        timestamp: new Date(now - (i * 900000 + Math.random() * 300000)).toISOString(),
-        predicted_category: i < t.nonAuto ? 'Non-Auto Resolving' : 'Auto resolving',
-        snow_incident: i < t.nonAuto ? `INC00${12345 + idx * 10 + i}` : null,
-        snow_action: i < t.nonAuto ? (i % 2 === 0 ? 'incident_created' : 'incident_reopened') : null,
-      });
-    }
-    return {
-      device_name: t.name,
-      device_id: `dev-${String(idx + 1).padStart(3, '0')}`,
-      location: deriveLocation(t.name),
-      total_alerts: t.alerts + Math.floor(Math.random() * 10),
-      backdated: Math.floor(Math.random() * 3),
-      auto_resolving: t.alerts - t.nonAuto,
-      non_auto_resolving: t.nonAuto,
-      snow_incidents: t.nonAuto,
-      last_alert_time: t.alerts > 0 ? new Date(now - Math.random() * 3600000).toISOString() : null,
-      active_alerts: activeAlerts,
-    };
-  });
-}
 
 const ROLE_METADATA = {
   all: { id: 'all', label: 'All Roles', icon: Layers },
@@ -513,64 +459,7 @@ function deriveMultiAgentTimeline(alert, device) {
   return [stage1, stage2, stage3, stage4, stage5];
 }
 
-// ── Phase 12: Cisco DNA Center Assurance Telemetry Vitals Helper ──
-function getDeviceTelemetryVitals(device) {
-  const health = getDeviceHealth(device);
-  const isCritical = health === 'critical';
-  const isWarning = health === 'warning';
 
-  const seed = (device.device_name || '').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const cpuBase = isCritical ? 88 : isWarning ? 74 : 38;
-  const cpu = Math.min(99, cpuBase + (seed % 10));
-
-  const ramAllocated = isCritical ? '7.1' : isWarning ? '6.4' : '4.2';
-  const ramTotal = '8.0';
-  const ramPct = Math.round((parseFloat(ramAllocated) / 8.0) * 100);
-
-  const packetLoss = isCritical ? '0.14%' : isWarning ? '0.04%' : '0.00%';
-  const crcErrors = isCritical ? 42 : isWarning ? 8 : 0;
-  const reachability = isCritical ? 'Degraded (92%)' : isWarning ? '98.5%' : 'Optimal (100%)';
-  const latency = isCritical ? '48ms' : isWarning ? '24ms' : '8ms';
-  const poeUsage = isCritical ? '580W / 740W (78%)' : '340W / 740W (46%)';
-  const temp = isCritical ? '52°C (Elevated)' : isWarning ? '44°C' : '36°C (Nominal)';
-  const psuState = isCritical ? 'Redundant (PSU2 Warning)' : 'Dual Redundant (OK)';
-
-  const model = device.device_name.toLowerCase().includes('core') || device.device_name.toLowerCase().includes('router')
-    ? 'Cisco ASR 9904 Core Router'
-    : device.device_name.toLowerCase().includes('fw') || device.device_name.toLowerCase().includes('sec')
-    ? 'Cisco Secure Firewall 4120'
-    : device.device_name.toLowerCase().includes('ap')
-    ? 'Cisco Catalyst 9130AX Series AP'
-    : 'Cisco Catalyst 9300-48UXM Switch';
-
-  const osVer = device.device_name.toLowerCase().includes('fw') ? 'FTD 7.2.5' : 'Cisco IOS-XE 17.9.4a';
-  const ip = `10.14.${(seed % 120) + 10}.${(seed % 240) + 1}`;
-  const mac = `00:2A:6A:${((seed * 3) % 90 + 10).toString(16).toUpperCase()}:${((seed * 7) % 90 + 10).toString(16).toUpperCase()}:${((seed * 11) % 90 + 10).toString(16).toUpperCase()}`;
-  const serial = `FCW2530${(seed % 900) + 100}`;
-  const rack = `Rack R-0${(seed % 8) + 1}, U${(seed % 35) + 4}`;
-  const uptime = `${120 + (seed % 90)} days, ${(seed % 23) + 1} hours`;
-
-  return {
-    cpu,
-    ramAllocated,
-    ramTotal,
-    ramPct,
-    packetLoss,
-    crcErrors,
-    reachability,
-    latency,
-    poeUsage,
-    temp,
-    psuState,
-    model,
-    osVer,
-    ip,
-    mac,
-    serial,
-    rack,
-    uptime
-  };
-}
 
 // ── Phase 12: Multi-Agent Stepper Micro-Component ──
 function AgentDecisionStepper({ timeline, alertIndex, expandedMetrics, onToggleMetric }) {
@@ -713,7 +602,7 @@ export default function NetworkOperations({
           setLoadingTelemetry(false);
           setDeviceTelemetry(prev => (prev && prev.device_name === deviceName ? prev : {
             device_name: deviceName,
-            source: 'offline',
+            source: 'error',
             synced_at: new Date().toISOString(),
             telemetry: null,
             device_info: null
@@ -796,8 +685,7 @@ export default function NetworkOperations({
   };
 
   const devices = useMemo(() => {
-    if (rawDevices && rawDevices.length > 0) return rawDevices;
-    return generateMockDevices();
+    return rawDevices || [];
   }, [rawDevices]);
 
   // Dynamic counts for multi-dimensional filter chips
@@ -2015,7 +1903,6 @@ export default function NetworkOperations({
           const snow = getSnowSummary(selectedDevice);
           const activeAlerts = selectedDevice.active_alerts || [];
           const resolvedAlerts = selectedDevice.resolved_alerts || [];
-          const proceduralVitals = getDeviceTelemetryVitals(selectedDevice);
           const health = getDeviceHealth(selectedDevice);
 
           // Phase 15: Determine live or cached provenance and telemetry state
@@ -2025,16 +1912,15 @@ export default function NetworkOperations({
           const telemetrySource = hasLoadedDeviceTelemetry ? deviceTelemetry.source : (loadingTelemetry ? 'loading' : 'cached_offline');
 
           // Metric extraction with honest null state support
-          const displayCpu = liveTelemetry ? liveTelemetry.cpu : (loadingTelemetry ? null : proceduralVitals.cpu);
-          const displayRam = liveTelemetry ? liveTelemetry.memory : (loadingTelemetry ? null : proceduralVitals.ramPct);
-          const displayPacketLoss = liveTelemetry ? (liveTelemetry.packet_drop != null ? `${liveTelemetry.packet_drop}%` : null) : (loadingTelemetry ? null : proceduralVitals.packetLoss);
-          const displayCrcErrors = liveTelemetry ? (liveTelemetry.interface_error_count != null ? liveTelemetry.interface_error_count : null) : (loadingTelemetry ? null : proceduralVitals.crcErrors);
-          const displayReachable = liveTelemetry ? (liveTelemetry.reachable ? 'Optimal (100%)' : 'Degraded / Unreachable') : (loadingTelemetry ? null : proceduralVitals.reachability);
-          const displayTemp = liveTelemetry ? (liveTelemetry.temperature != null ? `${liveTelemetry.temperature}°C` : null) : (loadingTelemetry ? null : proceduralVitals.temp);
-          const displayPoe = liveTelemetry ? (liveTelemetry.poe_status || null) : (loadingTelemetry ? null : proceduralVitals.poeUsage);
-          const displayPsu = liveTelemetry ? 'Dual Redundant (OK)' : proceduralVitals.psuState;
+          const displayCpu = liveTelemetry ? liveTelemetry.cpu : null;
+          const displayRam = liveTelemetry ? liveTelemetry.memory : null;
+          const displayPacketLoss = liveTelemetry ? (liveTelemetry.packet_drop != null ? `${liveTelemetry.packet_drop}%` : null) : null;
+          const displayCrcErrors = liveTelemetry ? (liveTelemetry.interface_error_count != null ? liveTelemetry.interface_error_count : null) : null;
+          const displayReachable = liveTelemetry ? (liveTelemetry.reachable ? 'Optimal (100%)' : 'Degraded / Unreachable') : null;
+          const displayTemp = liveTelemetry ? (liveTelemetry.temperature != null ? `${liveTelemetry.temperature}°C` : null) : null;
+          const displayPoe = liveTelemetry ? (liveTelemetry.poe_status || null) : null;
+          const displayPsu = liveTelemetry ? 'Dual Redundant (OK)' : null;
 
-          const isDnacActive = telemetrySource === 'dnac_live' || telemetrySource === 'cached_offline';
           const rawInv = liveTelemetry?.raw_response?.network_device || {};
           const rawDet = liveTelemetry?.raw_response?.device_detail || {};
 
@@ -2076,11 +1962,11 @@ export default function NetworkOperations({
             || null;
 
           // Spec extraction: never bleed synthetic switch defaults if live/cached DNAC is active
-          const displayModel = extractedModel || (isDnacActive ? 'Unknown' : proceduralVitals.model);
-          const displayOs = extractedOs || (isDnacActive ? 'Unknown' : proceduralVitals.osVer);
-          const displaySerial = extractedSerial || (isDnacActive ? 'Unknown' : proceduralVitals.serial);
-          const displayMac = extractedMac || (isDnacActive ? 'Unknown' : proceduralVitals.mac);
-          const displayIp = extractedIp || (isDnacActive ? (selectedDevice.ip_address || selectedDevice.device_name) : proceduralVitals.ip);
+          const displayModel = extractedModel || 'Unknown';
+          const displayOs = extractedOs || 'Unknown';
+          const displaySerial = extractedSerial || 'Unknown';
+          const displayMac = extractedMac || 'Unknown';
+          const displayIp = extractedIp || selectedDevice.ip_address || selectedDevice.device_name;
 
           const formatUptimeSeconds = (secs) => {
             if (secs == null || isNaN(secs) || secs <= 0) return null;
@@ -2091,22 +1977,14 @@ export default function NetworkOperations({
           const displayUptime = (liveTelemetry && formatUptimeSeconds(liveTelemetry.uptime_seconds))
             || rawInv.upTime
             || liveDeviceInfo?.uptime
-            || (isDnacActive ? null : proceduralVitals.uptime);
+            || null;
 
           // For unreachable devices or active DNAC, do not contaminate with procedural RAM/latency
           const isReachable = liveTelemetry ? liveTelemetry.reachable : true;
-          const displayRamAllocated = isDnacActive
-            ? (isReachable && displayRam != null ? `${displayRam}%` : null)
-            : proceduralVitals.ramAllocated;
-          const displayRamTotal = isDnacActive
-            ? (isReachable && displayRam != null ? '100%' : null)
-            : proceduralVitals.ramTotal;
-          const displayLatency = isDnacActive
-            ? (isReachable ? '24ms' : null)
-            : proceduralVitals.latency;
-          const displayRack = isDnacActive
-            ? (rawDet.location || rawInv.snmpLocation || selectedDevice.location || 'Site Placement')
-            : proceduralVitals.rack;
+          const displayRamAllocated = isReachable && displayRam != null ? `${displayRam}%` : null;
+          const displayRamTotal = isReachable && displayRam != null ? '100%' : null;
+          const displayLatency = isReachable ? '24ms' : null;
+          const displayRack = rawDet.location || rawInv.snmpLocation || selectedDevice.location || 'Site Placement';
 
           // Management plane diagnostics (DNAC-04)
           const diag = liveDeviceInfo?.diagnostics || {};
@@ -2123,7 +2001,6 @@ export default function NetworkOperations({
               : null);
 
           const vitals = {
-            ...proceduralVitals,
             cpu: displayCpu,
             ramPct: displayRam,
             ramAllocated: displayRamAllocated,
@@ -2154,14 +2031,14 @@ export default function NetworkOperations({
               return (
                 <div className="noc-provenance-banner offline">
                   <span className="noc-banner-text">
-                    <Database size={13} />
-                    <span>Simulated Device Profile • Backend API offline</span>
+                    <AlertTriangle size={13} />
+                    <span>Backend API offline • 503 Service Unavailable</span>
                   </span>
                   <button
                     type="button"
                     className="noc-retry-btn"
                     disabled={true}
-                    title="Backend API offline • Live controller polling unavailable"
+                    title="Backend API offline"
                   >
                     <RefreshCw size={11} />
                     <span>Poll DNAC</span>
@@ -2180,12 +2057,12 @@ export default function NetworkOperations({
                 </div>
               );
             }
-            if (telemetrySource === 'offline') {
+            if (telemetrySource === 'error' || telemetrySource === 'offline') {
               return (
                 <div className="noc-provenance-banner offline">
                   <span className="noc-banner-text">
                     <AlertTriangle size={13} />
-                    <span>DNAC Unreachable • Displaying offline baseline record</span>
+                    <span>DNAC Unreachable • 503 Service Unavailable</span>
                   </span>
                   <button type="button" className="noc-retry-btn" onClick={handlePollDNAC} disabled={pollingHealth} title="Retry live polling">
                     <RefreshCw size={11} className={pollingHealth ? 'spin' : ''} />
@@ -2228,9 +2105,9 @@ export default function NetworkOperations({
                         <span style={{ color: 'var(--accent-green-bright)' }}>●</span> DNAC LIVE
                         {loadingTelemetry && <span className="noc-loading-dot" />}
                       </span>
-                    ) : telemetrySource === 'offline' ? (
+                    ) : telemetrySource === 'error' || telemetrySource === 'offline' ? (
                       <span className="noc-provenance-pill offline">
-                        <span>○</span> OFFLINE
+                        <span>○</span> ERROR
                         {loadingTelemetry && <span className="noc-loading-dot" />}
                       </span>
                     ) : (
