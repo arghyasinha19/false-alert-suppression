@@ -2,6 +2,7 @@
 
 ## Milestones
 
+- 🏗️ **v2.2 Production Readiness & Mock Data Elimination** — Phases 30-31 (in progress)
 - ✅ **v2.1 Real DNAC Telemetry & Production Hardening** — Phases 27-29 (shipped 2026-10-07)
 - ✅ **v2.0 Multi-Site Hierarchical Topology & WAN Observability** — Phases 24-26 (shipped 2026-10-06)
 - ✅ **v1.8 - v1.9 Topology Diagram & UI Audit Remediation** — Phases 17-23 (shipped 2026-10-05 – 2026-10-06)
@@ -9,7 +10,12 @@
 
 ## Phases
 
-<details open>
+### 🏗️ v2.2 Production Readiness & Mock Data Elimination (Phases 30-31)
+
+- [ ] **Phase 30**: Backend Mock Eradication & Strict API Constraints (`PROD-01`, `PROD-03`, `PROD-04`)
+- [ ] **Phase 31**: Frontend Offline Fallback Eradication (`PROD-02`, `PROD-04`)
+
+<details>
 <summary>✅ v2.1 Real DNAC Telemetry & Production Hardening (Phases 27-29) — SHIPPED 2026-10-07</summary>
 
 - [x] Phase 27: Authoritative DNAC Hardware & Spec Resolution (2/2 plans) — completed 2026-10-07
@@ -42,5 +48,5 @@
 </details>
 
 ---
-*Roadmap defined: 2026-10-07*  
-*Last updated: 2026-10-07 after Milestone v2.1 completion*
+*Roadmap defined: 2026-10-09 (Milestone v2.2)*  
+*Last updated: 2026-10-09*

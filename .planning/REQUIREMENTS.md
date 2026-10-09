@@ -14,4 +14,8 @@
 - Changes to the core ML classification logic or threshold tuning.
 
 ## Traceability
-*(To be populated by roadmap)*
+
+- **PROD-01**: Addressed in **Phase 30**
+- **PROD-02**: Addressed in **Phase 31**
+- **PROD-03**: Addressed in **Phase 30**
+- **PROD-04**: Addressed across **Phase 30** and **Phase 31**
