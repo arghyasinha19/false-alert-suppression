@@ -963,11 +963,14 @@ export default function NetworkOperations({
     // 1. Fleet Health Score (Weighted Severity Formula)
     // Critical deducts 1.0 full weight, Warning deducts 0.33 weight relative to total devices
     const penalty = total > 0 ? ((critical * 1.0 + warning * 0.33) / total) * 100 : 0;
-    const fleetHealthScore = Math.max(0, Math.min(100, Math.round(100 - penalty)));
+    const fleetHealthScore = total > 0 ? Math.max(0, Math.min(100, Math.round(100 - penalty))) : 0;
 
     let slaStatus = 'nominal';
     let slaLabel = 'NOMINAL';
-    if (fleetHealthScore < 85) {
+    if (total === 0) {
+      slaStatus = 'unknown';
+      slaLabel = 'NO DATA';
+    } else if (fleetHealthScore < 85) {
       slaStatus = 'critical';
       slaLabel = 'CRITICAL';
     } else if (fleetHealthScore < 95) {
@@ -979,14 +982,14 @@ export default function NetworkOperations({
     const suppressedVolume = totalAutoResolving + totalBackdated;
     const suppressionRate = totalAlerts > 0
       ? Math.round((suppressedVolume / totalAlerts) * 1000) / 10
-      : 78.4;
+      : 0;
 
     // 3. Active Blast Radius
     const degradedNodesCount = critical + warning;
     const allLocations = Object.keys(locationMap);
     const affectedLocations = allLocations.filter(loc => locationMap[loc].degraded > 0);
     const affectedSitesCount = affectedLocations.length;
-    const totalSitesCount = allLocations.length || 1;
+    const totalSitesCount = total > 0 ? allLocations.length : 0;
 
     // 4. Mean Resolution Velocity
     const resolutionVelocityMinutes = 15;
@@ -995,7 +998,7 @@ export default function NetworkOperations({
     const nominalSitesCount = allLocations.filter(loc => locationMap[loc].degraded === 0).length;
     const resiliencePct = totalSitesCount > 0
       ? Math.round((nominalSitesCount / totalSitesCount) * 100)
-      : 100;
+      : 0;
 
     return {
       total,
